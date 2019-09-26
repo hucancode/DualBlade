@@ -1,0 +1,60 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+Content/Linhi
+Content/ArianaCharacter
+Content/PP801Character_P1
+Content/ParagonCountess
+Content/ParagonKwang
+Content/ParagonMinions
+Content/ParagonPhase
+Content/ParagonGreystone
+Content/ParagonShinbi
+Content/ParagonSparrow
+Content/ParagonSunWukong
+Content/ParagonGrux 
+Content/ParagonLtBelica
+Content/ParagonAurora
+Content/ParagonIggyScorch
+Content/ParagonCrunch
+Content/ParagonRiktor
+Content/ParagonMorigesh
+Content/ParagonSerath
+Content/ParagonRampage
+Content/ParagonNarbash
+Intermediate/
+Saved/
+Binaries/
+.vs/
+Saved/Config/Windows/EditorPerProjectUserSettings.ini
+Saved/Config/Windows/Engine.ini
