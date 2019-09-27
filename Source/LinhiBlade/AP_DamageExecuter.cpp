@@ -2,6 +2,7 @@
 
 #include "AP_DamageExecuter.h"
 #include "AP_AttributeSet.h"
+#include <GameplayAbilities\Public\AbilitySystemBlueprintLibrary.h>
 struct AP_DamageStatics
 {
 	DECLARE_ATTRIBUTE_CAPTUREDEF(DefensePower);
@@ -25,8 +26,8 @@ struct AP_DamageStatics
 
 static const AP_DamageStatics& DamageStatics()
 {
-	static AP_DamageStatics DmgStatics;
-	return DmgStatics;
+	static AP_DamageStatics ret;
+	return ret;
 }
 
 
@@ -44,6 +45,7 @@ void UAP_DamageExecuter::Execute_Implementation(const FGameplayEffectCustomExecu
 
 	AActor* SourceActor = SourceAbilitySystemComponent ? SourceAbilitySystemComponent->AvatarActor : nullptr;
 	AActor* TargetActor = TargetAbilitySystemComponent ? TargetAbilitySystemComponent->AvatarActor : nullptr;
+	
 
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
 
@@ -72,10 +74,18 @@ void UAP_DamageExecuter::Execute_Implementation(const FGameplayEffectCustomExecu
 
 	float Damage = 0.f;
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().DamageDef, EvaluationParameters, Damage);
-
 	float DamageDone = Damage * AttackPower / DefensePower;
+	UE_LOG(LogTemp, Warning, TEXT("calculating damage, damage done = %f"), DamageDone);
 	if (DamageDone > 0.f)
 	{
 		OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(DamageStatics().DamageProperty, EGameplayModOp::Additive, DamageDone));
 	}
+	FGameplayEventData DamageData;
+	DamageData.Instigator = SourceActor;
+	DamageData.Target = TargetActor;
+	DamageData.EventMagnitude = DamageDone;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SourceActor,
+		FGameplayTag::RequestGameplayTag("Combat.DamageCaused"), DamageData);
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(TargetActor,
+		FGameplayTag::RequestGameplayTag("Combat.DamageReceived"), DamageData);
 }

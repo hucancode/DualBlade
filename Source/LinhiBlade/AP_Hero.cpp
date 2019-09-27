@@ -92,7 +92,6 @@ void AAP_Hero::BeginPlay()
 	}*/
 	SetupAbilities();
 	SetupStats();
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveEffect"), FGameplayEventData());
 	AbilitySystem->AbilityCommittedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityCommitted);
 	AbilitySystem->AbilityEndedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityEnded);
 	AbilitySystem->AbilityActivatedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityActivated);
@@ -136,6 +135,8 @@ void AAP_Hero::SetupAbilities()
 			}
 			GiveAbility(Level, SpellAbilitySet->Abilities[slot]);
 		}
+		// we used to activate passive skill through this, but now we don't
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveEffect"), FGameplayEventData());
 		bAbilitiesInitialized = true;
 	}
 }
@@ -188,10 +189,13 @@ void AAP_Hero::RemoveAllAbilities()
 		SpellAbilityHandles.Empty();
 		SpellStates.Empty();
 		AbilitySystem->CancelAllAbilities();
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, 
+			FGameplayTag::RequestGameplayTag("Event.TriggerPassiveDetach"), FGameplayEventData());
 		// potential crash here (known bug, but still have't found any effective fix)
 		// basically you need to make sure no skill are in the middle of activation before remove them
 		AbilitySystem->ClearAllAbilities();
 		bAbilitiesInitialized = false;
+		
 	}
 }
 

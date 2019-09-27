@@ -99,6 +99,7 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 
 void UAP_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
+	UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute"));
 	Super::PostGameplayEffectExecute(Data);
 	FGameplayEffectContextHandle Context = Data.EffectSpec.GetContext();
 	UAbilitySystemComponent* Source = Context.GetOriginalInstigatorAbilitySystemComponent();
@@ -125,6 +126,7 @@ void UAP_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 
 	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute damage updated %f"), GetDamage());
 		// Get the Source actor
 		AActor* SourceActor = nullptr;
 		AController* SourceController = nullptr;
@@ -173,8 +175,13 @@ void UAP_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 		{
 			// Apply the health change and then clamp it
 			const float OldHealth = GetHealth();
+			UE_LOG(LogTemp, Warning,
+				TEXT("calculating damage, old health = %f, LocalDamageDone %f"),
+				GetHealth(), LocalDamageDone);
 			SetHealth(FMath::Clamp(OldHealth - LocalDamageDone, 0.0f, GetMaxHealth()));
-
+			UE_LOG(LogTemp, Warning, 
+				TEXT("calculating damage, new health = %f"), 
+				GetHealth());
 			if (TargetCharacter)
 			{
 				// This is proper damage
