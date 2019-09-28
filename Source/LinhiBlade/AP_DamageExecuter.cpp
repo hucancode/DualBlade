@@ -5,22 +5,24 @@
 #include <GameplayAbilities\Public\AbilitySystemBlueprintLibrary.h>
 struct AP_DamageStatics
 {
-	DECLARE_ATTRIBUTE_CAPTUREDEF(DefensePower);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(AttackPower);
-	DECLARE_ATTRIBUTE_CAPTUREDEF(Damage);
+	DECLARE_ATTRIBUTE_CAPTUREDEF(Armor);
+	DECLARE_ATTRIBUTE_CAPTUREDEF(Evasion);
+	DECLARE_ATTRIBUTE_CAPTUREDEF(PhysicalPower);
+	DECLARE_ATTRIBUTE_CAPTUREDEF(Health);
 
 	AP_DamageStatics()
 	{
 		// Capture the Target's DefensePower attribute. Do not snapshot it, because we want to use the health value at the moment we apply the execution.
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UAP_AttributeSet, DefensePower, Target, false);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UAP_AttributeSet, Armor, Target, false);
+		// Capture the Target's DefensePower attribute. Do not snapshot it, because we want to use the health value at the moment we apply the execution.
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UAP_AttributeSet, Evasion, Target, false);
+		// Also capture the source's raw Damage, which is normally passed in directly via the execution
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UAP_AttributeSet, Health, Target, false);
 
 		// Capture the Source's AttackPower. We do want to snapshot this at the moment we create the GameplayEffectSpec that will execute the damage.
 		// (imagine we fire a projectile: we create the GE Spec when the projectile is fired. When it hits the target, we want to use the AttackPower at the moment
 		// the projectile was launched, not when it hits).
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UAP_AttributeSet, AttackPower, Source, true);
-
-		// Also capture the source's raw Damage, which is normally passed in directly via the execution
-		DEFINE_ATTRIBUTE_CAPTUREDEF(UAP_AttributeSet, Damage, Source, true);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UAP_AttributeSet, PhysicalPower, Source, true);
 	}
 };
 
@@ -33,9 +35,9 @@ static const AP_DamageStatics& DamageStatics()
 
 UAP_DamageExecuter::UAP_DamageExecuter()
 {
-	RelevantAttributesToCapture.Add(DamageStatics().DefensePowerDef);
-	RelevantAttributesToCapture.Add(DamageStatics().AttackPowerDef);
-	RelevantAttributesToCapture.Add(DamageStatics().DamageDef);
+	RelevantAttributesToCapture.Add(DamageStatics().ArmorDef);
+	RelevantAttributesToCapture.Add(DamageStatics().HealthDef);
+	RelevantAttributesToCapture.Add(DamageStatics().PhysicalPowerDef);
 }
 
 void UAP_DamageExecuter::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, OUT FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
@@ -57,28 +59,23 @@ void UAP_DamageExecuter::Execute_Implementation(const FGameplayEffectCustomExecu
 	EvaluationParameters.SourceTags = SourceTags;
 	EvaluationParameters.TargetTags = TargetTags;
 
-	// --------------------------------------
-	//	Damage Done = Damage * AttackPower / DefensePower
-	//	If DefensePower is 0, it is treated as 1.0
-	// --------------------------------------
+	// the real calculation start here
 
-	float DefensePower = 0.f;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().DefensePowerDef, EvaluationParameters, DefensePower);
-	if (DefensePower == 0.0f)
-	{
-		DefensePower = 1.0f;
-	}
-
-	float AttackPower = 0.f;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().AttackPowerDef, EvaluationParameters, AttackPower);
-
+	float Armor = 0.f;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
+		DamageStatics().ArmorDef, EvaluationParameters, Armor);
+	float Evasion = 0.f;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
+		DamageStatics().EvasionDef, EvaluationParameters, Armor);
 	float Damage = 0.f;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(DamageStatics().DamageDef, EvaluationParameters, Damage);
-	float DamageDone = Damage * AttackPower / DefensePower;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
+		DamageStatics().PhysicalPowerDef, EvaluationParameters, Damage);
+	bool Hit = FMath::RandRange(0.0f, 1.0f) > Evasion;
+	float DamageDone = Hit ? FMath::Clamp(Damage - Armor, 0.0f, 99999.0f) : 0.0f;
 	UE_LOG(LogTemp, Warning, TEXT("calculating damage, damage done = %f"), DamageDone);
 	if (DamageDone > 0.f)
 	{
-		OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(DamageStatics().DamageProperty, EGameplayModOp::Additive, DamageDone));
+		OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(DamageStatics().HealthProperty, EGameplayModOp::Additive, -DamageDone));
 	}
 	FGameplayEventData DamageData;
 	DamageData.Instigator = SourceActor;

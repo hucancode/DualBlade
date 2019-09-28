@@ -76,11 +76,7 @@ public:
 	/** Returns maximum mana, mana will never be greater than this */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		virtual float GetMaxMana() const;
-
-	/** Returns current movement speed */
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual float GetMoveSpeed() const;
-
+	
 	/** Returns the character level that is passed to the ability system */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		virtual int32 GetCharacterLevel() const;
@@ -124,18 +120,7 @@ protected:
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	/**
-	 * Called when character takes damage, which may have killed them
-	 *
-	 * @param DamageAmount Amount of damage that was done, not clamped based on current health
-	 * @param HitInfo The hit info that generated this damage
-	 * @param DamageTags The gameplay tags of the event that did the damage
-	 * @param InstigatorCharacter The character that initiated this damage
-	 * @param DamageCauser The actual actor that did the damage, might be a weapon or projectile
-	 */
-	UFUNCTION(BlueprintImplementableEvent)
-		void OnDamaged(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, AAP_Hero* InstigatorCharacter, AActor* DamageCauser);
-
+	
 	/**
 	 * Called when health is changed, either from healing or from being damaged
 	 * For damage this is called in addition to OnDamaged/OnKilled
@@ -214,7 +199,6 @@ protected:
 	
 
 	// Called from RPGAttributeSet, these call BP events above
-	virtual void HandleDamage(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, AAP_Hero* InstigatorCharacter, AActor* DamageCauser);
 	virtual void HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
 	virtual void HandleManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
 	virtual void HandleMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);

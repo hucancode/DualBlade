@@ -30,45 +30,88 @@ public:
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	/** Current Health, when 0 we expect owner to die. Capped by MaxHealth */
-	UPROPERTY(BlueprintReadOnly, Category = "Health", ReplicatedUsing = OnRep_Health)
-		FGameplayAttributeData Health;
-	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Health)
+	UPROPERTY(BlueprintReadOnly, Category = "Core", ReplicatedUsing = OnRep_Strength)
+		FGameplayAttributeData Strength;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Strength)
+		UPROPERTY(BlueprintReadOnly, Category = "Core", ReplicatedUsing = OnRep_Agility)
+		FGameplayAttributeData Agility;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Agility)
+		UPROPERTY(BlueprintReadOnly, Category = "Core", ReplicatedUsing = OnRep_Vitality)
+		FGameplayAttributeData Vitality;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Vitality)
+		UPROPERTY(BlueprintReadOnly, Category = "Core", ReplicatedUsing = OnRep_Energy)
+		FGameplayAttributeData Energy;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Energy)
 
-		/** MaxHealth is its own attribute, since GameplayEffects may modify it */
-		UPROPERTY(BlueprintReadOnly, Category = "Health", ReplicatedUsing = OnRep_MaxHealth)
-		FGameplayAttributeData MaxHealth;
-	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, MaxHealth)
-
-		/** Current Mana, used to execute special abilities. Capped by MaxMana */
-		UPROPERTY(BlueprintReadOnly, Category = "Mana", ReplicatedUsing = OnRep_Mana)
-		FGameplayAttributeData Mana;
-	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Mana)
-
-		/** MaxMana is its own attribute, since GameplayEffects may modify it */
-		UPROPERTY(BlueprintReadOnly, Category = "Mana", ReplicatedUsing = OnRep_MaxMana)
-		FGameplayAttributeData MaxMana;
-	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, MaxMana)
-
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Strength")
+		float PhysicalPowerGrowRate;
 		/** AttackPower of the attacker is multiplied by the base Damage to reduce health, so 1.0 means no bonus */
-		UPROPERTY(BlueprintReadOnly, Category = "Damage", ReplicatedUsing = OnRep_AttackPower)
-		FGameplayAttributeData AttackPower;
-	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, AttackPower)
+		UPROPERTY(BlueprintReadOnly, Category = "Strength", ReplicatedUsing = OnRep_PhysicalPower)
+		FGameplayAttributeData PhysicalPower;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, PhysicalPower)
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Strength")
+		float AttackSpeedGrowRate;
+	UPROPERTY(BlueprintReadOnly, Category = "Strength")
+		float AttackSpeedInSecond;
+		/** AttackPower of the attacker is multiplied by the base Damage to reduce health, so 1.0 means no bonus */
+		UPROPERTY(BlueprintReadOnly, Category = "Strength", ReplicatedUsing = OnRep_AttackSpeed)
+		FGameplayAttributeData AttackSpeed;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, AttackSpeed)
 
-		/** Base Damage is divided by DefensePower to get actual damage done, so 1.0 means no bonus */
-		UPROPERTY(BlueprintReadOnly, Category = "Damage", ReplicatedUsing = OnRep_DefensePower)
-		FGameplayAttributeData DefensePower;
-	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, DefensePower)
-
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Agility")
+		float EvasionGrowRate;
+		/** AttackPower of the attacker is multiplied by the base Damage to reduce health, so 1.0 means no bonus */
+		UPROPERTY(BlueprintReadOnly, Category = "Agility", ReplicatedUsing = OnRep_Evasion)
+		FGameplayAttributeData Evasion;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Evasion)
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Agility")
+		float MoveSpeedGrowRate;
 		/** MoveSpeed affects how fast characters can move */
-		UPROPERTY(BlueprintReadOnly, Category = "MoveSpeed", ReplicatedUsing = OnRep_MoveSpeed)
+		UPROPERTY(BlueprintReadOnly, Category = "Agility", ReplicatedUsing = OnRep_MoveSpeed)
 		FGameplayAttributeData MoveSpeed;
 	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, MoveSpeed)
 
-		/** Damage is a 'temporary' attribute used by the DamageExecution to calculate final damage, which then turns into -Health */
-		UPROPERTY(BlueprintReadOnly, Category = "Mana", meta = (HideFromLevelInfos))
-		FGameplayAttributeData Damage;
-	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Damage)
+	UPROPERTY(BlueprintReadOnly, Category = "Vitality", ReplicatedUsing = OnRep_Health)
+		FGameplayAttributeData Health;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Health)
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vitality")
+		float HealthRegenGrowRate;
+		UPROPERTY(BlueprintReadOnly, Category = "Vitality", ReplicatedUsing = OnRep_HealthRegen)
+		FGameplayAttributeData HealthRegen;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, HealthRegen)
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vitality")
+		float MaxHealthGrowRate;
+		UPROPERTY(BlueprintReadOnly, Category = "Vitality", ReplicatedUsing = OnRep_MaxHealth)
+		FGameplayAttributeData MaxHealth;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, MaxHealth)
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy")
+		float MagicalPowerGrowRate;
+		/** AttackPower of the attacker is multiplied by the base Damage to reduce health, so 1.0 means no bonus */
+		UPROPERTY(BlueprintReadOnly, Category = "Energy", ReplicatedUsing = OnRep_MagicalPower)
+		FGameplayAttributeData MagicalPower;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, MagicalPower)
+		/** Current Mana, used to execute special abilities. Capped by MaxMana */
+		UPROPERTY(BlueprintReadOnly, Category = "Energy", ReplicatedUsing = OnRep_Mana)
+		FGameplayAttributeData Mana;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Mana)
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy")
+		float ManaRegenGrowRate;
+		/** Current Mana, used to execute special abilities. Capped by MaxMana */
+		UPROPERTY(BlueprintReadOnly, Category = "Energy", ReplicatedUsing = OnRep_ManaRegen)
+		FGameplayAttributeData ManaRegen;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, ManaRegen)
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Energy")
+		float MaxManaGrowRate;
+		/** MaxMana is its own attribute, since GameplayEffects may modify it */
+		UPROPERTY(BlueprintReadOnly, Category = "Energy", ReplicatedUsing = OnRep_MaxMana)
+		FGameplayAttributeData MaxMana;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, MaxMana)
+		
+		/** Base Damage is divided by DefensePower to get actual damage done, so 1.0 means no bonus */
+		UPROPERTY(BlueprintReadOnly, Category = "Items", ReplicatedUsing = OnRep_Armor)
+		FGameplayAttributeData Armor;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Armor)
 
 protected:
 	/** Helper function to proportionally adjust the value of an attribute when it's associated max attribute changes. (i.e. When MaxHealth increases, Health increases by an amount that maintains the same percentage as before) */
@@ -76,23 +119,43 @@ protected:
 
 	// These OnRep functions exist to make sure that the ability system internal representations are synchronized properly during replication
 	UFUNCTION()
-		virtual void OnRep_Health();
+		virtual void OnRep_Strength();
+	UFUNCTION()
+		virtual void OnRep_Agility();
+	UFUNCTION()
+		virtual void OnRep_Vitality();
+	UFUNCTION()
+		virtual void OnRep_Energy();
 
+	UFUNCTION()
+		virtual void OnRep_PhysicalPower();
+	UFUNCTION()
+		virtual void OnRep_AttackSpeed();
+
+	UFUNCTION()
+		virtual void OnRep_Evasion();
+	UFUNCTION()
+		virtual void OnRep_MoveSpeed();
+
+	UFUNCTION()
+		virtual void OnRep_Health();
+	UFUNCTION()
+		virtual void OnRep_HealthRegen();
 	UFUNCTION()
 		virtual void OnRep_MaxHealth();
 
 	UFUNCTION()
+		virtual void OnRep_MagicalPower();
+	UFUNCTION()
 		virtual void OnRep_Mana();
-
+	UFUNCTION()
+		virtual void OnRep_ManaRegen();
 	UFUNCTION()
 		virtual void OnRep_MaxMana();
 
 	UFUNCTION()
-		virtual void OnRep_AttackPower();
-
-	UFUNCTION()
-		virtual void OnRep_DefensePower();
-
-	UFUNCTION()
-		virtual void OnRep_MoveSpeed();
+		virtual void OnRep_Armor();
+	static const float ATTACK_SPEED_MAX;
+	static const float ATTACK_SPEED_SECOND_MIN;
+	static const float ATTACK_SPEED_SECOND_MAX;
 };

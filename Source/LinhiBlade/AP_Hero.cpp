@@ -431,11 +431,6 @@ void AAP_Hero::OnAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplay
 	SpellOffCooldown.Broadcast((int)Slot);
 }
 
-void AAP_Hero::HandleDamage(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, AAP_Hero* InstigatorPawn, AActor* DamageCauser)
-{
-	OnDamaged(DamageAmount, HitInfo, DamageTags, InstigatorPawn, DamageCauser);
-}
-
 void AAP_Hero::HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
 {
 	// We only call the BP callback if this is not the initial ability setup
@@ -455,12 +450,9 @@ void AAP_Hero::HandleManaChanged(float DeltaValue, const struct FGameplayTagCont
 
 void AAP_Hero::HandleMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
 {
-	// Update the character movement's walk speed
-	GetCharacterMovement()->MaxWalkSpeed = GetMoveSpeed();
-
 	if (bStatsInitialized)
 	{
-		OnMoveSpeedChanged(DeltaValue, EventTags);
+		GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMoveSpeed();
 	}
 }
 
@@ -487,11 +479,6 @@ float AAP_Hero::GetMana() const
 float AAP_Hero::GetMaxMana() const
 {
 	return AttributeSet->GetMaxMana();
-}
-
-float AAP_Hero::GetMoveSpeed() const
-{
-	return AttributeSet->GetMoveSpeed();
 }
 
 int32 AAP_Hero::GetCharacterLevel() const
