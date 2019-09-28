@@ -3,6 +3,7 @@
 #include "AP_Hero.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/BoxComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -17,7 +18,7 @@
 AAP_Hero::AAP_Hero()
 {
 	// Set size for player capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	GetCapsuleComponent()->InitCapsuleSize(5.f, 90.0f);
 
 	SelectionRing = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SelectionRing"));
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/Engine/BasicShapes/Plane'"));
@@ -26,6 +27,11 @@ AAP_Hero::AAP_Hero()
 	SelectionRing->SetCollisionProfileName(TEXT("NoCollision"));
 	SelectionRing->SetVisibility(false);
 	SelectionRing->RelativeLocation.Set(0.0f, 0.0f, 80.0f);
+
+	SelectionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SelectionBox"));
+	SelectionBox->RelativeLocation.Set(0.0f, 0.0f, 0.0f);
+	SelectionBox->SetBoxExtent(FVector(32.0f, 32.0f, 80.0f));
+	SelectionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;

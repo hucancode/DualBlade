@@ -242,6 +242,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities, meta = (AllowPrivateAccess = "true"))
 		class UStaticMeshComponent* SelectionRing;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities, meta = (AllowPrivateAccess = "true"))
+		class UBoxComponent* SelectionBox;
 
 	UPROPERTY()
 		TArray <ESpellState> SpellStates;
