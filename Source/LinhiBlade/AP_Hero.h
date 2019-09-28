@@ -53,6 +53,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
+	
 	/** select hero, activate selection effect */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		virtual void SelectHero(bool selected);
@@ -149,6 +150,23 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnVanishedStarted();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnVanishedFinished();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnCloakStarted();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnCloakFinished();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnInviStarted();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnInviFinished();
 
 	/** Called when a game effect applied to self
 	 *
@@ -244,6 +262,8 @@ protected:
 		class UStaticMeshComponent* SelectionRing;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities, meta = (AllowPrivateAccess = "true"))
 		class UBoxComponent* SelectionBox;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities)
+		bool IsSelected;
 
 	UPROPERTY()
 		TArray <ESpellState> SpellStates;
@@ -276,5 +296,22 @@ protected:
 		int32 bAbilitiesInitialized;
 	UPROPERTY()
 		int32 bStatsInitialized;
+public:
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void EnterVanish();
+	
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void QuitVanish();
 
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void EnterCloak();
+
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void QuitCloak();
+
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void EnterInvi();
+
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void QuitInvi();
 };

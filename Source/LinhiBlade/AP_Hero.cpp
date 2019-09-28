@@ -464,7 +464,8 @@ void AAP_Hero::HandleMoveSpeedChanged(float DeltaValue, const struct FGameplayTa
 
 void AAP_Hero::SelectHero(bool selected)
 {
-	SelectionRing->SetVisibility(selected);
+	IsSelected = selected;
+	SelectionRing->SetVisibility(IsSelected);
 }
 
 float AAP_Hero::GetHealth() const
@@ -517,4 +518,34 @@ bool AAP_Hero::SetCharacterLevel(int32 NewLevel)
 		return true;
 	}
 	return false;
+}
+
+void AAP_Hero::EnterVanish()
+{
+	OnVanishedStarted();
+}
+
+void AAP_Hero::QuitVanish()
+{
+	OnVanishedFinished();
+}
+
+void AAP_Hero::EnterCloak()
+{
+	OnCloakStarted();
+}
+
+void AAP_Hero::QuitCloak()
+{
+	OnCloakFinished();
+}
+
+void AAP_Hero::EnterInvi()
+{
+	OnInviStarted();
+}
+
+void AAP_Hero::QuitInvi()
+{
+	OnInviFinished();
 }
