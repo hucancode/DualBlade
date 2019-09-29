@@ -336,6 +336,7 @@ UAbilitySystemComponent * AAP_Hero::GetAbilitySystemComponent() const
 
 void AAP_Hero::OnGameplayEffectAppliedToSelf(UAbilitySystemComponent * Source, const FGameplayEffectSpec & Spec, FActiveGameplayEffectHandle Handle)
 {
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::OnGameplayEffectAppliedToSelf duration = %f"), Spec.GetDuration());
 	GameplayEffectAppliedToSelf.Broadcast(Source, Spec, Handle);
 	FOnActiveGameplayEffectRemoved_Info* Delegate = AbilitySystem->OnGameplayEffectRemoved_InfoDelegate(Handle);
 	if (Delegate)
@@ -437,28 +438,38 @@ void AAP_Hero::OnAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplay
 	SpellOffCooldown.Broadcast((int)Slot);
 }
 
-void AAP_Hero::HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
+void AAP_Hero::HandleHealthChanged(float NewValue)
 {
 	// We only call the BP callback if this is not the initial ability setup
 	if (bStatsInitialized)
 	{
-		OnHealthChanged(DeltaValue, EventTags);
+		OnHealthChanged(NewValue);
 	}
 }
 
-void AAP_Hero::HandleManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
+void AAP_Hero::HandleManaChanged(float NewValue)
 {
 	if (bStatsInitialized)
 	{
-		OnManaChanged(DeltaValue, EventTags);
+		OnManaChanged(NewValue);
 	}
 }
 
-void AAP_Hero::HandleMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
+void AAP_Hero::HandleMoveSpeedChanged(float NewValue)
 {
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::HandleMoveSpeedChanged"));
 	if (bStatsInitialized)
 	{
-		GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMoveSpeed();
+		GetCharacterMovement()->MaxWalkSpeed = NewValue;
+	}
+}
+
+void AAP_Hero::HandleTurnRateChanged(float NewValue)
+{
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::HandleTurnRateChanged"));
+	if (bStatsInitialized)
+	{
+		GetCharacterMovement()->RotationRate.Yaw = NewValue;
 	}
 }
 

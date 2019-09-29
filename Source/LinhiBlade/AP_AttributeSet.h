@@ -70,6 +70,11 @@ public:
 		UPROPERTY(BlueprintReadOnly, Category = "Agility", ReplicatedUsing = OnRep_MoveSpeed)
 		FGameplayAttributeData MoveSpeed;
 	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, MoveSpeed)
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Agility")
+		float TurnRateGrowRate;
+		UPROPERTY(BlueprintReadOnly, Category = "Agility", ReplicatedUsing = OnRep_TurnRate)
+		FGameplayAttributeData TurnRate;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, TurnRate)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Vitality", ReplicatedUsing = OnRep_Health)
 		FGameplayAttributeData Health;
@@ -136,6 +141,8 @@ protected:
 		virtual void OnRep_Evasion();
 	UFUNCTION()
 		virtual void OnRep_MoveSpeed();
+	UFUNCTION()
+		virtual void OnRep_TurnRate();
 
 	UFUNCTION()
 		virtual void OnRep_Health();

@@ -130,7 +130,7 @@ protected:
 	 * @param EventTags The gameplay tags of the event that changed mana
 	 */
 	UFUNCTION(BlueprintImplementableEvent)
-		void OnHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
+		void OnHealthChanged(float NewValue);
 
 	/**
 	 * Called when mana is changed, either from healing or from being used as a cost
@@ -139,17 +139,8 @@ protected:
 	 * @param EventTags The gameplay tags of the event that changed mana
 	 */
 	UFUNCTION(BlueprintImplementableEvent)
-		void OnManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
-
-	/**
-	 * Called when movement speed is changed
-	 *
-	 * @param DeltaValue Change in move speed
-	 * @param EventTags The gameplay tags of the event that changed mana
-	 */
-	UFUNCTION(BlueprintImplementableEvent)
-		void OnMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
-
+		void OnManaChanged(float NewValue);
+	
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnVanishedStarted();
 
@@ -217,9 +208,10 @@ protected:
 	
 
 	// Called from RPGAttributeSet, these call BP events above
-	virtual void HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
-	virtual void HandleManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
-	virtual void HandleMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
+	virtual void HandleHealthChanged(float NewValue);
+	virtual void HandleManaChanged(float NewValue);
+	virtual void HandleMoveSpeedChanged(float NewValue);
+	virtual void HandleTurnRateChanged(float NewValue);
 
 	// Friended to allow access to handle functions above
 	friend UAP_AttributeSet;

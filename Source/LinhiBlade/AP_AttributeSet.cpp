@@ -27,6 +27,8 @@ UAP_AttributeSet::UAP_AttributeSet()
 	, Evasion(1.0f)
 	, MoveSpeedGrowRate(1.0f)
 	, MoveSpeed(1.0f)
+	, TurnRateGrowRate(1.0f)
+	, TurnRate(1.0f)
 	, Health(1.0f)
 	, HealthRegenGrowRate(1.0f)
 	, HealthRegen(1.0f)
@@ -119,6 +121,10 @@ void UAP_AttributeSet::OnRep_MoveSpeed()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, MoveSpeed);
 }
+void UAP_AttributeSet::OnRep_TurnRate()
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, MoveSpeed);
+}
 
 void UAP_AttributeSet::OnRep_Strength()
 {
@@ -168,15 +174,20 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 {
 	// This is called whenever attributes change, so for max health/mana we want to scale the current totals to match
 	Super::PreAttributeChange(Attribute, NewValue);
+	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange %s %f"), *Attribute.GetName(), NewValue);
 
 	UAbilitySystemComponent* AC = GetOwningAbilitySystemComponent();
 	if (Attribute == GetMaxHealthAttribute())
 	{
 		AdjustAttributeForMaxChange(Health, MaxHealth, NewValue, GetHealthAttribute());
+		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
+		Owner->HandleHealthChanged(Health.GetCurrentValue());
 	}
 	else if (Attribute == GetMaxManaAttribute())
 	{
 		AdjustAttributeForMaxChange(Mana, MaxMana, NewValue, GetManaAttribute());
+		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
+		Owner->HandleHealthChanged(Mana.GetCurrentValue());
 	}
 	else if (Attribute == GetStrengthAttribute())
 	{
@@ -191,10 +202,13 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 	{
 		float NewEvasion = NewValue * EvasionGrowRate;
 		float NewMoveSpeed = NewValue * MoveSpeedGrowRate;
+		float NewTurnRate = NewValue * TurnRateGrowRate;
 		AC->ApplyModToAttribute(
 			GetEvasionAttribute(), EGameplayModOp::Override, NewEvasion);
 		AC->ApplyModToAttribute(
 			GetMoveSpeedAttribute(), EGameplayModOp::Override, NewMoveSpeed);
+		AC->ApplyModToAttribute(
+			GetTurnRateAttribute(), EGameplayModOp::Override, NewTurnRate);
 	}
 	else if (Attribute == GetVitalityAttribute())
 	{
@@ -222,15 +236,34 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 		AttackSpeedInSecond = FMath::Lerp(ATTACK_SPEED_SECOND_MIN, ATTACK_SPEED_SECOND_MAX,
 			FMath::Clamp(NewValue/ATTACK_SPEED_MAX, 0.0f, 1.0f));
 	}
+	else if (Attribute == GetMoveSpeedAttribute())
+	{
+		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
+		Owner->HandleMoveSpeedChanged(NewValue);
+	}
+	else if (Attribute == GetTurnRateAttribute())
+	{
+		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
+		Owner->HandleTurnRateChanged(NewValue);
+	}
+	else if (Attribute == GetHealthAttribute())
+	{
+		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
+		Owner->HandleHealthChanged(NewValue);
+	}
+	else if (Attribute == GetManaAttribute())
+	{
+		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
+		Owner->HandleManaChanged(NewValue);
+	}
 }
 
 void UAP_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
-	UE_LOG(LogTemp, Warning, TEXT("PostGameplayEffectExecute"));
+	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PostGameplayEffectExecute, effect duration = %f"), Data.EffectSpec.Duration);
 	Super::PostGameplayEffectExecute(Data);
 	FGameplayEffectContextHandle Context = Data.EffectSpec.GetContext();
 	UAbilitySystemComponent* Source = Context.GetOriginalInstigatorAbilitySystemComponent();
-	const FGameplayTagContainer& SourceTags = *Data.EffectSpec.CapturedSourceTags.GetAggregatedTags();
 
 	// Compute the delta between old and new, if it is available
 	float DeltaValue = 0;
@@ -255,30 +288,10 @@ void UAP_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 		// Handle other health changes such as from healing or direct modifiers
 		// First clamp it
 		SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
-
-		if (TargetCharacter)
-		{
-			// Call for all health changes
-			TargetCharacter->HandleHealthChanged(DeltaValue, SourceTags);
-		}
 	}
 	else if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
 		// Clamp mana
 		SetMana(FMath::Clamp(GetMana(), 0.0f, GetMaxMana()));
-
-		if (TargetCharacter)
-		{
-			// Call for all mana changes
-			TargetCharacter->HandleManaChanged(DeltaValue, SourceTags);
-		}
-	}
-	else if (Data.EvaluatedData.Attribute == GetMoveSpeedAttribute())
-	{
-		if (TargetCharacter)
-		{
-			// Call for all movespeed changes
-			TargetCharacter->HandleMoveSpeedChanged(DeltaValue, SourceTags);
-		}
 	}
 }

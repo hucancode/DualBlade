@@ -49,6 +49,11 @@ void UAP_Task_LookAtUnit::Activate()
 	if (Character)
 	{
 		TurnRate = Character->GetCharacterMovement()->RotationRate.Yaw;
+		if (FMath::Abs(TurnRate) <= 0.0f)
+		{
+			Reached = true;
+			OnRotationCancelled.Broadcast();
+		}
 	}
 	else
 	{
