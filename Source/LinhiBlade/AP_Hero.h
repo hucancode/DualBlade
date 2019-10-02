@@ -112,6 +112,9 @@ protected:
 	/** Apply the startup gameplay abilities and effects */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void CancelAllAttack();
+	/** Apply the startup gameplay abilities and effects */
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void RemoveAllChannelingEffect();
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		float GetSpellCooldown(int SpellSlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
@@ -282,7 +285,8 @@ protected:
 
 	UPROPERTY()
 		TArray<FGameplayAbilitySpecHandle> SpellAbilityHandles;
-
+	UPROPERTY()
+		int ChannelEffectCount;
 	/** If true we have initialized our abilities */
 	UPROPERTY()
 		int32 bAbilitiesInitialized;

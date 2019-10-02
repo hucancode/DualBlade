@@ -43,6 +43,7 @@ AAP_Hero::AAP_Hero()
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
+	
 
 	// Our ability system component.
 	AbilitySystem = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
@@ -73,6 +74,7 @@ AAP_Hero::AAP_Hero()
 		UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::AAP_Hero() ChildObjects %d, ASetObjects %d"),
 			ChildObjects.Num(), ASetObjects.Num());
 	}*/
+	ChannelEffectCount = 0;
 }
 
 // Called when the game starts or when spawned
@@ -234,6 +236,21 @@ void AAP_Hero::CancelAllAttack()
 	}
 }
 
+void AAP_Hero::RemoveAllChannelingEffect()
+{
+	if (AbilitySystem)
+	{
+		if (ChannelEffectCount)
+		{
+			static FGameplayTagContainer Container =
+				FGameplayTag::RequestGameplayTag("Combat.Channeling").GetSingleTagContainer();
+			AbilitySystem->RemoveActiveEffectsWithGrantedTags(Container);
+			UE_LOG(LogTemp, Warning, TEXT("cancel all channeling ability"));
+			ChannelEffectCount = 0;
+		}
+	}
+}
+
 float AAP_Hero::GetSpellCooldown(int SpellSlot)
 {
 	bool valid = SpellAbilityHandles.IsValidIndex(SpellSlot);
@@ -295,6 +312,11 @@ ESpellState AAP_Hero::GetSpellState(int SpellSlot)
 void AAP_Hero::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (!GetCharacterMovement()->Velocity.IsNearlyZero())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::Tick is moving = true"));
+		RemoveAllChannelingEffect();
+	}
 }
 
 // Called to bind functionality to input
@@ -343,10 +365,23 @@ void AAP_Hero::OnGameplayEffectAppliedToSelf(UAbilitySystemComponent * Source, c
 	{
 		Delegate->AddUObject(this, &AAP_Hero::OnGameplayEffectRemovedFromSelf);
 	}
+	FGameplayTagContainer Container;
+	Spec.GetAllGrantedTags(Container);
+	if (Container.HasTag(FGameplayTag::RequestGameplayTag("Combat.Channeling")))
+	{
+		ChannelEffectCount++;
+	}
 }
 
 void AAP_Hero::OnGameplayEffectRemovedFromSelf(const FGameplayEffectRemovalInfo & Info)
 {
+	FGameplayTagContainer Container;
+	FGameplayTagContainer Container_Dummy;
+	Info.EffectContext.GetOwnedGameplayTags(Container_Dummy, Container);
+	if (Container.HasTag(FGameplayTag::RequestGameplayTag("Combat.Channeling")))
+	{
+		ChannelEffectCount--;
+	}
 	GameplayEffectRemovedFromSelf.Broadcast(Info);
 }
 
