@@ -26,12 +26,15 @@ AAP_Hero::AAP_Hero()
 	SelectionRing->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	SelectionRing->SetCollisionProfileName(TEXT("NoCollision"));
 	SelectionRing->SetVisibility(false);
-	SelectionRing->RelativeLocation.Set(0.0f, 0.0f, 80.0f);
+	SelectionRing->SetupAttachment(GetCapsuleComponent());
+	SelectionRing->SetRelativeLocation(FVector(0.0f, 0.0f, -80.0f));
 
 	SelectionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SelectionBox"));
-	SelectionBox->RelativeLocation.Set(0.0f, 0.0f, 0.0f);
 	SelectionBox->SetBoxExtent(FVector(32.0f, 32.0f, 80.0f));
 	SelectionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	SelectionBox->SetupAttachment(GetCapsuleComponent());
+	SelectionBox->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
+	
 
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
@@ -103,6 +106,11 @@ void AAP_Hero::BeginPlay()
 	AbilitySystem->AbilityCommittedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityCommitted);
 	AbilitySystem->AbilityEndedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityEnded);
 	AbilitySystem->AbilityActivatedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityActivated);
+	
+	if (!GetController()->IsValidLowLevel())
+	{
+		SpawnDefaultController();
+	}
 }
 
 void AAP_Hero::SetupAbilities()
