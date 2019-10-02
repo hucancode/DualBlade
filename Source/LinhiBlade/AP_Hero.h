@@ -64,19 +64,11 @@ public:
 
 	/** Returns current health, will be 0 if dead */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual float GetHealth() const;
-
-	/** Returns maximum health, health will never be greater than this */
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual float GetMaxHealth() const;
+		virtual float GetHealthPercent() const;
 
 	/** Returns current mana */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual float GetMana() const;
-
-	/** Returns maximum mana, mana will never be greater than this */
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual float GetMaxMana() const;
+		virtual float GetManaPercent() const;
 	
 	/** Returns the character level that is passed to the ability system */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
@@ -132,7 +124,7 @@ protected:
 	 * @param DeltaValue Change in health value, positive for heal, negative for cost. If 0 the delta is unknown
 	 * @param EventTags The gameplay tags of the event that changed mana
 	 */
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnHealthChanged(float NewValue);
 
 	/**
@@ -141,25 +133,25 @@ protected:
 	 * @param DeltaValue Change in mana value, positive for heal, negative for cost. If 0 the delta is unknown
 	 * @param EventTags The gameplay tags of the event that changed mana
 	 */
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnManaChanged(float NewValue);
 	
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnVanishedStarted();
 
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnVanishedFinished();
 
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnCloakStarted();
 
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnCloakFinished();
 
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnInviStarted();
 
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnInviFinished();
 
 	/** Called when a game effect applied to self

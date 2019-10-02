@@ -181,13 +181,19 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 	{
 		AdjustAttributeForMaxChange(Health, MaxHealth, NewValue, GetHealthAttribute());
 		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		Owner->HandleHealthChanged(Health.GetCurrentValue());
+		if (Owner)
+		{
+			Owner->HandleHealthChanged(GetHealth());
+		}
 	}
 	else if (Attribute == GetMaxManaAttribute())
 	{
 		AdjustAttributeForMaxChange(Mana, MaxMana, NewValue, GetManaAttribute());
 		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		Owner->HandleHealthChanged(Mana.GetCurrentValue());
+		if (Owner)
+		{
+			Owner->HandleHealthChanged(GetMana());
+		}
 	}
 	else if (Attribute == GetStrengthAttribute())
 	{
@@ -239,22 +245,50 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 	else if (Attribute == GetMoveSpeedAttribute())
 	{
 		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		Owner->HandleMoveSpeedChanged(NewValue);
+		if (Owner)
+		{
+			Owner->HandleMoveSpeedChanged(NewValue);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
+		}
 	}
 	else if (Attribute == GetTurnRateAttribute())
 	{
 		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		Owner->HandleTurnRateChanged(NewValue);
+		if (Owner->IsValidLowLevel())
+		{
+			Owner->HandleTurnRateChanged(NewValue);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
+		}
 	}
 	else if (Attribute == GetHealthAttribute())
 	{
 		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		Owner->HandleHealthChanged(NewValue);
+		if (Owner->IsValidLowLevel())
+		{
+			Owner->HandleHealthChanged(NewValue);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
+		}
 	}
 	else if (Attribute == GetManaAttribute())
 	{
 		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		Owner->HandleManaChanged(NewValue);
+		if (Owner->IsValidLowLevel())
+		{
+			Owner->HandleManaChanged(NewValue);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
+		}
 	}
 }
 

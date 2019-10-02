@@ -188,6 +188,10 @@ void AAP_Hero::SetupStats()
 			UE_LOG(LogTemp, Warning, TEXT("setup stats, done AbilitySystem->GetAllAttributes() %d"), all.Num());*/
 		}
 	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("won't setup stats because this is not server"));
+	}
 }
 
 void AAP_Hero::GiveAbility(const int32& Level, TSubclassOf<UGameplayAbility> Ability)
@@ -322,7 +326,6 @@ void AAP_Hero::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (!GetCharacterMovement()->Velocity.IsNearlyZero())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::Tick is moving = true"));
 		RemoveAllChannelingEffect();
 	}
 }
@@ -483,7 +486,6 @@ void AAP_Hero::OnAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplay
 
 void AAP_Hero::HandleHealthChanged(float NewValue)
 {
-	// We only call the BP callback if this is not the initial ability setup
 	if (bStatsInitialized)
 	{
 		OnHealthChanged(NewValue);
@@ -522,24 +524,20 @@ void AAP_Hero::SelectHero(bool selected)
 	SelectionRing->SetVisibility(IsSelected);
 }
 
-float AAP_Hero::GetHealth() const
+float AAP_Hero::GetHealthPercent() const
 {
-	return AttributeSet->GetHealth();
+	float v = AttributeSet->GetHealth();
+	float m = AttributeSet->GetMaxHealth();
+	m = FMath::Max(1.0f, m);
+	return v / m;
 }
 
-float AAP_Hero::GetMaxHealth() const
+float AAP_Hero::GetManaPercent() const
 {
-	return AttributeSet->GetMaxHealth();
-}
-
-float AAP_Hero::GetMana() const
-{
-	return AttributeSet->GetMana();
-}
-
-float AAP_Hero::GetMaxMana() const
-{
-	return AttributeSet->GetMaxMana();
+	float v = AttributeSet->GetMana();
+	float m = AttributeSet->GetMaxMana();
+	m = FMath::Max(1.0f, m);
+	return v / m;
 }
 
 int32 AAP_Hero::GetCharacterLevel() const
