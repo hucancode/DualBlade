@@ -100,6 +100,12 @@ protected:
 		void RemoveAllAbilities();
 	/** Apply the startup gameplay abilities and effects */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		int GetSpellLevel(int SpellSlot);
+	/** Apply the startup gameplay abilities and effects */
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void SetSpellLevel(int SpellSlot, int Level);
+	/** Apply the startup gameplay abilities and effects */
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void SpellAttack(int SpellSlot);
 	/** Apply the startup gameplay abilities and effects */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")

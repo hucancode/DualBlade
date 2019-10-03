@@ -185,6 +185,33 @@ void AAP_Hero::RemoveAllAbilities()
 	}
 }
 
+int AAP_Hero::GetSpellLevel(int SpellSlot)
+{
+	bool valid = SpellAbilityHandles.IsValidIndex(SpellSlot);
+	if (valid && AbilitySystem && bAbilitiesInitialized)
+	{
+		auto Ability = AbilitySystem->FindAbilitySpecFromHandle(SpellAbilityHandles[SpellSlot]);
+		if (Ability)
+		{
+			return Ability->Level;
+		}
+	}
+	return 0;
+}
+
+void AAP_Hero::SetSpellLevel(int SpellSlot, int Level)
+{
+	bool valid = SpellAbilityHandles.IsValidIndex(SpellSlot);
+	UE_LOG(LogTemp, Warning, TEXT("about to set ability level %d, valid=%d"), SpellSlot, valid);
+	if (valid && AbilitySystem && bAbilitiesInitialized)
+	{
+		auto Ability = AbilitySystem->FindAbilitySpecFromHandle(SpellAbilityHandles[SpellSlot]);
+		if (Ability)
+		{
+			Ability->Level = Level;
+		}
+	}
+}
 void AAP_Hero::SpellAttack(int SpellSlot)
 {
 	bool valid = SpellAbilityHandles.IsValidIndex(SpellSlot);
