@@ -57,26 +57,12 @@ AAP_Hero::AAP_Hero()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
+	AllStats = CreateDefaultSubobject<UAP_AttributeSet>(TEXT("AllStats"));;
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::AAP_Hero(), AllStats=%x"), AllStats);
+
 	SpellAbilitySet = 0;
-	AttributeSet = CreateDefaultSubobject<UAP_AttributeSet>(TEXT("AttributeSet"));
-	/*UE_LOG(LogTemp, Warning, TEXT("CreateDefaultSubobject<UAP_AttributeSet>(); %x AttributeSet.GetAttackPower() %f"), AttributeSet, AttributeSet->GetAttackPower());*/
 	bStatsInitialized = false;
 	bAbilitiesInitialized = false;
-	/*{
-		TArray<UObject*> ChildObjects;
-		TArray<UObject*> ASetObjects;
-		GetObjectsWithOuter(this, ChildObjects, false, RF_NoFlags, EInternalObjectFlags::PendingKill);
-		for (UObject* Obj : ChildObjects)
-		{
-			UAttributeSet* Set = Cast<UAttributeSet>(Obj);
-			if (Set)
-			{
-				ASetObjects.AddUnique(Set);
-			}
-		}
-		UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::AAP_Hero() ChildObjects %d, ASetObjects %d"),
-			ChildObjects.Num(), ASetObjects.Num());
-	}*/
 	ChannelEffectCount = 0;
 }
 
@@ -84,23 +70,7 @@ AAP_Hero::AAP_Hero()
 void AAP_Hero::BeginPlay()
 {
 	Super::BeginPlay();
-	/*UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::BeginPlay() AttributeSet %x"), 
-		AttributeSet);
-	{
-		TArray<UObject*> ChildObjects;
-		TArray<UObject*> ASetObjects;
-		GetObjectsWithOuter(this, ChildObjects, false, RF_NoFlags, EInternalObjectFlags::PendingKill);
-		for (UObject* Obj : ChildObjects)
-		{
-			UAttributeSet* Set = Cast<UAttributeSet>(Obj);
-			if (Set)
-			{
-				ASetObjects.AddUnique(Set);
-			}
-		}
-		UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::BeginPlay() ChildObjects %d, ASetObjects %d"),
-			ChildObjects.Num(), ASetObjects.Num());
-	}*/
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::BeginPlay(), AllStats=%x"), AllStats);
 	SetupAbilities();
 	SetupStats();
 	AbilitySystem->AbilityCommittedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityCommitted);
@@ -182,10 +152,6 @@ void AAP_Hero::SetupStats()
 		{
 			FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystem->ApplyGameplayEffectSpecToTarget(*NewHandle.Data.Get(), AbilitySystem);
 			bStatsInitialized = true;
-			/*UE_LOG(LogTemp, Warning, TEXT("setup stats, done AttributeSet %x"), AttributeSet);
-			TArray< FGameplayAttribute> all;
-			AbilitySystem->GetAllAttributes(all);
-			UE_LOG(LogTemp, Warning, TEXT("setup stats, done AbilitySystem->GetAllAttributes() %d"), all.Num());*/
 		}
 	}
 	else
@@ -225,9 +191,6 @@ void AAP_Hero::SpellAttack(int SpellSlot)
 	UE_LOG(LogTemp, Warning, TEXT("about to activate ability %d, valid=%d"), SpellSlot, valid);
 	if (valid && AbilitySystem && bStatsInitialized && bAbilitiesInitialized)
 	{
-		/*float x = AbilitySystem->GetNumericAttribute(AttributeSet->GetManaAttribute());
-		float y = AttributeSet->GetManaAttribute().GetNumericValue(AttributeSet);
-		UE_LOG(LogTemp, Warning, TEXT("activate ability, x = %f, y = %f"), x, y);*/
 		// If bAllowRemoteActivation is true, it will remotely activate local / server abilities, if false it will only try to locally activate the ability
 		bool ret = AbilitySystem->TryActivateAbility(SpellAbilityHandles[SpellSlot], true);
 		if (ret)
@@ -526,17 +489,17 @@ void AAP_Hero::SelectHero(bool selected)
 
 float AAP_Hero::GetHealthPercent() const
 {
-	float v = AttributeSet->GetHealth();
-	float m = AttributeSet->GetMaxHealth();
-	m = FMath::Max(1.0f, m);
+	if (!AllStats) return 0.0f;
+	const float v = AllStats->GetHealth();
+	const float m = FMath::Max(1.0f, AllStats->GetMaxHealth());
 	return v / m;
 }
 
 float AAP_Hero::GetManaPercent() const
 {
-	float v = AttributeSet->GetMana();
-	float m = AttributeSet->GetMaxMana();
-	m = FMath::Max(1.0f, m);
+	if (!AllStats) return 0.0f;
+	const float v = AllStats->GetMana();
+	const float m = FMath::Max(1.0f, AllStats->GetMaxMana());
 	return v / m;
 }
 

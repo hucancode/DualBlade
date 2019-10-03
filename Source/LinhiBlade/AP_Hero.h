@@ -202,7 +202,7 @@ protected:
 		void OnAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplayEffectRemovalInfo);
 	
 
-	// Called from RPGAttributeSet, these call BP events above
+	// Called from RPGAllStats, these call BP events above
 	virtual void HandleHealthChanged(float NewValue);
 	virtual void HandleManaChanged(float NewValue);
 	virtual void HandleMoveSpeedChanged(float NewValue);
@@ -260,8 +260,8 @@ protected:
 		UAbilitySystemComponent* AbilitySystem;
 
 	/** List of attributes modified by the ability system */
-	UPROPERTY()
-		UAP_AttributeSet* AttributeSet;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities)
+		UAP_AttributeSet* AllStats;
 
 	/** The level of this character, should not be modified directly once it has already spawned */
 	UPROPERTY(EditAnywhere, Replicated, Category = Abilities)
