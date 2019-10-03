@@ -489,7 +489,10 @@ void AAP_Hero::SelectHero(bool selected)
 
 float AAP_Hero::GetHealthPercent() const
 {
-	if (!AllStats) return 0.0f;
+	if (!AllStats->IsValidLowLevel())
+	{
+		return 0.0f;
+	}
 	const float v = AllStats->GetHealth();
 	const float m = FMath::Max(1.0f, AllStats->GetMaxHealth());
 	return v / m;
@@ -497,7 +500,10 @@ float AAP_Hero::GetHealthPercent() const
 
 float AAP_Hero::GetManaPercent() const
 {
-	if (!AllStats) return 0.0f;
+	if (!AllStats->IsValidLowLevel())
+	{
+		return 0.0f;
+	}
 	const float v = AllStats->GetMana();
 	const float m = FMath::Max(1.0f, AllStats->GetMaxMana());
 	return v / m;
