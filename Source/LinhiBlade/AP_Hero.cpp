@@ -122,7 +122,7 @@ void AAP_Hero::SetupAbilities()
 			GiveAbility(Level, SpellAbilitySet->Abilities[slot]);
 		}
 		// we used to activate passive skill through this, but now we don't
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveEffect"), FGameplayEventData());
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
 		bAbilitiesInitialized = true;
 	}
 }
@@ -208,7 +208,9 @@ void AAP_Hero::SetSpellLevel(int SpellSlot, int Level)
 		auto Ability = AbilitySystem->FindAbilitySpecFromHandle(SpellAbilityHandles[SpellSlot]);
 		if (Ability)
 		{
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
 			Ability->Level = Level;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveDetach"), FGameplayEventData());
 		}
 	}
 }
