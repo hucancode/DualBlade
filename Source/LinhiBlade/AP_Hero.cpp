@@ -92,10 +92,10 @@ void AAP_Hero::SetupAbilities()
 		{
 			return;
 		}
-		GiveAbility(Level, SpellAbilitySet->Abilities[ESpellSlot::Ability1]);
-		GiveAbility(Level, SpellAbilitySet->Abilities[ESpellSlot::Ability2]);
-		GiveAbility(Level, SpellAbilitySet->Abilities[ESpellSlot::Ability3]);
-		GiveAbility(Level, SpellAbilitySet->Abilities[ESpellSlot::Ability4]);
+		GiveAbility(Level, SpellAbilitySet->Abilities.FindOrAdd(ESpellSlot::Ability1));
+		GiveAbility(Level, SpellAbilitySet->Abilities.FindOrAdd(ESpellSlot::Ability2));
+		GiveAbility(Level, SpellAbilitySet->Abilities.FindOrAdd(ESpellSlot::Ability3));
+		GiveAbility(Level, SpellAbilitySet->Abilities.FindOrAdd(ESpellSlot::Ability4));
 		{
 			// R Job
 			ESpellSlot slot = ESpellSlot::Ability5;
@@ -119,9 +119,8 @@ void AAP_Hero::SetupAbilities()
 			default:
 				break;
 			}
-			GiveAbility(Level, SpellAbilitySet->Abilities[slot]);
+			GiveAbility(Level, SpellAbilitySet->Abilities.FindOrAdd(slot));
 		}
-		// we used to activate passive skill through this, but now we don't
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
 		bAbilitiesInitialized = true;
 	}
@@ -162,6 +161,10 @@ void AAP_Hero::SetupStats()
 
 void AAP_Hero::GiveAbility(const int32& Level, TSubclassOf<UGameplayAbility> Ability)
 {
+	if (Ability->IsValidLowLevel())
+	{
+		return;
+	}
 	FGameplayAbilitySpecHandle handle = AbilitySystem->GiveAbility(
 		FGameplayAbilitySpec(Ability, Level, INDEX_NONE, this));
 	SpellAbilityHandles.Add(handle);
