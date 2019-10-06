@@ -81,6 +81,7 @@ void UAP_DamageCalculator_Physic::Execute_Implementation(const FGameplayEffectCu
 	DamageData.Instigator = SourceActor;
 	DamageData.Target = TargetActor;
 	DamageData.EventMagnitude = DamageDone;
+	Spec.GetAllGrantedTags(DamageData.InstigatorTags);
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(SourceActor,
 		FGameplayTag::RequestGameplayTag("Combat.DamageCaused"), DamageData);
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(TargetActor,
