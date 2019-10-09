@@ -32,3 +32,8 @@ ESpellSlot UAP_GameplayAbilitySet::Find(const UGameplayAbility* Ability)
 	}
 	return ESpellSlot::Ability_Invalid;
 }
+
+TSubclassOf<UGameplayAbility> UAP_GameplayAbilitySet::Find(ESpellSlot Slot)
+{
+	return Abilities.FindOrAdd(Slot);
+}

@@ -12,7 +12,6 @@
 #include <AP_GameplayAbilitySet.h>
 #include "AP_Hero.generated.h"
 
-
 UENUM(BlueprintType)
 enum class ESpellState : uint8
 {
@@ -33,7 +32,7 @@ enum class EJob : uint8
 };
 
 UCLASS()
-class LINHIBLADE_API AAP_Hero : public ACharacter, public IAbilitySystemInterface
+class LINHIBLADE_API AAP_Hero : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -77,6 +76,9 @@ public:
 	/** Returns the character level that is passed to the ability system */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		virtual int32 GetSpellCount() const;
+	/** Returns the character level that is passed to the ability system */
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		virtual UGameplayAbility* GetSpell(int SpellSlot) const;
 
 	/** Returns if the character is targeting */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
@@ -119,6 +121,9 @@ protected:
 		float GetSpellCooldownPercent(int SpellSlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		ESpellState GetSpellState(int SpellSlot);
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		bool GetSpellAutoCastEnabled(int SpellSlot);
+
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -290,6 +295,8 @@ protected:
 		int32 bAbilitiesInitialized;
 	UPROPERTY()
 		int32 bStatsInitialized;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay Tags")
+	FGameplayTagContainer GameplayTags;
 public:
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void EnterVanish();
@@ -308,4 +315,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void QuitInvi();
+
+	UFUNCTION(BlueprintCallable, Category = GameplayTags)
+		virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+	UFUNCTION(BlueprintCallable, Category = GameplayTags)
+		virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const;
+	UFUNCTION(BlueprintCallable, Category = GameplayTags)
+		virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const;
+	UFUNCTION(BlueprintCallable, Category = GameplayTags)
+		virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const;
 };

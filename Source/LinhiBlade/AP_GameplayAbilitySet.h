@@ -69,4 +69,5 @@ public:
 	UPROPERTY(EditAnywhere, Category = AbilitySet)
 	TMap< TEnumAsByte<ESpellSlot>, TSubclassOf<UGameplayAbility>>	Abilities;
 	ESpellSlot Find(const UGameplayAbility* Ability);
+	TSubclassOf<UGameplayAbility> Find(ESpellSlot Slot);
 };
