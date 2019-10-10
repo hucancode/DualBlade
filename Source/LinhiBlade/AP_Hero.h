@@ -123,7 +123,8 @@ protected:
 		ESpellState GetSpellState(int SpellSlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		bool GetSpellAutoCastEnabled(int SpellSlot);
-
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		bool GetSpellActive(int SpellSlot);
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

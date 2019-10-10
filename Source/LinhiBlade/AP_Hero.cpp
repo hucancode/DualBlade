@@ -312,6 +312,19 @@ bool AAP_Hero::GetSpellAutoCastEnabled(int SpellSlot)
 	return implemented && enabled;
 }
 
+bool AAP_Hero::GetSpellActive(int SpellSlot)
+{
+	bool valid = AbilitySystem
+		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(SpellSlot)
+		&& AbilitySystem->GetActivatableAbilities()[SpellSlot].GetAbilityInstances().Num();
+	if (!valid)
+	{
+		return false;
+	}
+	UGameplayAbility* Ability = AbilitySystem->GetActivatableAbilities()[SpellSlot].GetAbilityInstances().Last();
+	return Ability->IsActive();
+}
+
 // Called every frame
 void AAP_Hero::Tick(float DeltaTime)
 {
