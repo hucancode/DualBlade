@@ -315,13 +315,12 @@ bool AAP_Hero::GetSpellAutoCastEnabled(int SpellSlot)
 bool AAP_Hero::GetSpellActive(int SpellSlot)
 {
 	bool valid = AbilitySystem
-		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(SpellSlot)
-		&& AbilitySystem->GetActivatableAbilities()[SpellSlot].GetAbilityInstances().Num();
+		&& SpellAbilityHandles.IsValidIndex(SpellSlot);
 	if (!valid)
 	{
 		return false;
 	}
-	UGameplayAbility* Ability = AbilitySystem->GetActivatableAbilities()[SpellSlot].GetAbilityInstances().Last();
+	auto Ability = AbilitySystem->FindAbilitySpecFromHandle(SpellAbilityHandles[SpellSlot]);
 	return Ability->IsActive();
 }
 
