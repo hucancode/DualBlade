@@ -103,6 +103,8 @@ void AAP_Hero::SetupAbilities()
 			Job == EJob::Job4 ? ESpellSlot::Ability8 :
 			Job == EJob::Job5 ? ESpellSlot::Ability9 : 
 			ESpellSlot::Ability5));
+		GiveAbility(Level, SpellAbilitySet->Find(ESpellSlot::Ability10));
+		GiveAbility(Level, SpellAbilitySet->Find(ESpellSlot::Ability11));
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
 		bAbilitiesInitialized = true;
 	}
