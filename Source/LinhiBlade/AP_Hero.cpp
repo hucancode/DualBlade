@@ -60,7 +60,7 @@ AAP_Hero::AAP_Hero()
 	AllStats = CreateDefaultSubobject<UAP_AttributeSet>(TEXT("AllStats"));;
 	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::AAP_Hero(), AllStats=%x"), AllStats);
 
-	SpellAbilitySet = 0;
+	AbilitySet = 0;
 	bStatsInitialized = false;
 	bAbilitiesInitialized = false;
 	ChannelEffectCount = 0;
@@ -88,23 +88,23 @@ void AAP_Hero::SetupAbilities()
 	if (Role == ROLE_Authority && !bAbilitiesInitialized)
 	{
 		int32 Level = 1;
-		if (!SpellAbilitySet)
+		if (!AbilitySet)
 		{
 			return;
 		}
-		GiveAbility(Level, SpellAbilitySet->Find(ESpellSlot::Ability1));
-		GiveAbility(Level, SpellAbilitySet->Find(ESpellSlot::Ability2));
-		GiveAbility(Level, SpellAbilitySet->Find(ESpellSlot::Ability3));
-		GiveAbility(Level, SpellAbilitySet->Find(ESpellSlot::Ability4));
-		GiveAbility(Level, SpellAbilitySet->Find(
-			Job == EJob::Job1 ? ESpellSlot::Ability5 :
-			Job == EJob::Job2 ? ESpellSlot::Ability6 :
-			Job == EJob::Job3 ? ESpellSlot::Ability7 :
-			Job == EJob::Job4 ? ESpellSlot::Ability8 :
-			Job == EJob::Job5 ? ESpellSlot::Ability9 : 
-			ESpellSlot::Ability5));
-		GiveAbility(Level, SpellAbilitySet->Find(ESpellSlot::Ability10));
-		GiveAbility(Level, SpellAbilitySet->Find(ESpellSlot::Ability11));
+		GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability1));
+		GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability2));
+		GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability3));
+		GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability4));
+		GiveAbility(Level, AbilitySet->Find(
+			Job == EJob::Job1 ? EAbilitySlot::Ability5 :
+			Job == EJob::Job2 ? EAbilitySlot::Ability6 :
+			Job == EJob::Job3 ? EAbilitySlot::Ability7 :
+			Job == EJob::Job4 ? EAbilitySlot::Ability8 :
+			Job == EJob::Job5 ? EAbilitySlot::Ability9 : 
+			EAbilitySlot::Ability5));
+		GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability10));
+		GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability11));
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
 		bAbilitiesInitialized = true;
 	}
@@ -152,16 +152,16 @@ void AAP_Hero::GiveAbility(const int32& Level, TSubclassOf<UGameplayAbility> Abi
 	}
 	FGameplayAbilitySpecHandle handle = AbilitySystem->GiveAbility(
 		FGameplayAbilitySpec(Ability, Level, INDEX_NONE, this));
-	SpellAbilityHandles.Add(handle);
-	SpellStates.AddDefaulted();
+	AbilityHandles.Add(handle);
+	AbilityStates.AddDefaulted();
 }
 
 void AAP_Hero::RemoveAllAbilities()
 {
 	if (Role == ROLE_Authority)
 	{
-		SpellAbilityHandles.Empty();
-		SpellStates.Empty();
+		AbilityHandles.Empty();
+		AbilityStates.Empty();
 		AbilitySystem->CancelAllAbilities();
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, 
 			FGameplayTag::RequestGameplayTag("Event.TriggerPassiveDetach"), FGameplayEventData());
@@ -173,12 +173,12 @@ void AAP_Hero::RemoveAllAbilities()
 	}
 }
 
-int AAP_Hero::GetSpellLevel(int SpellSlot)
+int AAP_Hero::GetAbilityLevel(int AbilitySlot)
 {
-	bool valid = SpellAbilityHandles.IsValidIndex(SpellSlot);
+	bool valid = AbilityHandles.IsValidIndex(AbilitySlot);
 	if (valid && AbilitySystem && bAbilitiesInitialized)
 	{
-		auto Ability = AbilitySystem->FindAbilitySpecFromHandle(SpellAbilityHandles[SpellSlot]);
+		auto Ability = AbilitySystem->FindAbilitySpecFromHandle(AbilityHandles[AbilitySlot]);
 		if (Ability)
 		{
 			return Ability->Level;
@@ -187,13 +187,13 @@ int AAP_Hero::GetSpellLevel(int SpellSlot)
 	return 0;
 }
 
-void AAP_Hero::SetSpellLevel(int SpellSlot, int Level)
+void AAP_Hero::SetAbilityLevel(int AbilitySlot, int Level)
 {
-	bool valid = SpellAbilityHandles.IsValidIndex(SpellSlot);
-	UE_LOG(LogTemp, Warning, TEXT("about to set ability level %d, valid=%d"), SpellSlot, valid);
+	bool valid = AbilityHandles.IsValidIndex(AbilitySlot);
+	UE_LOG(LogTemp, Warning, TEXT("about to set ability level %d, valid=%d"), AbilitySlot, valid);
 	if (valid && AbilitySystem && bAbilitiesInitialized)
 	{
-		auto Ability = AbilitySystem->FindAbilitySpecFromHandle(SpellAbilityHandles[SpellSlot]);
+		auto Ability = AbilitySystem->FindAbilitySpecFromHandle(AbilityHandles[AbilitySlot]);
 		if (Ability)
 		{
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
@@ -202,18 +202,18 @@ void AAP_Hero::SetSpellLevel(int SpellSlot, int Level)
 		}
 	}
 }
-void AAP_Hero::SpellAttack(int SpellSlot)
+void AAP_Hero::ActivateAbility(int AbilitySlot)
 {
-	bool valid = SpellAbilityHandles.IsValidIndex(SpellSlot);
-	UE_LOG(LogTemp, Warning, TEXT("about to activate ability %d, valid=%d"), SpellSlot, valid);
+	bool valid = AbilityHandles.IsValidIndex(AbilitySlot);
+	UE_LOG(LogTemp, Warning, TEXT("about to activate ability %d, valid=%d"), AbilitySlot, valid);
 	if (valid && AbilitySystem && bStatsInitialized && bAbilitiesInitialized)
 	{
 		// If bAllowRemoteActivation is true, it will remotely activate local / server abilities, if false it will only try to locally activate the ability
-		bool ret = AbilitySystem->TryActivateAbility(SpellAbilityHandles[SpellSlot], true);
+		bool ret = AbilitySystem->TryActivateAbility(AbilityHandles[AbilitySlot], true);
 		if (ret)
 		{
-			SpellStates[SpellSlot] = ESpellState::Casting;
-			SpellCastDelegate.Broadcast(SpellSlot);
+			AbilityStates[AbilitySlot] = EAbilityState::Casting;
+			AbilityCastDelegate.Broadcast(AbilitySlot);
 		}
 		UE_LOG(LogTemp, Warning, TEXT("activate ability, ret = %d"), ret);
 	}
@@ -243,40 +243,40 @@ void AAP_Hero::RemoveAllChannelingEffect()
 	}
 }
 
-float AAP_Hero::GetSpellCooldown(int SpellSlot)
+float AAP_Hero::GetAbilityCooldown(int AbilitySlot)
 {
 	bool valid = AbilitySystem
-		&& SpellAbilityHandles.IsValidIndex(SpellSlot)
-		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(SpellSlot)
-		&& AbilitySystem->GetActivatableAbilities()[SpellSlot].GetAbilityInstances().Num();
-	UE_LOG(LogTemp, Warning, TEXT("about to check ability cooldown %d, valid=%d"), SpellSlot, valid);
+		&& AbilityHandles.IsValidIndex(AbilitySlot)
+		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(AbilitySlot)
+		&& AbilitySystem->GetActivatableAbilities()[AbilitySlot].GetAbilityInstances().Num();
+	UE_LOG(LogTemp, Warning, TEXT("about to check ability cooldown %d, valid=%d"), AbilitySlot, valid);
 	float ret = 0.0f;
 	if (!valid)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("valid false return %f"), ret);
 		return ret;
 	}
-	UGameplayAbility* ability = AbilitySystem->GetActivatableAbilities()[SpellSlot].GetAbilityInstances().Last();
+	UGameplayAbility* ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot].GetAbilityInstances().Last();
 	ret = ability->GetCooldownTimeRemaining();
 	UE_LOG(LogTemp, Warning, TEXT("return %f"), ret);
 	return ret;
 }
 
-float AAP_Hero::GetSpellCooldownPercent(int SpellSlot)
+float AAP_Hero::GetAbilityCooldownPercent(int AbilitySlot)
 {
 	bool valid = AbilitySystem 
-		&& SpellAbilityHandles.IsValidIndex(SpellSlot)
-		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(SpellSlot)
-		&& AbilitySystem->GetActivatableAbilities()[SpellSlot].GetAbilityInstances().Num();
-	UE_LOG(LogTemp, Warning, TEXT("about to check ability cooldown percent %d, valid=%d"), SpellSlot, valid);
+		&& AbilityHandles.IsValidIndex(AbilitySlot)
+		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(AbilitySlot)
+		&& AbilitySystem->GetActivatableAbilities()[AbilitySlot].GetAbilityInstances().Num();
+	UE_LOG(LogTemp, Warning, TEXT("about to check ability cooldown percent %d, valid=%d"), AbilitySlot, valid);
 	float ret = 0.0f;
 	if (!valid)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("valid false return %f"), ret);
 		return ret;
 	}
-	UGameplayAbility* ability = AbilitySystem->GetActivatableAbilities()[SpellSlot].GetAbilityInstances().Last();
-	FGameplayAbilitySpecHandle handle = SpellAbilityHandles[SpellSlot];
+	UGameplayAbility* ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot].GetAbilityInstances().Last();
+	FGameplayAbilitySpecHandle handle = AbilityHandles[AbilitySlot];
 	float remaining;
 	float duration;
 	ability->GetCooldownTimeRemainingAndDuration(handle, ability->GetCurrentActorInfo(), remaining, duration);
@@ -290,39 +290,39 @@ float AAP_Hero::GetSpellCooldownPercent(int SpellSlot)
 	return ret;
 }
 
-ESpellState AAP_Hero::GetSpellState(int SpellSlot)
+EAbilityState AAP_Hero::GetAbilityState(int AbilitySlot)
 {
-	if (!SpellStates.IsValidIndex(SpellSlot))
+	if (!AbilityStates.IsValidIndex(AbilitySlot))
 	{
-		return ESpellState::Disabled;
+		return EAbilityState::Disabled;
 	}
-	return SpellStates[SpellSlot];
+	return AbilityStates[AbilitySlot];
 }
 
-bool AAP_Hero::GetSpellAutoCastEnabled(int SpellSlot)
+bool AAP_Hero::GetAbilityAutoCastEnabled(int AbilitySlot)
 {
 	bool valid = AbilitySystem
-		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(SpellSlot);
+		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(AbilitySlot);
 	if (!valid)
 	{
 		return false;
 	}
-	UGameplayAbility* Ability = AbilitySystem->GetActivatableAbilities()[SpellSlot].Ability;
+	UGameplayAbility* Ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot].Ability;
 	bool implemented = Ability->AbilityTags.HasAny(
 		FGameplayTag::RequestGameplayTag("Combat.Autocast").GetSingleTagContainer());
 	bool enabled = true;
 	return implemented && enabled;
 }
 
-bool AAP_Hero::GetSpellActive(int SpellSlot)
+bool AAP_Hero::IsAbilityBusy(int AbilitySlot)
 {
 	bool valid = AbilitySystem
-		&& SpellAbilityHandles.IsValidIndex(SpellSlot);
+		&& AbilityHandles.IsValidIndex(AbilitySlot);
 	if (!valid)
 	{
 		return false;
 	}
-	auto Ability = AbilitySystem->FindAbilitySpecFromHandle(SpellAbilityHandles[SpellSlot]);
+	auto Ability = AbilitySystem->FindAbilitySpecFromHandle(AbilityHandles[AbilitySlot]);
 	return Ability->IsActive();
 }
 
@@ -406,28 +406,28 @@ void AAP_Hero::OnAbilityActivated(UGameplayAbility * Ability)
 {
 	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::OnAbilityActivated %s"), *Ability->GetFName().ToString());
 	FGameplayAbilitySpecHandle Handle = Ability->GetCurrentAbilitySpecHandle();
-	int Index = SpellAbilityHandles.Find(Handle);
+	int Index = AbilityHandles.Find(Handle);
 	if (Index == INDEX_NONE)
 	{
 		return;
 	}
-	SpellStates[Index] = ESpellState::Casting;
-	SpellCastDelegate.Broadcast(Index);
+	AbilityStates[Index] = EAbilityState::Casting;
+	AbilityCastDelegate.Broadcast(Index);
 }
 
 void AAP_Hero::OnAbilityCommitted(UGameplayAbility* Ability)
 {
 	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::OnAbilityCommitted %s"), *Ability->GetFName().ToString());
 	FGameplayAbilitySpecHandle Handle = Ability->GetCurrentAbilitySpecHandle();
-	int Index = SpellAbilityHandles.Find(Handle);
+	int Index = AbilityHandles.Find(Handle);
 	if (Index == INDEX_NONE)
 	{
 		return;
 	}
 	if (!Ability->CheckCooldown(Handle, Ability->GetCurrentActorInfo()))
 	{
-		SpellStates[Index] = ESpellState::OnCooldown;
-		SpellGoneCooldown.Broadcast(Index);
+		AbilityStates[Index] = EAbilityState::OnCooldown;
+		AbilityGoneCooldown.Broadcast(Index);
 		FGameplayEffectQuery query;
 		query.EffectDefinition = Ability->GetCooldownGameplayEffect()->GetClass();
 		TArray<FActiveGameplayEffectHandle> Handles = AbilitySystem->GetActiveEffects(query);
@@ -457,20 +457,20 @@ void AAP_Hero::OnAbilityEnded(UGameplayAbility* Ability)
 {
 	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::OnAbilityEnded %s"), *Ability->GetFName().ToString());
 	FGameplayAbilitySpecHandle Handle = Ability->GetCurrentAbilitySpecHandle();
-	int Index = SpellAbilityHandles.Find(Handle);
+	int Index = AbilityHandles.Find(Handle);
 	if (Index == INDEX_NONE)
 	{
 		return;
 	}
 	if (!Ability->CheckCooldown(Handle, Ability->GetCurrentActorInfo()))
 	{
-		SpellStates[Index] = ESpellState::OnCooldown;
-		SpellGoneCooldown.Broadcast(Index);
+		AbilityStates[Index] = EAbilityState::OnCooldown;
+		AbilityGoneCooldown.Broadcast(Index);
 	}
 	else
 	{
-		SpellStates[Index] = ESpellState::Ready;
-		SpellOffCooldown.Broadcast(Index);
+		AbilityStates[Index] = EAbilityState::Ready;
+		AbilityOffCooldown.Broadcast(Index);
 	}
 }
 
@@ -480,14 +480,14 @@ void AAP_Hero::OnAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplay
 	// this is not the actual ability we are concerning, just a default ability instance
 	// weird but i don't know why
 	const UGameplayAbility* AbilityInfo = InGameplayEffectRemovalInfo.EffectContext.GetAbility();
-	ESpellSlot Slot = SpellAbilitySet->Find(AbilityInfo);
-	if (Slot == ESpellSlot::Ability_Invalid)
+	EAbilitySlot Slot = AbilitySet->Find(AbilityInfo);
+	if (Slot == EAbilitySlot::Ability_Invalid)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("an ability just gone off cooldown, but it seems doesn't belong to this actor %s/%s"), *GetFName().ToString(), *AbilityInfo->GetFName().ToString());
 		return;
 	}
-	SpellStates[(int)Slot] = ESpellState::Ready;
-	SpellOffCooldown.Broadcast((int)Slot);
+	AbilityStates[(int)Slot] = EAbilityState::Ready;
+	AbilityOffCooldown.Broadcast((int)Slot);
 }
 
 void AAP_Hero::HandleHealthChanged(float NewValue)
@@ -557,22 +557,37 @@ int32 AAP_Hero::GetCharacterLevel() const
 	return CharacterLevel;
 }
 
-int32 AAP_Hero::GetSpellCount() const
+int32 AAP_Hero::GetAbilityCount() const
 {
-	return SpellAbilityHandles.Num();
+	return AbilityHandles.Num();
 }
 
-UGameplayAbility* AAP_Hero::GetSpell(int SpellSlot) const
+UGameplayAbility* AAP_Hero::GetAbility(int AbilitySlot) const
 {
 	bool valid = AbilitySystem
-		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(SpellSlot);
+		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(AbilitySlot);
 	if (!valid)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetSpell, return null"));
 		return nullptr;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetSpell, return a spell"));
-	return AbilitySystem->GetActivatableAbilities()[SpellSlot].Ability;
+	return AbilitySystem->GetActivatableAbilities()[AbilitySlot].Ability;
+}
+
+bool AAP_Hero::CanActivateAbility(int AbilitySlot) const
+{
+	bool valid = AbilitySystem
+		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(AbilitySlot)
+		&& AbilityHandles.IsValidIndex(AbilitySlot);
+	if (!valid)
+	{
+		return false;
+	}
+	auto Ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot].Ability;
+	auto Handle = AbilityHandles[AbilitySlot];
+	auto ActorInfo = AbilitySystem->AbilityActorInfo.Get();
+	FGameplayTagContainer Tags;
+	AbilitySystem->GetOwnedGameplayTags(Tags);
+	return Ability->CanActivateAbility(Handle, ActorInfo, &Tags);
 }
 
 bool AAP_Hero::IsTargeting() const

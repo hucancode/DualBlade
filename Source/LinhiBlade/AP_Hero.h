@@ -13,7 +13,7 @@
 #include "AP_Hero.generated.h"
 
 UENUM(BlueprintType)
-enum class ESpellState : uint8
+enum class EAbilityState : uint8
 {
 	Ready 		UMETA(DisplayName = "Ready"),
 	Casting 	UMETA(DisplayName = "Casting"),
@@ -36,7 +36,7 @@ class LINHIBLADE_API AAP_Hero : public ACharacter, public IAbilitySystemInterfac
 {
 	GENERATED_BODY()
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSpellEventDelegate, int, SpellSlot);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityEventDelegate, int, AbilitySlot);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnGameplayEffectAppliedDelegate, UAbilitySystemComponent*, Source, const FGameplayEffectSpec&, Spec, FActiveGameplayEffectHandle, Handle);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGameplayEffectRemovedDelegate, const FGameplayEffectRemovalInfo&, Info);
 
@@ -75,10 +75,13 @@ public:
 
 	/** Returns the character level that is passed to the ability system */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual int32 GetSpellCount() const;
+		virtual int32 GetAbilityCount() const;
 	/** Returns the character level that is passed to the ability system */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual UGameplayAbility* GetSpell(int SpellSlot) const;
+		virtual UGameplayAbility* GetAbility(int AbilitySlot) const;
+	/** Returns the character level that is passed to the ability system */
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		virtual bool CanActivateAbility(int AbilitySlot) const;
 
 	/** Returns if the character is targeting */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
@@ -102,13 +105,13 @@ protected:
 		void RemoveAllAbilities();
 	/** Apply the startup gameplay abilities and effects */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		int GetSpellLevel(int SpellSlot);
+		int GetAbilityLevel(int AbilitySlot);
 	/** Apply the startup gameplay abilities and effects */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		void SetSpellLevel(int SpellSlot, int Level);
+		void SetAbilityLevel(int AbilitySlot, int Level);
 	/** Apply the startup gameplay abilities and effects */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		void SpellAttack(int SpellSlot);
+		void ActivateAbility(int AbilitySlot);
 	/** Apply the startup gameplay abilities and effects */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void CancelAllAttack();
@@ -116,15 +119,15 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void RemoveAllChannelingEffect();
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		float GetSpellCooldown(int SpellSlot);
+		float GetAbilityCooldown(int AbilitySlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		float GetSpellCooldownPercent(int SpellSlot);
+		float GetAbilityCooldownPercent(int AbilitySlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		ESpellState GetSpellState(int SpellSlot);
+		EAbilityState GetAbilityState(int AbilitySlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		bool GetSpellAutoCastEnabled(int SpellSlot);
+		bool GetAbilityAutoCastEnabled(int AbilitySlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		bool GetSpellActive(int SpellSlot);
+		bool IsAbilityBusy(int AbilitySlot);
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -226,24 +229,24 @@ protected:
 	/**
 	 * Called when character cast a skill
 	 *
-	 * @param SpellSlot Which skill are being cast
+	 * @param AbilitySlot Which skill are being cast
 	 */
 	UPROPERTY(BlueprintAssignable)
-		FSpellEventDelegate SpellCastDelegate;
+		FAbilityEventDelegate AbilityCastDelegate;
 	/**
 	 * Called when a spell gone cooldown
 	 *
-	 * @param SpellSlot Which skill are being cast
+	 * @param AbilitySlot Which skill are being cast
 	 */
 	UPROPERTY(BlueprintAssignable)
-		FSpellEventDelegate SpellGoneCooldown;
+		FAbilityEventDelegate AbilityGoneCooldown;
 	/**
 	 * Called when a spell off cooldown
 	 *
-	 * @param SpellSlot Which skill is just off cooldown
+	 * @param AbilitySlot Which skill is just off cooldown
 	 */
 	UPROPERTY(BlueprintAssignable)
-		FSpellEventDelegate SpellOffCooldown;
+		FAbilityEventDelegate AbilityOffCooldown;
 
 	/**
 	 * Called when a gamplay effect applied to self
@@ -265,7 +268,7 @@ protected:
 		bool IsSelected;
 
 	UPROPERTY()
-		TArray <ESpellState> SpellStates;
+		TArray <EAbilityState> AbilityStates;
 
 	/** Our ability system */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities, meta = (AllowPrivateAccess = "true"))
@@ -281,14 +284,14 @@ protected:
 
 	/** Abilities to grant to this character on creation. These will be activated by tag or event and are not bound to specific inputs */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Abilities)
-		UAP_GameplayAbilitySet* SpellAbilitySet;
+		UAP_GameplayAbilitySet* AbilitySet;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Abilities)
 		EJob Job;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Abilities)
 		TSubclassOf<UGameplayEffect> BaseStats;
 
 	UPROPERTY()
-		TArray<FGameplayAbilitySpecHandle> SpellAbilityHandles;
+		TArray<FGameplayAbilitySpecHandle> AbilityHandles;
 	UPROPERTY()
 		int ChannelEffectCount;
 	/** If true we have initialized our abilities */

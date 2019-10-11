@@ -20,7 +20,7 @@ class UAbilitySystemComponent;
  *	that you are binding "Ability1" to LMB by default in your projects DefaultInput.ini.
  */
 UENUM(BlueprintType)
-enum ESpellSlot
+enum EAbilitySlot
 {
 	Ability1 = 0			UMETA(DisplayName = "Ability1 (A)"),
 	Ability2				UMETA(DisplayName = "Ability2 (Q)"),
@@ -45,7 +45,7 @@ struct FGameplayAbilitySlotInfo
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(EditAnywhere, Category = BindInfo)
-	TEnumAsByte<ESpellSlot>	Slot;
+	TEnumAsByte<EAbilitySlot>	Slot;
 
 	UPROPERTY(EditAnywhere, Category = BindInfo)
 	TSubclassOf<UGameplayAbility>	GameplayAbilityClass;
@@ -67,7 +67,7 @@ public:
 	UAP_GameplayAbilitySet();
 public:
 	UPROPERTY(EditAnywhere, Category = AbilitySet)
-	TMap< TEnumAsByte<ESpellSlot>, TSubclassOf<UGameplayAbility>>	Abilities;
-	ESpellSlot Find(const UGameplayAbility* Ability);
-	TSubclassOf<UGameplayAbility> Find(ESpellSlot Slot);
+	TMap< TEnumAsByte<EAbilitySlot>, TSubclassOf<UGameplayAbility>>	Abilities;
+	EAbilitySlot Find(const UGameplayAbility* Ability);
+	TSubclassOf<UGameplayAbility> Find(EAbilitySlot Slot);
 };

@@ -5,18 +5,18 @@
 
 UAP_GameplayAbilitySet::UAP_GameplayAbilitySet()
 {
-	Abilities.Add(ESpellSlot::Ability1, nullptr);
-	Abilities.Add(ESpellSlot::Ability2, nullptr);
-	Abilities.Add(ESpellSlot::Ability3, nullptr);
-	Abilities.Add(ESpellSlot::Ability4, nullptr);
-	Abilities.Add(ESpellSlot::Ability5, nullptr);
-	Abilities.Add(ESpellSlot::Ability6, nullptr);
-	Abilities.Add(ESpellSlot::Ability7, nullptr);
-	Abilities.Add(ESpellSlot::Ability8, nullptr);
-	Abilities.Add(ESpellSlot::Ability9, nullptr);
+	Abilities.Add(EAbilitySlot::Ability1, nullptr);
+	Abilities.Add(EAbilitySlot::Ability2, nullptr);
+	Abilities.Add(EAbilitySlot::Ability3, nullptr);
+	Abilities.Add(EAbilitySlot::Ability4, nullptr);
+	Abilities.Add(EAbilitySlot::Ability5, nullptr);
+	Abilities.Add(EAbilitySlot::Ability6, nullptr);
+	Abilities.Add(EAbilitySlot::Ability7, nullptr);
+	Abilities.Add(EAbilitySlot::Ability8, nullptr);
+	Abilities.Add(EAbilitySlot::Ability9, nullptr);
 }
 
-ESpellSlot UAP_GameplayAbilitySet::Find(const UGameplayAbility* Ability)
+EAbilitySlot UAP_GameplayAbilitySet::Find(const UGameplayAbility* Ability)
 {
 	for(auto item : Abilities)
 	{
@@ -30,10 +30,10 @@ ESpellSlot UAP_GameplayAbilitySet::Find(const UGameplayAbility* Ability)
 		}
 
 	}
-	return ESpellSlot::Ability_Invalid;
+	return EAbilitySlot::Ability_Invalid;
 }
 
-TSubclassOf<UGameplayAbility> UAP_GameplayAbilitySet::Find(ESpellSlot Slot)
+TSubclassOf<UGameplayAbility> UAP_GameplayAbilitySet::Find(EAbilitySlot Slot)
 {
 	return Abilities.FindOrAdd(Slot);
 }
