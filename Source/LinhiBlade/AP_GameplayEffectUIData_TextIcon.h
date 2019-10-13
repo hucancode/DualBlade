@@ -16,5 +16,6 @@ class LINHIBLADE_API UAP_GameplayEffectUIData_TextIcon : public UGameplayEffectU
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Data, meta = (MultiLine = "true"))
 	FText Description;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Data)
 	UTexture2D* Icon;
 };
