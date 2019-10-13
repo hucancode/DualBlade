@@ -228,5 +228,8 @@
 			"Name": "BackChannel",
 			"Enabled": false
 		}
+	],
+	"TargetPlatforms": [
+		"AllDesktop"
 	]
 }
