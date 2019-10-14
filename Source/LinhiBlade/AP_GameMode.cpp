@@ -13,14 +13,21 @@ void AAP_GameMode::StartPlay()
 
 ETeamAttitude::Type AAP_GameMode::GetAttitude(FGenericTeamId From, FGenericTeamId Toward)
 {
+	
+	ETeamAttitude::Type ret;
 	if (From == Toward)
 	{
-		return ETeamAttitude::Friendly;
+		ret = ETeamAttitude::Friendly;
 	}
-	if (From.GetId() == (uint8)EGameTeam::Neutral || 
+	else if (From.GetId() == (uint8)EGameTeam::Neutral || 
 		Toward.GetId() == (uint8)EGameTeam::Neutral)
 	{
-		return ETeamAttitude::Neutral;
+		ret = ETeamAttitude::Neutral;
 	}
-	return ETeamAttitude::Hostile;
+	else
+	{
+		ret = ETeamAttitude::Hostile;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("AAP_GameMode::GetAttitude %d %d %d"), (uint8)From, (uint8)Toward, (uint8)ret);
+	return ret;
 }

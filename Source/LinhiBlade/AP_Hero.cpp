@@ -13,6 +13,7 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/GameplayAbilityTargetActor.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include <LinhiBlade\AP_GameMode.h>
 
 // Sets default values
 AAP_Hero::AAP_Hero()
@@ -70,17 +71,31 @@ AAP_Hero::AAP_Hero()
 void AAP_Hero::BeginPlay()
 {
 	Super::BeginPlay();
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::BeginPlay(), AllStats=%x"), AllStats);
+	//UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::BeginPlay(), AllStats=%x"), AllStats);
 	SetupAbilities();
 	SetupStats();
 	AbilitySystem->AbilityCommittedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityCommitted);
 	AbilitySystem->AbilityEndedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityEnded);
 	AbilitySystem->AbilityActivatedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityActivated);
-	
 	if (!GetController()->IsValidLowLevel())
 	{
 		SpawnDefaultController();
 	}
+	if (HasMatchingGameplayTag(
+		FGameplayTag::RequestGameplayTag("Combat.Team_1")))
+	{
+		SetGenericTeamId((uint8)EGameTeam::Team1);
+	}
+	else if (HasMatchingGameplayTag(
+		FGameplayTag::RequestGameplayTag("Combat.Team_2")))
+	{
+		SetGenericTeamId((uint8)EGameTeam::Team2);
+	}
+	else
+	{
+		SetGenericTeamId((uint8)EGameTeam::Neutral);
+	}
+
 }
 
 void AAP_Hero::SetupAbilities()
@@ -371,6 +386,17 @@ void AAP_Hero::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 UAbilitySystemComponent * AAP_Hero::GetAbilitySystemComponent() const
 {
 	return AbilitySystem;
+}
+
+void AAP_Hero::SetGenericTeamId(const FGenericTeamId& Id)
+{
+	TeamId = Id;
+}
+
+FGenericTeamId AAP_Hero::GetGenericTeamId() const
+{
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetGenericTeamId"));
+	return TeamId;
 }
 
 void AAP_Hero::OnGameplayEffectAppliedToSelf(UAbilitySystemComponent * Source, const FGameplayEffectSpec & Spec, FActiveGameplayEffectHandle Handle)

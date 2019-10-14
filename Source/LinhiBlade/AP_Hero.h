@@ -9,8 +9,10 @@
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayAbility.h"
+#include <Runtime\AIModule\Classes\GenericTeamAgentInterface.h>
 #include <AP_GameplayAbilitySet.h>
 #include "AP_Hero.generated.h"
+
 
 UENUM(BlueprintType)
 enum class EAbilityState : uint8
@@ -32,7 +34,7 @@ enum class EJob : uint8
 };
 
 UCLASS()
-class LINHIBLADE_API AAP_Hero : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface
+class LINHIBLADE_API AAP_Hero : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -51,7 +53,8 @@ public:
 	virtual void OnRep_Controller() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-
+	virtual void SetGenericTeamId(const FGenericTeamId& Id) override;
+	virtual FGenericTeamId GetGenericTeamId() const override;
 	
 	/** select hero, activate selection effect */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
@@ -301,6 +304,7 @@ protected:
 		int32 bStatsInitialized;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay Tags")
 	FGameplayTagContainer GameplayTags;
+	FGenericTeamId TeamId;
 public:
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void EnterVanish();
