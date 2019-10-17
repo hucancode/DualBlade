@@ -491,7 +491,7 @@ void AAP_Hero::OnAbilityEnded(UGameplayAbility* Ability)
 	if (!Ability->CheckCooldown(Handle, Ability->GetCurrentActorInfo()))
 	{
 		AbilityStates[Index] = EAbilityState::OnCooldown;
-		AbilityGoneCooldown.Broadcast(Index);
+		//AbilityGoneCooldown.Broadcast(Index);
 	}
 	else
 	{
