@@ -102,7 +102,7 @@ void AAP_Hero::SetupAbilities()
 {
 	if (Role == ROLE_Authority && !bAbilitiesInitialized)
 	{
-		int32 Level = 1;
+		int32 Level = 0;
 		if (!AbilitySet)
 		{
 			return;
@@ -180,11 +180,18 @@ void AAP_Hero::RemoveAllAbilities()
 		AbilitySystem->CancelAllAbilities();
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, 
 			FGameplayTag::RequestGameplayTag("Event.TriggerPassiveDetach"), FGameplayEventData());
+		const auto AllAbility = AbilitySystem->GetActivatableAbilities();
+		for (auto Ability : AllAbility)
+		{
+			AllStats->AbilityPoint.SetBaseValue(
+				AllStats->AbilityPoint.GetBaseValue()
+				+ Ability.Level);
+		}
+		AbilityPointChange.Broadcast();
 		// potential crash here (known bug, but still have't found any effective fix)
 		// basically you need to make sure no skill are in the middle of activation before remove them
 		AbilitySystem->ClearAllAbilities();
 		bAbilitiesInitialized = false;
-		
 	}
 }
 
@@ -614,6 +621,28 @@ bool AAP_Hero::CanActivateAbility(int AbilitySlot) const
 	FGameplayTagContainer Tags;
 	AbilitySystem->GetOwnedGameplayTags(Tags);
 	return Ability->CanActivateAbility(Handle, ActorInfo, &Tags);
+}
+
+bool AAP_Hero::LevelUpAbility(int AbilitySlot) const
+{
+	bool valid = AbilitySystem
+		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(AbilitySlot)
+		&& AbilityHandles.IsValidIndex(AbilitySlot);
+	if (!valid)
+	{
+		return false;
+	}
+	FGameplayAbilitySpec& Ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot];
+	float Potential = AllStats->AbilityPoint.GetBaseValue();
+	if (Potential < 1.0f)
+	{
+		return false;
+	}
+	AllStats->AbilityPoint.SetBaseValue(Potential - 1.0f);
+	Ability.Level += 1;
+	AbilityPointChange.Broadcast();
+	AbilityLevelUp.Broadcast(AbilitySlot);
+	return true;
 }
 
 bool AAP_Hero::SetCharacterLevel(int32 NewLevel)

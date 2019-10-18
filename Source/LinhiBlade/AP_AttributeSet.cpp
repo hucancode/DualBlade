@@ -18,6 +18,8 @@ UAP_AttributeSet::UAP_AttributeSet()
 	, Agility(1.0f)
 	, Vitality(1.0f)
 	, Energy(1.0f)
+	, AbilityPoint(1.0f)
+	, StatPoint(1.0f)
 	, PhysicalPowerGrowRate(1.0f)
 	, PhysicalPower(1.0f)
 	, AttackSpeedGrowRate(1.0f)
@@ -144,6 +146,21 @@ void UAP_AttributeSet::OnRep_Vitality()
 void UAP_AttributeSet::OnRep_Energy()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Energy);
+}
+
+void UAP_AttributeSet::OnRep_Experience()
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Experience);
+}
+
+void UAP_AttributeSet::OnRep_AbilityPoint()
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, AbilityPoint);
+}
+
+void UAP_AttributeSet::OnRep_StatPoint()
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, StatPoint);
 }
 
 void UAP_AttributeSet::OnRep_PhysicalPower()

@@ -42,6 +42,16 @@ public:
 		UPROPERTY(BlueprintReadOnly, Category = "Core", ReplicatedUsing = OnRep_Energy)
 		FGameplayAttributeData Energy;
 	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Energy)
+		
+		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_Experience)
+		FGameplayAttributeData Experience;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Experience)
+		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_AbilityPoint)
+		FGameplayAttributeData AbilityPoint;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, AbilityPoint)
+		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_StatPoint)
+		FGameplayAttributeData StatPoint;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, StatPoint)
 
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Strength")
 		float PhysicalPowerGrowRate;
@@ -131,6 +141,13 @@ protected:
 		virtual void OnRep_Vitality();
 	UFUNCTION()
 		virtual void OnRep_Energy();
+
+	UFUNCTION()
+		virtual void OnRep_Experience();
+	UFUNCTION()
+		virtual void OnRep_AbilityPoint();
+	UFUNCTION()
+		virtual void OnRep_StatPoint();
 
 	UFUNCTION()
 		virtual void OnRep_PhysicalPower();

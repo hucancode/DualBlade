@@ -38,6 +38,7 @@ class LINHIBLADE_API AAP_Hero : public ACharacter, public IAbilitySystemInterfac
 {
 	GENERATED_BODY()
 
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStatEventDelegate);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityEventDelegate, int, AbilitySlot);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnGameplayEffectAppliedDelegate, UAbilitySystemComponent*, Source, const FGameplayEffectSpec&, Spec, FActiveGameplayEffectHandle, Handle);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGameplayEffectRemovedDelegate, const FGameplayEffectRemovalInfo&, Info);
@@ -85,6 +86,9 @@ public:
 	/** Returns the character level that is passed to the ability system */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		virtual bool CanActivateAbility(int AbilitySlot) const;
+	/** Returns the character level that is passed to the ability system */
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		virtual bool LevelUpAbility(int AbilitySlot) const;
 
 protected:
 	void SetupStats();
@@ -245,6 +249,20 @@ protected:
 	 */
 	UPROPERTY(BlueprintAssignable)
 		FAbilityEventDelegate AbilityOffCooldown;
+	/**
+	 * Called when a spell off cooldown
+	 *
+	 * @param AbilitySlot Which skill is just off cooldown
+	 */
+	UPROPERTY(BlueprintAssignable)
+		FAbilityEventDelegate AbilityLevelUp;
+	/**
+	 * Called when a spell off cooldown
+	 *
+	 * @param AbilitySlot Which skill is just off cooldown
+	 */
+	UPROPERTY(BlueprintAssignable)
+		FStatEventDelegate AbilityPointChange;
 
 	/**
 	 * Called when a gamplay effect applied to self
