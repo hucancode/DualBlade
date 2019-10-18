@@ -616,18 +616,6 @@ bool AAP_Hero::CanActivateAbility(int AbilitySlot) const
 	return Ability->CanActivateAbility(Handle, ActorInfo, &Tags);
 }
 
-bool AAP_Hero::IsTargeting() const
-{
-	for (AGameplayAbilityTargetActor* Actor : AbilitySystem->SpawnedTargetActors)
-	{
-		if (!Actor) continue;
-		if (Actor->IsActorBeingDestroyed()) continue;
-		if (!Actor->IsConfirmTargetingAllowed()) continue;
-		return true;
-	}
-	return false;
-}
-
 bool AAP_Hero::SetCharacterLevel(int32 NewLevel)
 {
 	if (CharacterLevel != NewLevel && NewLevel > 0)

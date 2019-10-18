@@ -86,11 +86,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		virtual bool CanActivateAbility(int AbilitySlot) const;
 
-	/** Returns if the character is targeting */
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		bool IsTargeting() const;
-
-
 protected:
 	void SetupStats();
 	void GiveAbility(const int32& Level, TSubclassOf<UGameplayAbility> Ability);
