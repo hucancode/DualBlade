@@ -197,10 +197,6 @@
 			"Enabled": false
 		},
 		{
-			"Name": "OnlineSubsystem",
-			"Enabled": false
-		},
-		{
 			"Name": "MacGraphicsSwitching",
 			"Enabled": false
 		},
@@ -227,6 +223,14 @@
 		{
 			"Name": "BackChannel",
 			"Enabled": false
+		},
+		{
+			"Name": "OnlineFramework",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineSubsystemSteam",
+			"Enabled": true
 		}
 	],
 	"TargetPlatforms": [
