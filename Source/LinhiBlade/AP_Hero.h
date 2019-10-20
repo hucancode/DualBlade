@@ -325,16 +325,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void QuitVanish();
 
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
 		void EnterCloak();
 
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
 		void QuitCloak();
 
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
 		void EnterInvi();
 
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
 		void QuitInvi();
 
 	UFUNCTION(BlueprintCallable, Category = GameplayTags)

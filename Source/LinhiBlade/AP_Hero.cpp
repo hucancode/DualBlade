@@ -665,22 +665,22 @@ void AAP_Hero::QuitVanish()
 	OnVanishedFinished();
 }
 
-void AAP_Hero::EnterCloak()
+void AAP_Hero::EnterCloak_Implementation()
 {
 	OnCloakStarted();
 }
 
-void AAP_Hero::QuitCloak()
+void AAP_Hero::QuitCloak_Implementation()
 {
 	OnCloakFinished();
 }
 
-void AAP_Hero::EnterInvi()
+void AAP_Hero::EnterInvi_Implementation()
 {
 	OnInviStarted();
 }
 
-void AAP_Hero::QuitInvi()
+void AAP_Hero::QuitInvi_Implementation()
 {
 	OnInviFinished();
 }
