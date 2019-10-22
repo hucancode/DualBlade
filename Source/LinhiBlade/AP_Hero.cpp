@@ -613,6 +613,7 @@ bool AAP_Hero::CanActivateAbility(int AbilitySlot) const
 		&& AbilityHandles.IsValidIndex(AbilitySlot);
 	if (!valid)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::CanActivateAbility false because invalid index"));
 		return false;
 	}
 	auto Ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot].Ability;
