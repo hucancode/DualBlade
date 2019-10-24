@@ -603,6 +603,7 @@ UGameplayAbility* AAP_Hero::GetAbility(int AbilitySlot) const
 	{
 		return nullptr;
 	}
+	auto Ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot];
 	return AbilitySystem->GetActivatableAbilities()[AbilitySlot].Ability;
 }
 
