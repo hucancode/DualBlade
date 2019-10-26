@@ -189,12 +189,8 @@
 			"Enabled": false
 		},
 		{
-			"Name": "OnlineSubsystemNull",
-			"Enabled": false
-		},
-		{
 			"Name": "OnlineSubsystemUtils",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "MacGraphicsSwitching",

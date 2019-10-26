@@ -8,7 +8,6 @@ public class LinhiBladeTarget : TargetRules
 	public LinhiBladeTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
-
 		ExtraModuleNames.AddRange( new string[] { "LinhiBlade" } );
 	}
 }
