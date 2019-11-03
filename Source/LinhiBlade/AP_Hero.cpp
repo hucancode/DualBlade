@@ -706,3 +706,18 @@ bool AAP_Hero::HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContai
 {
 	return GameplayTags.HasAny(TagContainer);
 }
+
+void AAP_Hero::SetLogicalController(AController* NewController)
+{
+	LogicalController = NewController;
+}
+
+AController* AAP_Hero::GetLogicalController()
+{
+	return LogicalController;
+}
+
+bool AAP_Hero::IsLogicalController(AController* OtherController)
+{
+	return OtherController == LogicalController;
+}
