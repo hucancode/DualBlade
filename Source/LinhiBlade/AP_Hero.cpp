@@ -65,6 +65,7 @@ AAP_Hero::AAP_Hero()
 	bStatsInitialized = false;
 	bAbilitiesInitialized = false;
 	ChannelEffectCount = 0;
+	SetReplicates(true);
 }
 
 // Called when the game starts or when spawned
@@ -685,6 +686,16 @@ void AAP_Hero::EnterInvi_Implementation()
 void AAP_Hero::QuitInvi_Implementation()
 {
 	OnInviFinished();
+}
+
+bool AAP_Hero::RemoveGameplayTag(FGameplayTag Tag)
+{
+	return GameplayTags.RemoveTag(Tag);
+}
+
+void AAP_Hero::AddGameplayTag(FGameplayTag Tag)
+{
+	GameplayTags.AddTag(Tag);
 }
 
 void AAP_Hero::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const

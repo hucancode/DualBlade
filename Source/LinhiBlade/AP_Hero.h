@@ -315,7 +315,7 @@ protected:
 		int32 bAbilitiesInitialized;
 	UPROPERTY()
 		int32 bStatsInitialized;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay Tags")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Gameplay Tags")
 	FGameplayTagContainer GameplayTags;
 	FGenericTeamId TeamId;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -338,6 +338,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
 		void QuitInvi();
+
+	UFUNCTION(BlueprintCallable, Category = GameplayTags)
+		bool RemoveGameplayTag(FGameplayTag Tag);
+	UFUNCTION(BlueprintCallable, Category = GameplayTags)
+		void AddGameplayTag(FGameplayTag Tag);
 
 	UFUNCTION(BlueprintCallable, Category = GameplayTags)
 		virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
