@@ -318,7 +318,7 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Gameplay Tags")
 	FGameplayTagContainer GameplayTags;
 	FGenericTeamId TeamId;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	AController* LogicalController;
 public:
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
@@ -352,10 +352,6 @@ public:
 		virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const;
 	UFUNCTION(BlueprintCallable, Category = GameplayTags)
 		virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const;
-	UFUNCTION(BlueprintCallable)
-		void SetLogicalController(AController* NewController);
-	UFUNCTION(BlueprintCallable)
-		AController* GetLogicalController();
 	UFUNCTION(BlueprintCallable)
 		bool IsLogicalController(AController* OtherController);
 };

@@ -10,6 +10,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "AbilitySystemComponent.h"
 #include "Abilities/GameplayAbilityTargetActor.h"
 #include "AbilitySystemBlueprintLibrary.h"
@@ -389,6 +390,8 @@ void AAP_Hero::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	//DOREPLIFETIME(AAP_Hero, CharacterLevel);
+	DOREPLIFETIME(AAP_Hero, GameplayTags);
+	DOREPLIFETIME(AAP_Hero, LogicalController);
 }
 
 UAbilitySystemComponent * AAP_Hero::GetAbilitySystemComponent() const
@@ -716,16 +719,6 @@ bool AAP_Hero::HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContai
 bool AAP_Hero::HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
 {
 	return GameplayTags.HasAny(TagContainer);
-}
-
-void AAP_Hero::SetLogicalController(AController* NewController)
-{
-	LogicalController = NewController;
-}
-
-AController* AAP_Hero::GetLogicalController()
-{
-	return LogicalController;
 }
 
 bool AAP_Hero::IsLogicalController(AController* OtherController)
