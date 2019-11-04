@@ -2,6 +2,7 @@
 
 #include "AP_Hero.h"
 #include "UObject/ConstructorHelpers.h"
+#include "AIController.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "Engine/StaticMesh.h"
@@ -15,6 +16,7 @@
 #include "Abilities/GameplayAbilityTargetActor.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include <LinhiBlade\AP_GameMode.h>
+#include <AP_AIController.h>
 
 // Sets default values
 AAP_Hero::AAP_Hero()
@@ -724,4 +726,25 @@ bool AAP_Hero::HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContai
 bool AAP_Hero::IsLogicalController(AController* OtherController)
 {
 	return OtherController == LogicalController;
+}
+
+void AAP_Hero::SetTeam(const FGenericTeamId& Id)
+{
+	auto AICtrl = GetController<AAP_AIController>();
+	if (!AICtrl)
+	{
+		return;
+	}
+	AICtrl->SetGenericTeamId(Id);
+	OnTeamUpdated(Id);
+}
+
+FGenericTeamId AAP_Hero::GetTeam()
+{
+	auto AICtrl = GetController<AAP_AIController>();
+	if (!AICtrl)
+	{
+		return FGenericTeamId();
+	}
+	return AICtrl->GetGenericTeamId();
 }

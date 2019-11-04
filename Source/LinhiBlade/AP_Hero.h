@@ -171,6 +171,9 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnInviFinished();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "AI")
+		void OnTeamUpdated(const FGenericTeamId& NewTeam);
+
 	/** Called when a game effect applied to self
 	 *
 	 * @param Source who are giving the effect
@@ -339,6 +342,8 @@ public:
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
 		void QuitInvi();
 
+	
+
 	UFUNCTION(BlueprintCallable, Category = GameplayTags)
 		bool RemoveGameplayTag(FGameplayTag Tag);
 	UFUNCTION(BlueprintCallable, Category = GameplayTags)
@@ -354,4 +359,8 @@ public:
 		virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const;
 	UFUNCTION(BlueprintCallable)
 		bool IsLogicalController(AController* OtherController);
+	UFUNCTION(BlueprintCallable)
+		void SetTeam(const FGenericTeamId& Id);
+	UFUNCTION(BlueprintCallable)
+		FGenericTeamId GetTeam();
 };
