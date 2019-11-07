@@ -127,6 +127,10 @@ public:
 		UPROPERTY(BlueprintReadOnly, Category = "Items", ReplicatedUsing = OnRep_Armor)
 		FGameplayAttributeData Armor;
 	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Armor)
+		/** Base Damage is divided by DefensePower to get actual damage done, so 1.0 means no bonus */
+		UPROPERTY(BlueprintReadOnly, Category = "Others", ReplicatedUsing = OnRep_DeathTime)
+		FGameplayAttributeData DeathTime;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, DeathTime)
 
 protected:
 	/** Helper function to proportionally adjust the value of an attribute when it's associated max attribute changes. (i.e. When MaxHealth increases, Health increases by an amount that maintains the same percentage as before) */
@@ -179,6 +183,8 @@ protected:
 
 	UFUNCTION()
 		virtual void OnRep_Armor();
+	UFUNCTION()
+		virtual void OnRep_DeathTime();
 	static const float ATTACK_SPEED_MAX;
 	static const float ATTACK_SPEED_SECOND_MIN;
 	static const float ATTACK_SPEED_SECOND_MAX;

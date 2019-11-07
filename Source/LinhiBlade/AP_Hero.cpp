@@ -12,10 +12,9 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "AbilitySystemComponent.h"
 #include "Abilities/GameplayAbilityTargetActor.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include <LinhiBlade\AP_GameMode.h>
+#include <LinhiBlade/AP_GameMode.h>
 #include <AP_AIController.h>
 
 // Sets default values
@@ -534,6 +533,16 @@ void AAP_Hero::HandleHealthChanged(float NewValue)
 	if (bStatsInitialized)
 	{
 		OnHealthChanged(NewValue);
+		if (NewValue <= 0.0f)
+		{
+			AbilitySystem->CancelAllAbilities();
+			GetCharacterMovement()->StopMovementImmediately();
+			float DeathTime = AllStats->GetDeathTime();
+			OnDeath(DeathTime);
+			FTimerHandle DeathTimerHandle;
+			GetWorldTimerManager().SetTimer(DeathTimerHandle, 
+				this, &AAP_Hero::Respawn, DeathTime, false, -1.0f);
+		}
 	}
 }
 
@@ -691,6 +700,12 @@ void AAP_Hero::EnterInvi_Implementation()
 void AAP_Hero::QuitInvi_Implementation()
 {
 	OnInviFinished();
+}
+
+void AAP_Hero::Respawn_Implementation()
+{
+	AllStats->SetHealth(AllStats->GetMaxHealth());
+	OnRespawn();
 }
 
 bool AAP_Hero::RemoveGameplayTag(FGameplayTag Tag)

@@ -44,6 +44,7 @@ UAP_AttributeSet::UAP_AttributeSet()
 	, MaxManaGrowRate(1.0f)
 	, MaxMana(1.f)
 	, Armor(1.0f)
+	, DeathTime(10.0f)
 {
 }
 
@@ -72,6 +73,7 @@ void UAP_AttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UAP_AttributeSet, MagicalPower);
 
 	DOREPLIFETIME(UAP_AttributeSet, Armor);
+	DOREPLIFETIME(UAP_AttributeSet, DeathTime);
 }
 
 void UAP_AttributeSet::OnRep_Health()
@@ -112,6 +114,10 @@ void UAP_AttributeSet::OnRep_MaxMana()
 void UAP_AttributeSet::OnRep_Armor()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Armor);
+}
+void UAP_AttributeSet::OnRep_DeathTime()
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, DeathTime);
 }
 
 void UAP_AttributeSet::OnRep_Evasion()

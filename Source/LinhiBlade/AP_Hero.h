@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
+#include "TimerManager.h"
 #include "GameplayAbility.h"
 #include <Runtime\AIModule\Classes\GenericTeamAgentInterface.h>
 #include <AP_GameplayAbilitySet.h>
@@ -143,7 +144,10 @@ protected:
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnHealthChanged(float NewValue);
-
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
+		void OnDeath(float DeathTime);
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
+		void OnRespawn();
 	/**
 	 * Called when mana is changed, either from healing or from being used as a cost
 	 *
@@ -323,6 +327,7 @@ protected:
 	FGenericTeamId TeamId;
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	AController* LogicalController;
+	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void EnterVanish();
@@ -342,7 +347,8 @@ public:
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
 		void QuitInvi();
 
-	
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = Abilities)
+		void Respawn();
 
 	UFUNCTION(BlueprintCallable, Category = GameplayTags)
 		bool RemoveGameplayTag(FGameplayTag Tag);
