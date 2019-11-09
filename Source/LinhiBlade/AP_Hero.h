@@ -36,7 +36,7 @@ enum class EJob : uint8
 UENUM(BlueprintType)
 enum class ECloakingLevel : uint8
 {
-	Visible		UMETA(DisplayName = "Visible"),
+	None		UMETA(DisplayName = "None"),
 	Cloaked		UMETA(DisplayName = "Cloaked"),
 	Invisible	UMETA(DisplayName = "Invisible"),
 	Vanished	UMETA(DisplayName = "Vanished"),
