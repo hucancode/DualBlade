@@ -704,7 +704,7 @@ void AAP_Hero::EnterCloak_Implementation(ECloakingLevel Level)
 void AAP_Hero::QuitCloak_Implementation()
 {
 	auto LastStatus = CloakStatus;
-	CloakStatus = ECloakingLevel::Visible;
+	CloakStatus = ECloakingLevel::None;
 	OnCloakFinished(LastStatus);
 }
 
@@ -726,7 +726,7 @@ bool AAP_Hero::IsVisibleToTeam(FGameplayTag TeamTag)
 	{
 		return CloakStatus != ECloakingLevel::Vanished;
 	}
-	return CloakStatus == ECloakingLevel::Visible;
+	return CloakStatus == ECloakingLevel::None;
 }
 
 bool AAP_Hero::RemoveGameplayTag(FGameplayTag Tag)
