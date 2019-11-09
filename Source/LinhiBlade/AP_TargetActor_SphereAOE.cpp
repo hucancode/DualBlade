@@ -27,7 +27,7 @@ bool AAP_TargetActor_SphereAOE::ShouldProduceTargetData() const
 
 TArray<TWeakObjectPtr<AActor>> AAP_TargetActor_SphereAOE::PerformTrace()
 {
-	FCollisionObjectQueryParams ObjectToScan = FCollisionObjectQueryParams(ECC_GameTraceChannel1);
+	FCollisionObjectQueryParams ObjectToScan = FCollisionObjectQueryParams(Channel);
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(SphereTargetingOverlap), false);
 	Params.bReturnPhysicalMaterial = false;
 	//Params.bTraceAsyncScene = false;
