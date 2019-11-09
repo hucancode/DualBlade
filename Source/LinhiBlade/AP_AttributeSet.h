@@ -55,6 +55,9 @@ public:
 		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_RequiredExp)
 		FGameplayAttributeData RequiredExp;
 	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, RequiredExp)
+		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_BountyExp)
+		FGameplayAttributeData BountyExp;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, BountyExp)
 		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_AbilityPoint)
 		FGameplayAttributeData AbilityPoint;
 	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, AbilityPoint)
@@ -169,6 +172,8 @@ protected:
 		virtual void OnRep_Experience();
 	UFUNCTION()
 		virtual void OnRep_RequiredExp();
+	UFUNCTION()
+		virtual void OnRep_BountyExp();
 	UFUNCTION()
 		virtual void OnRep_AbilityPoint();
 	UFUNCTION()

@@ -42,6 +42,8 @@ enum class ECloakingLevel : uint8
 	Vanished	UMETA(DisplayName = "Vanished"),
 };
 
+#define EXP_AQUIRING_RANGE 800.0f
+
 UCLASS()
 class LINHIBLADE_API AAP_Hero : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface, public IGenericTeamAgentInterface
 {
@@ -68,28 +70,31 @@ public:
 	
 	/** select hero, activate selection effect */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual void SelectHero(bool selected);
+		void SelectHero(bool selected);
 
 	/** Returns current health, will be 0 if dead */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual float GetHealthPercent() const;
+		float GetHealthPercent() const;
 
 	/** Returns current mana */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual float GetManaPercent() const;
+		float GetManaPercent() const;
 
 	/** Returns the character level that is passed to the ability system */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual int32 GetAbilityCount() const;
+		int32 GetAbilityCount() const;
 	/** Returns the character level that is passed to the ability system */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual UGameplayAbility* GetAbility(int AbilitySlot) const;
+		UGameplayAbility* GetAbility(int AbilitySlot) const;
 	/** Returns the character level that is passed to the ability system */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual bool CanActivateAbility(int AbilitySlot) const;
+		bool CanActivateAbility(int AbilitySlot) const;
 	/** Returns the character level that is passed to the ability system */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual bool LevelUpAbility(int AbilitySlot) const;
+		bool LevelUpAbility(int AbilitySlot);
+	/** Returns the character level that is passed to the ability system */
+	UFUNCTION(BlueprintCallable, Category = "Progress")
+		void GiveExp(float Amount);
 
 protected:
 	void SetupStats();
@@ -131,7 +136,8 @@ protected:
 		bool GetAbilityAutoCastEnabled(int AbilitySlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		bool IsAbilityBusy(int AbilitySlot);
-
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void GetAllUnitInRange(TArray<AAP_Hero*>& Result, float Radius);
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
@@ -156,6 +162,10 @@ protected:
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnManaChanged(float NewValue);
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
+		void OnLevelChanged(float NewValue);
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
+		void OnExpChanged(float NewValue);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnCloakStarted(ECloakingLevel Level);
@@ -214,11 +224,16 @@ protected:
 		void OnAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplayEffectRemovalInfo);
 	
 
+	void GetAllEnemyInRange();
+	void GrantBountyExp();
+
 	// Called from RPGAllStats, these call BP events above
-	virtual void HandleHealthChanged(float NewValue);
-	virtual void HandleManaChanged(float NewValue);
-	virtual void HandleMoveSpeedChanged(float NewValue);
-	virtual void HandleTurnRateChanged(float NewValue);
+	void HandleHealthChanged(float NewValue);
+	void HandleManaChanged(float NewValue);
+	void HandleLevelChanged(float NewValue);
+	void HandleExpChanged(float NewValue);
+	void HandleMoveSpeedChanged(float NewValue);
+	void HandleTurnRateChanged(float NewValue);
 
 	// Friended to allow access to handle functions above
 	friend UAP_AttributeSet;
@@ -323,7 +338,7 @@ public:
 		bool IsVisibleToTeam(FGameplayTag TeamTag);
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = Abilities)
-		void EnterDeath(float DeathTime);
+		void EnterDeath();
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = Abilities)
 		void Respawn();

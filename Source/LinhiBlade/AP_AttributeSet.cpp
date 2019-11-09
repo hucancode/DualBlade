@@ -21,6 +21,7 @@ UAP_AttributeSet::UAP_AttributeSet()
 	, Level(1.0f)
 	, Experience(0.0f)
 	, RequiredExp(1.0f)
+	, BountyExp(1.0f)
 	, AbilityPoint(1.0f)
 	, AbilityPointGrowRate(1.0f)
 	, StatPoint(1.0f)
@@ -66,6 +67,7 @@ void UAP_AttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UAP_AttributeSet, Level);
 	DOREPLIFETIME(UAP_AttributeSet, Experience);
 	DOREPLIFETIME(UAP_AttributeSet, RequiredExp);
+	DOREPLIFETIME(UAP_AttributeSet, BountyExp);
 	DOREPLIFETIME(UAP_AttributeSet, AbilityPoint);
 	DOREPLIFETIME(UAP_AttributeSet, StatPoint);
 	DOREPLIFETIME(UAP_AttributeSet, DeathTime);
@@ -186,6 +188,11 @@ void UAP_AttributeSet::OnRep_RequiredExp()
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, RequiredExp);
 }
 
+void UAP_AttributeSet::OnRep_BountyExp()
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, BountyExp);
+}
+
 void UAP_AttributeSet::OnRep_AbilityPoint()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, AbilityPoint);
@@ -208,15 +215,15 @@ void UAP_AttributeSet::OnRep_AttackSpeed()
 
 void UAP_AttributeSet::AdjustAttributeForMaxChange(FGameplayAttributeData& AffectedAttribute, const FGameplayAttributeData& MaxAttribute, float NewMaxValue, const FGameplayAttribute& AffectedAttributeProperty)
 {
-	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	UAbilitySystemComponent* AC = GetOwningAbilitySystemComponent();
 	const float CurrentMaxValue = MaxAttribute.GetCurrentValue();
-	if (!FMath::IsNearlyEqual(CurrentMaxValue, NewMaxValue) && AbilityComp)
+	if (!FMath::IsNearlyEqual(CurrentMaxValue, NewMaxValue) && AC)
 	{
 		// Change current value to maintain the current Val / Max percent
 		const float CurrentValue = AffectedAttribute.GetCurrentValue();
 		float NewDelta = (CurrentMaxValue > 0.f) ? (CurrentValue * NewMaxValue / CurrentMaxValue) - CurrentValue : NewMaxValue;
 
-		AbilityComp->ApplyModToAttributeUnsafe(AffectedAttributeProperty, EGameplayModOp::Additive, NewDelta);
+		AC->ApplyModToAttributeUnsafe(AffectedAttributeProperty, EGameplayModOp::Additive, NewDelta);
 	}
 }
 
@@ -227,25 +234,25 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange %s %f"), *Attribute.GetName(), NewValue);
 
 	UAbilitySystemComponent* AC = GetOwningAbilitySystemComponent();
+	AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
+	if (!Owner->IsValidLowLevel())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
+		return;
+	}
 	if (Attribute == GetMaxHealthAttribute())
 	{
 		AdjustAttributeForMaxChange(Health, MaxHealth, NewValue, GetHealthAttribute());
-		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		if (Owner)
-		{
-			Owner->HandleHealthChanged(GetHealth());
-		}
+		Owner->HandleHealthChanged(GetHealth());
+		return;
 	}
-	else if (Attribute == GetMaxManaAttribute())
+	if (Attribute == GetMaxManaAttribute())
 	{
 		AdjustAttributeForMaxChange(Mana, MaxMana, NewValue, GetManaAttribute());
-		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		if (Owner)
-		{
-			Owner->HandleHealthChanged(GetMana());
-		}
+		Owner->HandleHealthChanged(GetMana());
+		return;
 	}
-	else if (Attribute == GetStrengthAttribute())
+	if (Attribute == GetStrengthAttribute())
 	{
 		float NewPhysicalPower = NewValue * PhysicalPowerGrowRate;
 		float NewAttackSpeed = NewValue * AttackSpeedGrowRate;
@@ -253,8 +260,9 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 			GetPhysicalPowerAttribute(), EGameplayModOp::Override, NewPhysicalPower);
 		AC->ApplyModToAttribute(
 			GetAttackSpeedAttribute(), EGameplayModOp::Override, NewAttackSpeed);
+		return;
 	}
-	else if (Attribute == GetAgilityAttribute())
+	if (Attribute == GetAgilityAttribute())
 	{
 		float NewEvasion = NewValue * EvasionGrowRate;
 		float NewMoveSpeed = NewValue * MoveSpeedGrowRate;
@@ -265,8 +273,9 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 			GetMoveSpeedAttribute(), EGameplayModOp::Override, NewMoveSpeed);
 		AC->ApplyModToAttribute(
 			GetTurnRateAttribute(), EGameplayModOp::Override, NewTurnRate);
+		return;
 	}
-	else if (Attribute == GetVitalityAttribute())
+	if (Attribute == GetVitalityAttribute())
 	{
 		float NewHealthRegen = NewValue * HealthRegenGrowRate;
 		float NewMaxHealth = NewValue * MaxHealthGrowRate;
@@ -274,8 +283,9 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 			GetHealthRegenAttribute(), EGameplayModOp::Override, NewHealthRegen);
 		AC->ApplyModToAttribute(
 			GetMaxHealthAttribute(), EGameplayModOp::Override, NewMaxHealth);
+		return;
 	}
-	else if (Attribute == GetEnergyAttribute())
+	if (Attribute == GetEnergyAttribute())
 	{
 		float NewMagicalPower = NewValue * MagicalPowerGrowRate;
 		float NewManaRegen = NewValue * ManaRegenGrowRate;
@@ -286,61 +296,35 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 			GetManaRegenAttribute(), EGameplayModOp::Override, NewManaRegen);
 		AC->ApplyModToAttribute(
 			GetMaxManaAttribute(), EGameplayModOp::Override, NewMaxMana);
+		return;
 	}
-	else if (Attribute == GetAttackSpeedAttribute())
+	if (Attribute == GetAttackSpeedAttribute())
 	{
 		AttackSpeedInSecond = FMath::Lerp(ATTACK_SPEED_SECOND_MIN, ATTACK_SPEED_SECOND_MAX,
 			FMath::Clamp(NewValue/ATTACK_SPEED_MAX, 0.0f, 1.0f));
+		return;
 	}
-	else if (Attribute == GetMoveSpeedAttribute())
+	if (Attribute == GetMoveSpeedAttribute())
 	{
-		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		if (Owner)
-		{
-			Owner->HandleMoveSpeedChanged(NewValue);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
-		}
+		Owner->HandleMoveSpeedChanged(NewValue);
+		return;
 	}
-	else if (Attribute == GetTurnRateAttribute())
+	if (Attribute == GetTurnRateAttribute())
 	{
-		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		if (Owner->IsValidLowLevel())
-		{
-			Owner->HandleTurnRateChanged(NewValue);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
-		}
+		Owner->HandleTurnRateChanged(NewValue);
+		return;
 	}
-	else if (Attribute == GetHealthAttribute())
+	if (Attribute == GetHealthAttribute())
 	{
-		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		if (Owner->IsValidLowLevel())
-		{
-			Owner->HandleHealthChanged(NewValue);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
-		}
+		Owner->HandleHealthChanged(NewValue);
+		return;
 	}
-	else if (Attribute == GetManaAttribute())
+	if (Attribute == GetManaAttribute())
 	{
-		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		if (Owner->IsValidLowLevel())
-		{
-			Owner->HandleManaChanged(NewValue);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
-		}
+		Owner->HandleManaChanged(NewValue);
+		return;
 	}
-	else if (Attribute == GetExperienceAttribute())
+	if (Attribute == GetExperienceAttribute())
 	{
 		check(GetRequiredExp() > 0);
 		if(NewValue > GetRequiredExp())
@@ -348,8 +332,10 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 			SetExperience(0.0f);
 			SetLevel(GetLevel() + 1.0f);
 		}
+		Owner->HandleExpChanged(NewValue);
+		return;
 	}
-	else if (Attribute == GetLevelAttribute())
+	if (Attribute == GetLevelAttribute())
 	{
 		float delta = NewValue - GetLevel();
 		// linear grow rate
@@ -357,47 +343,25 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 		SetAbilityPoint(NewAbilityPoint);
 		float NewStatPoint = GetStatPoint() + StatPointGrowRate * delta;
 		SetStatPoint(NewStatPoint);
-		float NewDeathTime = GetDeathTime() + DeathTimeGrowRate * delta;
+		float NewDeathTime = DeathTimeGrowRate * NewValue;
 		SetDeathTime(NewDeathTime);
+		Owner->HandleLevelChanged(NewValue);
+		return;
 	}
-	else if (Attribute == GetAbilityPointAttribute())
+	if (Attribute == GetAbilityPointAttribute())
 	{
-		// notify UI
-		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		if (Owner->IsValidLowLevel())
-		{
-			//Owner->HandleManaChanged(NewValue);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
-		}
+		//Owner->HandleManaChanged(NewValue);
+		return;
 	}
-	else if (Attribute == GetStatPointAttribute())
+	if (Attribute == GetStatPointAttribute())
 	{
-		// notify UI
-		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		if (Owner->IsValidLowLevel())
-		{
-			//Owner->HandleManaChanged(NewValue);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
-		}
+		//Owner->HandleManaChanged(NewValue);
+		return;
 	}
-	else if (Attribute == GetMoneyAttribute())
+	if (Attribute == GetMoneyAttribute())
 	{
-		// notify UI
-		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-		if (Owner->IsValidLowLevel())
-		{
-			//Owner->HandleManaChanged(NewValue);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
-		}
+		//Owner->HandleManaChanged(NewValue);
+		return;
 	}
 }
 

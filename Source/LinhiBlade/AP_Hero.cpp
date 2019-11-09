@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AP_Hero.h"
+#include "Engine/World.h"
 #include "UObject/ConstructorHelpers.h"
 #include "AIController.h"
 #include "Components/StaticMeshComponent.h"
@@ -17,6 +18,7 @@
 #include <LinhiBlade/AP_GameMode.h>
 #include <AP_AIController.h>
 #include <AP_RTSPlayerController.h>
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 AAP_Hero::AAP_Hero()
@@ -140,6 +142,12 @@ int AAP_Hero::GetBuffStack(const TSubclassOf<UGameplayEffect> Effect)
 	return AbilitySystem->GetAggregatedStackCount(Query);
 }
 
+void AAP_Hero::GiveExp(float Amount)
+{
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GiveExp %f"), Amount);
+	AllStats->SetExperience(AllStats->GetExperience() + Amount);
+}
+
 void AAP_Hero::SetupStats()
 {
 	if (Role == ROLE_Authority && !bStatsInitialized)
@@ -186,9 +194,7 @@ void AAP_Hero::RemoveAllAbilities()
 		const auto AllAbility = AbilitySystem->GetActivatableAbilities();
 		for (auto Ability : AllAbility)
 		{
-			AllStats->AbilityPoint.SetBaseValue(
-				AllStats->AbilityPoint.GetBaseValue()
-				+ Ability.Level);
+			AllStats->SetAbilityPoint(AllStats->GetAbilityPoint() + Ability.Level);
 		}
 		AbilityPointChange.Broadcast();
 		// potential crash here (known bug, but still have't found any effective fix)
@@ -415,12 +421,13 @@ void AAP_Hero::SetGenericTeamId(const FGenericTeamId& Id)
 		Id == (uint8)EGameTeam::Team2 ? T2 :
 		TN);
 	TeamId = Id;
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::SetGenericTeamId %d"), (uint8)TeamId);
 	OnTeamUpdated(Id);
 }
 
 FGenericTeamId AAP_Hero::GetGenericTeamId() const
 {
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetGenericTeamId"));
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetGenericTeamId %d"), (uint8)TeamId);
 	return TeamId;
 }
 
@@ -541,9 +548,36 @@ void AAP_Hero::OnAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplay
 	AbilityOffCooldown.Broadcast((int)Slot);
 }
 
+void AAP_Hero::GetAllUnitInRange(TArray<AAP_Hero*>& Result, float Radius)
+{
+	const static ECollisionChannel Channel = ECollisionChannel::ECC_GameTraceChannel11;
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(SphereTargetingOverlap), false);
+	TArray<FOverlapResult> Overlaps;
+	FCollisionShape Shape = FCollisionShape::MakeSphere(Radius);
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetAllUnitInRange %s"), *GetActorLocation().ToString());
+	GetWorld()->OverlapMultiByChannel(Overlaps, GetActorLocation(), FQuat::Identity, Channel, Shape, Params);
+#if ENABLE_DRAW_DEBUG
+	DrawDebugSphere(GetWorld(), GetActorLocation(), Radius, 10, FColor::Green, false, 1.5f);
+#endif
+	for (auto Overlap: Overlaps)
+	{
+		if (Overlap.bBlockingHit)
+		{
+			auto Hero = Cast<AAP_Hero>(Overlap.Actor);
+			if (Hero)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetAllUnitInRange add %s"), *Hero->GetName());
+				Result.Add(Hero);
+			}
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetAllUnitInRange got %d"), Result.Num());
+}
+
 void AAP_Hero::HandleHealthChanged(float NewValue)
 {
-	if (bStatsInitialized)
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::HandleHealthChanged %f"), NewValue);
+	if (!bStatsInitialized)
 	{
 		return;
 	}
@@ -556,28 +590,66 @@ void AAP_Hero::HandleHealthChanged(float NewValue)
 	{
 		return;
 	}
-	AbilitySystem->CancelAllAbilities();
-	GetCharacterMovement()->StopMovementImmediately();
-	float DeathTime = AllStats->GetDeathTime();
-	EnterDeath(DeathTime);
-	FTimerHandle DeathTimerHandle;
-	GetWorldTimerManager().SetTimer(DeathTimerHandle,
-		this, &AAP_Hero::Respawn, DeathTime, false, -1.0f);
+	GrantBountyExp();
+	EnterDeath();
+}
+
+void AAP_Hero::GrantBountyExp()
+{
+	TArray<AAP_Hero*> Enemies;
+	GetAllUnitInRange(Enemies, EXP_AQUIRING_RANGE);
+	for (int i = Enemies.Num() - 1; i >= 0; i--)
+	{
+		auto Enemy = Enemies[i];
+		if (GetTeamAttitudeTowards(*Enemy) != ETeamAttitude::Hostile)
+		{
+			Enemies.RemoveAt(i);
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GrantBountyExp got %d enemies"), Enemies.Num());
+	if (!Enemies.Num())
+	{
+		return;
+	}
+	// exp given per unit gets smaller as enemy count grows, but not linearly
+	float ExpPerUnit = AllStats->GetBountyExp() / FMath::Sqrt(Enemies.Num());
+	for (int i = Enemies.Num() - 1; i >= 0; i--)
+	{
+		auto Enemy = Enemies[i];
+		Enemy->GiveExp(ExpPerUnit);
+	}
 }
 
 void AAP_Hero::HandleManaChanged(float NewValue)
 {
-	if (bStatsInitialized)
+	if (!bStatsInitialized)
 	{
 		return;
 	}
 	OnManaChanged(NewValue);
 }
+void AAP_Hero::HandleLevelChanged(float NewValue)
+{
+	if (!bStatsInitialized)
+	{
+		return;
+	}
+	OnLevelChanged(NewValue);
+}
+void AAP_Hero::HandleExpChanged(float NewValue)
+{
+	if (!bStatsInitialized)
+	{
+		return;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("exp changed, exp now is %f/%f"), NewValue, AllStats->GetRequiredExp());
+	OnExpChanged(NewValue);
+}
 
 void AAP_Hero::HandleMoveSpeedChanged(float NewValue)
 {
 	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::HandleMoveSpeedChanged"));
-	if (bStatsInitialized)
+	if (!bStatsInitialized)
 	{
 		return;
 	}
@@ -587,7 +659,7 @@ void AAP_Hero::HandleMoveSpeedChanged(float NewValue)
 void AAP_Hero::HandleTurnRateChanged(float NewValue)
 {
 	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::HandleTurnRateChanged"));
-	if (bStatsInitialized)
+	if (!bStatsInitialized)
 	{
 		return;
 	}
@@ -657,7 +729,7 @@ bool AAP_Hero::CanActivateAbility(int AbilitySlot) const
 	return Ability->CanActivateAbility(Handle, ActorInfo, &ASTags);
 }
 
-bool AAP_Hero::LevelUpAbility(int AbilitySlot) const
+bool AAP_Hero::LevelUpAbility(int AbilitySlot)
 {
 	bool valid = AbilitySystem
 		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(AbilitySlot)
@@ -715,9 +787,16 @@ void AAP_Hero::Respawn_Implementation()
 	OnRespawn();
 }
 
-void AAP_Hero::EnterDeath_Implementation(float DeathTime)
+void AAP_Hero::EnterDeath_Implementation()
 {
+	AbilitySystem->CancelAllAbilities();
+	GetCharacterMovement()->StopMovementImmediately();
+	float DeathTime = AllStats->GetDeathTime();
 	OnDeath(DeathTime);
+	FTimerHandle DeathTimerHandle;
+	GetWorldTimerManager().SetTimer(DeathTimerHandle,
+		this, &AAP_Hero::Respawn, DeathTime, false, -1.0f);
+	SelectHero(false);
 }
 
 bool AAP_Hero::IsVisibleToTeam(FGameplayTag TeamTag)
