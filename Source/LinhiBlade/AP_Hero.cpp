@@ -16,6 +16,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include <LinhiBlade/AP_GameMode.h>
 #include <AP_AIController.h>
+#include <AP_RTSPlayerController.h>
 
 // Sets default values
 AAP_Hero::AAP_Hero()
@@ -98,14 +99,13 @@ void AAP_Hero::BeginPlay()
 	{
 		SetGenericTeamId((uint8)EGameTeam::Neutral);
 	}
-
 }
 
 void AAP_Hero::SetupAbilities()
 {
 	if (Role == ROLE_Authority && !bAbilitiesInitialized)
 	{
-		int32 Level = 0;
+		const int32 Level = 0;
 		if (!AbilitySet)
 		{
 			return;
@@ -148,7 +148,7 @@ void AAP_Hero::SetupStats()
 		FGameplayEffectContextHandle EffectContext = AbilitySystem->MakeEffectContext();
 		EffectContext.AddSourceObject(this);
 
-		FGameplayEffectSpecHandle NewHandle = AbilitySystem->MakeOutgoingSpec(BaseStats, GetCharacterLevel(), EffectContext);
+		FGameplayEffectSpecHandle NewHandle = AbilitySystem->MakeOutgoingSpec(BaseStats, 1.0f, EffectContext);
 		if (NewHandle.IsValid())
 		{
 			FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystem->ApplyGameplayEffectSpecToTarget(*NewHandle.Data.Get(), AbilitySystem);
@@ -390,7 +390,6 @@ void AAP_Hero::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	//DOREPLIFETIME(AAP_Hero, CharacterLevel);
 	DOREPLIFETIME(AAP_Hero, GameplayTags);
 	DOREPLIFETIME(AAP_Hero, LogicalController);
 }
@@ -402,7 +401,21 @@ UAbilitySystemComponent * AAP_Hero::GetAbilitySystemComponent() const
 
 void AAP_Hero::SetGenericTeamId(const FGenericTeamId& Id)
 {
+	if (TeamId == Id)
+	{
+		return;
+	}
+	auto T1 = FGameplayTag::RequestGameplayTag("Combat.Team_1");
+	auto T2 = FGameplayTag::RequestGameplayTag("Combat.Team_2");
+	auto TN = FGameplayTag::RequestGameplayTag("Combat.Team_Neutral");
+	RemoveGameplayTag(TeamId == (uint8)EGameTeam::Team1 ? T1 :
+		TeamId == (uint8)EGameTeam::Team2 ? T2 :
+		TN);
+	AddGameplayTag(Id == (uint8)EGameTeam::Team1 ? T1 :
+		Id == (uint8)EGameTeam::Team2 ? T2 :
+		TN);
 	TeamId = Id;
+	OnTeamUpdated(Id);
 }
 
 FGenericTeamId AAP_Hero::GetGenericTeamId() const
@@ -532,26 +545,33 @@ void AAP_Hero::HandleHealthChanged(float NewValue)
 {
 	if (bStatsInitialized)
 	{
-		OnHealthChanged(NewValue);
-		if (NewValue <= 0.0f)
-		{
-			AbilitySystem->CancelAllAbilities();
-			GetCharacterMovement()->StopMovementImmediately();
-			float DeathTime = AllStats->GetDeathTime();
-			OnDeath(DeathTime);
-			FTimerHandle DeathTimerHandle;
-			GetWorldTimerManager().SetTimer(DeathTimerHandle, 
-				this, &AAP_Hero::Respawn, DeathTime, false, -1.0f);
-		}
+		return;
 	}
+	OnHealthChanged(NewValue);
+	if (!HasAuthority())
+	{
+		return;
+	}
+	if (NewValue > 0.0f)
+	{
+		return;
+	}
+	AbilitySystem->CancelAllAbilities();
+	GetCharacterMovement()->StopMovementImmediately();
+	float DeathTime = AllStats->GetDeathTime();
+	EnterDeath(DeathTime);
+	FTimerHandle DeathTimerHandle;
+	GetWorldTimerManager().SetTimer(DeathTimerHandle,
+		this, &AAP_Hero::Respawn, DeathTime, false, -1.0f);
 }
 
 void AAP_Hero::HandleManaChanged(float NewValue)
 {
 	if (bStatsInitialized)
 	{
-		OnManaChanged(NewValue);
+		return;
 	}
+	OnManaChanged(NewValue);
 }
 
 void AAP_Hero::HandleMoveSpeedChanged(float NewValue)
@@ -559,8 +579,9 @@ void AAP_Hero::HandleMoveSpeedChanged(float NewValue)
 	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::HandleMoveSpeedChanged"));
 	if (bStatsInitialized)
 	{
-		GetCharacterMovement()->MaxWalkSpeed = NewValue;
+		return;
 	}
+	GetCharacterMovement()->MaxWalkSpeed = NewValue;
 }
 
 void AAP_Hero::HandleTurnRateChanged(float NewValue)
@@ -568,8 +589,9 @@ void AAP_Hero::HandleTurnRateChanged(float NewValue)
 	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::HandleTurnRateChanged"));
 	if (bStatsInitialized)
 	{
-		GetCharacterMovement()->RotationRate.Yaw = NewValue;
+		return;
 	}
+	GetCharacterMovement()->RotationRate.Yaw = NewValue;
 }
 
 void AAP_Hero::SelectHero(bool selected)
@@ -598,11 +620,6 @@ float AAP_Hero::GetManaPercent() const
 	const float v = AllStats->GetMana();
 	const float m = FMath::Max(1.0f, AllStats->GetMaxMana());
 	return v / m;
-}
-
-int32 AAP_Hero::GetCharacterLevel() const
-{
-	return CharacterLevel;
 }
 
 int32 AAP_Hero::GetAbilityCount() const
@@ -635,9 +652,9 @@ bool AAP_Hero::CanActivateAbility(int AbilitySlot) const
 	auto Ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot].Ability;
 	auto Handle = AbilityHandles[AbilitySlot];
 	auto ActorInfo = AbilitySystem->AbilityActorInfo.Get();
-	FGameplayTagContainer Tags;
-	AbilitySystem->GetOwnedGameplayTags(Tags);
-	return Ability->CanActivateAbility(Handle, ActorInfo, &Tags);
+	FGameplayTagContainer ASTags;
+	AbilitySystem->GetOwnedGameplayTags(ASTags);
+	return Ability->CanActivateAbility(Handle, ActorInfo, &ASTags);
 }
 
 bool AAP_Hero::LevelUpAbility(int AbilitySlot) const
@@ -650,62 +667,66 @@ bool AAP_Hero::LevelUpAbility(int AbilitySlot) const
 		return false;
 	}
 	FGameplayAbilitySpec& Ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot];
-	float Potential = AllStats->AbilityPoint.GetBaseValue();
+	float Potential = AllStats->GetAbilityPoint();
 	if (Potential < 1.0f)
 	{
 		return false;
 	}
-	AllStats->AbilityPoint.SetBaseValue(Potential - 1.0f);
+	AllStats->SetAbilityPoint(Potential - 1.0f);
 	Ability.Level += 1;
 	AbilityPointChange.Broadcast();
 	AbilityLevelUp.Broadcast(AbilitySlot);
 	return true;
 }
 
-bool AAP_Hero::SetCharacterLevel(int32 NewLevel)
+void AAP_Hero::EnterCloak_Implementation(ECloakingLevel Level)
 {
-	if (CharacterLevel != NewLevel && NewLevel > 0)
+	// invisible to AI and visual render, character still physically on the map
+	switch (Level)
 	{
-		CharacterLevel = NewLevel;
-		return true;
+	case ECloakingLevel::Cloaked:
+		// invisible to enemy AI, manual ray tracing only, can still be visually seen
+		break;
+	case ECloakingLevel::Invisible:
+		// invisible to enemy AI, manual ray tracing, visual, can still be logically queried by ability
+		break;
+	case ECloakingLevel::Vanished:
+		// logically and visually disappeared on the map, for both enemy and ally,
+		// all logic regarding unit's position will not guaranteed to work
+		break;
+	default:
+		break;
 	}
-	return false;
-}
-
-void AAP_Hero::EnterVanish()
-{
-	OnVanishedStarted();
-}
-
-void AAP_Hero::QuitVanish()
-{
-	OnVanishedFinished();
-}
-
-void AAP_Hero::EnterCloak_Implementation()
-{
-	OnCloakStarted();
+	CloakStatus = Level;
+	OnCloakStarted(Level);
 }
 
 void AAP_Hero::QuitCloak_Implementation()
 {
-	OnCloakFinished();
-}
-
-void AAP_Hero::EnterInvi_Implementation()
-{
-	OnInviStarted();
-}
-
-void AAP_Hero::QuitInvi_Implementation()
-{
-	OnInviFinished();
+	auto LastStatus = CloakStatus;
+	CloakStatus = ECloakingLevel::Visible;
+	OnCloakFinished(LastStatus);
 }
 
 void AAP_Hero::Respawn_Implementation()
 {
 	AllStats->SetHealth(AllStats->GetMaxHealth());
+	AllStats->SetMana(AllStats->GetMaxMana());
 	OnRespawn();
+}
+
+void AAP_Hero::EnterDeath_Implementation(float DeathTime)
+{
+	OnDeath(DeathTime);
+}
+
+bool AAP_Hero::IsVisibleToTeam(FGameplayTag TeamTag)
+{
+	if (GameplayTags.HasTag(TeamTag))
+	{
+		return CloakStatus != ECloakingLevel::Vanished;
+	}
+	return CloakStatus == ECloakingLevel::Visible;
 }
 
 bool AAP_Hero::RemoveGameplayTag(FGameplayTag Tag)
@@ -743,23 +764,53 @@ bool AAP_Hero::IsLogicalController(AController* OtherController)
 	return OtherController == LogicalController;
 }
 
-void AAP_Hero::SetTeam(const FGenericTeamId& Id)
+void AAP_Hero::SetLogicalController(AController* NewController)
 {
-	auto AICtrl = GetController<AAP_AIController>();
-	if (!AICtrl)
+	LogicalController = NewController;
+	auto RTSController = Cast<AAP_RTSPlayerController>(NewController);
+	if (RTSController->IsValidLowLevel())
 	{
-		return;
+		SetTeam(RTSController->Team);
 	}
-	AICtrl->SetGenericTeamId(Id);
-	OnTeamUpdated(Id);
 }
 
-FGenericTeamId AAP_Hero::GetTeam()
+void AAP_Hero::SetTeam(const EGameTeam Id)
 {
-	auto AICtrl = GetController<AAP_AIController>();
-	if (!AICtrl)
+	SetGenericTeamId((uint8)Id);
+}
+
+EGameTeam AAP_Hero::GetTeam()
+{
+	return (EGameTeam)(uint8)GetGenericTeamId();
+}
+
+bool AAP_Hero::IsAlly()
+{
+	auto Me = Cast<AAP_RTSPlayerController>(GetWorld()->GetFirstPlayerController());
+	auto ThisUnit = Cast<AAP_RTSPlayerController>(LogicalController);
+	if (Me && ThisUnit)
 	{
-		return FGenericTeamId();
+		return Me->GetAttituteTowardPlayer(ThisUnit) == ETeamAttitude::Type::Friendly;
 	}
-	return AICtrl->GetGenericTeamId();
+	return false;
+}
+
+void AAP_Hero::SetJob(EJob NewJob)
+{
+	// TODO: implement a job changing mechanic
+	/*const int32 Level = 0;
+	GiveAbility(Level, AbilitySet->Find(
+		Job == EJob::Job1 ? EAbilitySlot::Ability5 :
+		Job == EJob::Job2 ? EAbilitySlot::Ability6 :
+		Job == EJob::Job3 ? EAbilitySlot::Ability7 :
+		Job == EJob::Job4 ? EAbilitySlot::Ability8 :
+		Job == EJob::Job5 ? EAbilitySlot::Ability9 :
+		EAbilitySlot::Ability5));
+	const auto AllAbility = AbilitySystem->GetActivatableAbilities();
+	for (auto Ability : AllAbility)
+	{
+		AllStats->AbilityPoint.SetBaseValue(
+			AllStats->AbilityPoint.GetBaseValue()
+			+ Ability.Level);
+	}*/
 }

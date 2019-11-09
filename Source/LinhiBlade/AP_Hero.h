@@ -4,13 +4,13 @@
 #include "AP_AttributeSet.h"
 #include "CoreMinimal.h"
 #include "Delegates/IDelegateInstance.h"
-#include "GameplayTags/Classes/GameplayTagContainer.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include "TimerManager.h"
 #include "GameplayAbility.h"
-#include <Runtime\AIModule\Classes\GenericTeamAgentInterface.h>
+#include "GenericTeamAgentInterface.h"
 #include <AP_GameplayAbilitySet.h>
 #include "AP_Hero.generated.h"
 
@@ -32,6 +32,14 @@ enum class EJob : uint8
 	Job3		UMETA(DisplayName = "Fighter"),
 	Job4		UMETA(DisplayName = "Mechanic"),
 	Job5		UMETA(DisplayName = "Assasin"),
+};
+UENUM(BlueprintType)
+enum class ECloakingLevel : uint8
+{
+	Visible		UMETA(DisplayName = "Visible"),
+	Cloaked		UMETA(DisplayName = "Cloaked"),
+	Invisible	UMETA(DisplayName = "Invisible"),
+	Vanished	UMETA(DisplayName = "Vanished"),
 };
 
 UCLASS()
@@ -62,10 +70,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		virtual void SelectHero(bool selected);
 
-	/** Modifies the character level, this may change abilities. Returns true on success */
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual bool SetCharacterLevel(int32 NewLevel);
-
 	/** Returns current health, will be 0 if dead */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		virtual float GetHealthPercent() const;
@@ -73,10 +77,6 @@ public:
 	/** Returns current mana */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		virtual float GetManaPercent() const;
-	
-	/** Returns the character level that is passed to the ability system */
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		virtual int32 GetCharacterLevel() const;
 
 	/** Returns the character level that is passed to the ability system */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
@@ -158,22 +158,10 @@ protected:
 		void OnManaChanged(float NewValue);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
-		void OnVanishedStarted();
+		void OnCloakStarted(ECloakingLevel Level);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
-		void OnVanishedFinished();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
-		void OnCloakStarted();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
-		void OnCloakFinished();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
-		void OnInviStarted();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
-		void OnInviFinished();
+		void OnCloakFinished(ECloakingLevel LastCloakingLevel);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "AI")
 		void OnTeamUpdated(const FGenericTeamId& NewTeam);
@@ -301,10 +289,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities)
 		UAP_AttributeSet* AllStats;
 
-	/** The level of this character, should not be modified directly once it has already spawned */
-	UPROPERTY(EditAnywhere, Replicated, Category = Abilities)
-		int32 CharacterLevel;
-
 	/** Abilities to grant to this character on creation. These will be activated by tag or event and are not bound to specific inputs */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Abilities)
 		UAP_GameplayAbilitySet* AbilitySet;
@@ -323,29 +307,23 @@ protected:
 	UPROPERTY()
 		int32 bStatsInitialized;
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Gameplay Tags")
-	FGameplayTagContainer GameplayTags;
+		FGameplayTagContainer GameplayTags;
 	FGenericTeamId TeamId;
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
-	AController* LogicalController;
-	
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly)
+		AController* LogicalController;
+	UPROPERTY()
+		ECloakingLevel CloakStatus;
 public:
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		void EnterVanish();
-	
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		void QuitVanish();
-
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
-		void EnterCloak();
+		void EnterCloak(ECloakingLevel Level);
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
 		void QuitCloak();
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		bool IsVisibleToTeam(FGameplayTag TeamTag);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
-		void EnterInvi();
-
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
-		void QuitInvi();
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = Abilities)
+		void EnterDeath(float DeathTime);
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = Abilities)
 		void Respawn();
@@ -366,7 +344,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 		bool IsLogicalController(AController* OtherController);
 	UFUNCTION(BlueprintCallable)
-		void SetTeam(const FGenericTeamId& Id);
+		void SetLogicalController(AController* NewController);
+	// blueprint proxy function
 	UFUNCTION(BlueprintCallable)
-		FGenericTeamId GetTeam();
+		void SetTeam(const EGameTeam Id);
+	// blueprint proxy function
+	UFUNCTION(BlueprintCallable)
+		EGameTeam GetTeam();
+	// blueprint proxy function
+	UFUNCTION(BlueprintCallable)
+		bool IsAlly();
+	UFUNCTION(BlueprintCallable)
+		void SetJob(EJob NewJob);
 };

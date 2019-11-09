@@ -13,7 +13,6 @@ void AAP_GameMode::StartPlay()
 
 ETeamAttitude::Type AAP_GameMode::GetAttitude(FGenericTeamId From, FGenericTeamId Toward)
 {
-	
 	ETeamAttitude::Type ret;
 	if (From == Toward)
 	{

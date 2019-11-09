@@ -18,8 +18,15 @@ UAP_AttributeSet::UAP_AttributeSet()
 	, Agility(1.0f)
 	, Vitality(1.0f)
 	, Energy(1.0f)
+	, Level(1.0f)
+	, Experience(0.0f)
+	, RequiredExp(1.0f)
 	, AbilityPoint(1.0f)
+	, AbilityPointGrowRate(1.0f)
 	, StatPoint(1.0f)
+	, StatPointGrowRate(5.0f)
+	, DeathTime(10.0f)
+	, DeathTimeGrowRate(1.0f)
 	, PhysicalPowerGrowRate(1.0f)
 	, PhysicalPower(1.0f)
 	, AttackSpeedGrowRate(1.0f)
@@ -44,7 +51,6 @@ UAP_AttributeSet::UAP_AttributeSet()
 	, MaxManaGrowRate(1.0f)
 	, MaxMana(1.f)
 	, Armor(1.0f)
-	, DeathTime(10.0f)
 {
 }
 
@@ -56,6 +62,13 @@ void UAP_AttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UAP_AttributeSet, Agility);
 	DOREPLIFETIME(UAP_AttributeSet, Vitality);
 	DOREPLIFETIME(UAP_AttributeSet, Energy);
+	
+	DOREPLIFETIME(UAP_AttributeSet, Level);
+	DOREPLIFETIME(UAP_AttributeSet, Experience);
+	DOREPLIFETIME(UAP_AttributeSet, RequiredExp);
+	DOREPLIFETIME(UAP_AttributeSet, AbilityPoint);
+	DOREPLIFETIME(UAP_AttributeSet, StatPoint);
+	DOREPLIFETIME(UAP_AttributeSet, DeathTime);
 
 	DOREPLIFETIME(UAP_AttributeSet, PhysicalPower);
 	DOREPLIFETIME(UAP_AttributeSet, AttackSpeed);
@@ -73,7 +86,6 @@ void UAP_AttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UAP_AttributeSet, MagicalPower);
 
 	DOREPLIFETIME(UAP_AttributeSet, Armor);
-	DOREPLIFETIME(UAP_AttributeSet, DeathTime);
 }
 
 void UAP_AttributeSet::OnRep_Health()
@@ -154,9 +166,24 @@ void UAP_AttributeSet::OnRep_Energy()
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Energy);
 }
 
+void UAP_AttributeSet::OnRep_Money()
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Money);
+}
+
+void UAP_AttributeSet::OnRep_Level()
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Level);
+}
+
 void UAP_AttributeSet::OnRep_Experience()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Experience);
+}
+
+void UAP_AttributeSet::OnRep_RequiredExp()
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, RequiredExp);
 }
 
 void UAP_AttributeSet::OnRep_AbilityPoint()
@@ -307,6 +334,65 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 		if (Owner->IsValidLowLevel())
 		{
 			Owner->HandleManaChanged(NewValue);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
+		}
+	}
+	else if (Attribute == GetExperienceAttribute())
+	{
+		check(GetRequiredExp() > 0);
+		if(NewValue > GetRequiredExp())
+		{
+			SetExperience(0.0f);
+			SetLevel(GetLevel() + 1.0f);
+		}
+	}
+	else if (Attribute == GetLevelAttribute())
+	{
+		float delta = NewValue - GetLevel();
+		// linear grow rate
+		float NewAbilityPoint = GetAbilityPoint() + AbilityPointGrowRate * delta;
+		SetAbilityPoint(NewAbilityPoint);
+		float NewStatPoint = GetStatPoint() + StatPointGrowRate * delta;
+		SetStatPoint(NewStatPoint);
+		float NewDeathTime = GetDeathTime() + DeathTimeGrowRate * delta;
+		SetDeathTime(NewDeathTime);
+	}
+	else if (Attribute == GetAbilityPointAttribute())
+	{
+		// notify UI
+		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
+		if (Owner->IsValidLowLevel())
+		{
+			//Owner->HandleManaChanged(NewValue);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
+		}
+	}
+	else if (Attribute == GetStatPointAttribute())
+	{
+		// notify UI
+		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
+		if (Owner->IsValidLowLevel())
+		{
+			//Owner->HandleManaChanged(NewValue);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
+		}
+	}
+	else if (Attribute == GetMoneyAttribute())
+	{
+		// notify UI
+		AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
+		if (Owner->IsValidLowLevel())
+		{
+			//Owner->HandleManaChanged(NewValue);
 		}
 		else
 		{

@@ -43,15 +43,33 @@ public:
 		FGameplayAttributeData Energy;
 	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Energy)
 		
+		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_Money)
+		FGameplayAttributeData Money;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Money)
+		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_Level)
+		FGameplayAttributeData Level;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Level)
 		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_Experience)
 		FGameplayAttributeData Experience;
 	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Experience)
+		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_RequiredExp)
+		FGameplayAttributeData RequiredExp;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, RequiredExp)
 		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_AbilityPoint)
 		FGameplayAttributeData AbilityPoint;
 	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, AbilityPoint)
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progress")
+		float AbilityPointGrowRate;
 		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_StatPoint)
 		FGameplayAttributeData StatPoint;
 	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, StatPoint)
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progress")
+		float StatPointGrowRate;
+		UPROPERTY(BlueprintReadOnly, Category = "Progress", ReplicatedUsing = OnRep_DeathTime)
+		FGameplayAttributeData DeathTime;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, DeathTime)
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progress")
+		float DeathTimeGrowRate;
 
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Strength")
 		float PhysicalPowerGrowRate;
@@ -127,10 +145,7 @@ public:
 		UPROPERTY(BlueprintReadOnly, Category = "Items", ReplicatedUsing = OnRep_Armor)
 		FGameplayAttributeData Armor;
 	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Armor)
-		/** Base Damage is divided by DefensePower to get actual damage done, so 1.0 means no bonus */
-		UPROPERTY(BlueprintReadOnly, Category = "Others", ReplicatedUsing = OnRep_DeathTime)
-		FGameplayAttributeData DeathTime;
-	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, DeathTime)
+		
 
 protected:
 	/** Helper function to proportionally adjust the value of an attribute when it's associated max attribute changes. (i.e. When MaxHealth increases, Health increases by an amount that maintains the same percentage as before) */
@@ -147,7 +162,13 @@ protected:
 		virtual void OnRep_Energy();
 
 	UFUNCTION()
+		virtual void OnRep_Money();
+	UFUNCTION()
+		virtual void OnRep_Level();
+	UFUNCTION()
 		virtual void OnRep_Experience();
+	UFUNCTION()
+		virtual void OnRep_RequiredExp();
 	UFUNCTION()
 		virtual void OnRep_AbilityPoint();
 	UFUNCTION()
