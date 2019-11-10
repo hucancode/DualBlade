@@ -581,7 +581,7 @@ void AAP_Hero::HandleHealthChanged(float NewValue)
 	{
 		return;
 	}
-	OnHealthChanged(NewValue);
+	OnHealthChanged(NewValue, GetHealthPercent());
 	if (!HasAuthority())
 	{
 		return;
@@ -626,7 +626,7 @@ void AAP_Hero::HandleManaChanged(float NewValue)
 	{
 		return;
 	}
-	OnManaChanged(NewValue);
+	OnManaChanged(NewValue, GetManaPercent());
 }
 void AAP_Hero::HandleLevelChanged(float NewValue)
 {
@@ -643,7 +643,7 @@ void AAP_Hero::HandleExpChanged(float NewValue)
 		return;
 	}
 	UE_LOG(LogTemp, Warning, TEXT("exp changed, exp now is %f/%f"), NewValue, AllStats->GetRequiredExp());
-	OnExpChanged(NewValue);
+	OnExpChanged(NewValue, GetExpPercent());
 }
 
 void AAP_Hero::HandleMoveSpeedChanged(float NewValue)
@@ -691,6 +691,17 @@ float AAP_Hero::GetManaPercent() const
 	}
 	const float v = AllStats->GetMana();
 	const float m = FMath::Max(1.0f, AllStats->GetMaxMana());
+	return v / m;
+}
+
+float AAP_Hero::GetExpPercent() const
+{
+	if (!AllStats->IsValidLowLevel())
+	{
+		return 0.0f;
+	}
+	const float v = AllStats->GetExperience();
+	const float m = FMath::Max(1.0f, AllStats->GetRequiredExp());
 	return v / m;
 }
 

@@ -79,6 +79,9 @@ public:
 	/** Returns current mana */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		float GetManaPercent() const;
+	/** Returns current mana */
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		float GetExpPercent() const;
 
 	/** Returns the character level that is passed to the ability system */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
@@ -149,7 +152,7 @@ protected:
 	 * @param EventTags The gameplay tags of the event that changed mana
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
-		void OnHealthChanged(float NewValue);
+		void OnHealthChanged(float NewValue, float HealthPercent);
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnDeath(float DeathTime);
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
@@ -161,11 +164,11 @@ protected:
 	 * @param EventTags The gameplay tags of the event that changed mana
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
-		void OnManaChanged(float NewValue);
+		void OnManaChanged(float NewValue, float ManaPercent);
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnLevelChanged(float NewValue);
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
-		void OnExpChanged(float NewValue);
+		void OnExpChanged(float NewValue, float ExpPercent);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void OnCloakStarted(ECloakingLevel Level);
