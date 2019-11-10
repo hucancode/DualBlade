@@ -10,8 +10,10 @@
 
 
 const float UAP_AttributeSet::ATTACK_SPEED_MAX = 2000.0f;
-const float UAP_AttributeSet::ATTACK_SPEED_SECOND_MIN = 0.1f;
-const float UAP_AttributeSet::ATTACK_SPEED_SECOND_MAX = 5.0f;
+// at max attack speed, time between atk is 0.1s
+const float UAP_AttributeSet::ATTACK_COOLDOWN_MIN = 0.1f;
+// at min attack speed, time between atk is 5.0s
+const float UAP_AttributeSet::ATTACK_COOLDOWN_MAX = 5.0f;
 
 UAP_AttributeSet::UAP_AttributeSet()
 	: Strength(1.0f)
@@ -31,7 +33,7 @@ UAP_AttributeSet::UAP_AttributeSet()
 	, PhysicalPowerGrowRate(1.0f)
 	, PhysicalPower(1.0f)
 	, AttackSpeedGrowRate(1.0f)
-	, AttackSpeedInSecond(ATTACK_SPEED_SECOND_MAX)
+	, AttackSpeedInSecond(ATTACK_COOLDOWN_MAX)
 	, AttackSpeed(1.0f)
 	, EvasionGrowRate(0.1f)
 	, Evasion(1.0f)
@@ -213,20 +215,6 @@ void UAP_AttributeSet::OnRep_AttackSpeed()
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, AttackSpeed);
 }
 
-void UAP_AttributeSet::AdjustAttributeForMaxChange(FGameplayAttributeData& AffectedAttribute, const FGameplayAttributeData& MaxAttribute, float NewMaxValue, const FGameplayAttribute& AffectedAttributeProperty)
-{
-	UAbilitySystemComponent* AC = GetOwningAbilitySystemComponent();
-	const float CurrentMaxValue = MaxAttribute.GetCurrentValue();
-	if (!FMath::IsNearlyEqual(CurrentMaxValue, NewMaxValue) && AC)
-	{
-		// Change current value to maintain the current Val / Max percent
-		const float CurrentValue = AffectedAttribute.GetCurrentValue();
-		float NewDelta = (CurrentMaxValue > 0.f) ? (CurrentValue * NewMaxValue / CurrentMaxValue) - CurrentValue : NewMaxValue;
-
-		AC->ApplyModToAttributeUnsafe(AffectedAttributeProperty, EGameplayModOp::Additive, NewDelta);
-	}
-}
-
 void UAP_AttributeSet::InitFromMetaDataTable(const UDataTable* DataTable)
 {
 	Super::InitFromMetaDataTable(DataTable);
@@ -253,25 +241,55 @@ void UAP_AttributeSet::PrintDebug()
 
 void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
-	// This is called whenever attributes change, so for max health/mana we want to scale the current totals to match
 	Super::PreAttributeChange(Attribute, NewValue);
 	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange %s %f"), *Attribute.GetName(), NewValue);
-
 	UAbilitySystemComponent* AC = GetOwningAbilitySystemComponent();
+	if (!AC)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange AC null"));
+		return;
+	}
 	AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
 	if (!Owner->IsValidLowLevel())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner null, unbelievable"));
+		UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner is not an AAP_Hero"));
 		return;
 	}
+	AdjustAttribute(Attribute, NewValue);
 	Owner->OnStatsChanged(Attribute, NewValue);
+}
+
+void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, float& NewValue)
+{
 	if (Attribute == GetMaxHealthAttribute())
 	{
-		return AdjustAttributeForMaxChange(Health, MaxHealth, NewValue, GetHealthAttribute());
+		float Delta = GetMaxHealth() - GetHealth();
+		if (FMath::IsNearlyZero(Delta))
+		{
+			return;
+		}
+		float NewHealth = FMath::Clamp(NewValue - Delta, 1.0f, GetMaxHealth());
+		return SetHealth(NewHealth);
+	}
+	if (Attribute == GetHealthAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth());
+		return;
 	}
 	if (Attribute == GetMaxManaAttribute())
 	{
-		return AdjustAttributeForMaxChange(Mana, MaxMana, NewValue, GetManaAttribute());
+		float Delta = GetMaxMana() - GetMana();
+		if (FMath::IsNearlyZero(Delta))
+		{
+			return;
+		}
+		float NewMana = FMath::Clamp(NewValue - Delta, 1.0f, GetMaxMana());
+		return SetMana(NewMana);
+	}
+	if (Attribute == GetManaAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxMana());
+		return;
 	}
 	if (Attribute == GetStrengthAttribute())
 	{
@@ -291,8 +309,9 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 	}
 	if (Attribute == GetAttackSpeedAttribute())
 	{
-		AttackSpeedInSecond = FMath::Lerp(ATTACK_SPEED_SECOND_MIN, ATTACK_SPEED_SECOND_MAX,
-			FMath::Clamp(NewValue/ATTACK_SPEED_MAX, 0.0f, 1.0f));
+		float r = NewValue / ATTACK_SPEED_MAX;
+		r = FMath::Clamp(r, 0.0f, 1.0f);
+		AttackSpeedInSecond = FMath::Lerp(ATTACK_COOLDOWN_MAX, ATTACK_COOLDOWN_MIN, r);
 		return;
 	}
 	if (Attribute == GetExperienceAttribute())
@@ -389,6 +408,7 @@ void UAP_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 {
 	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PostGameplayEffectExecute, effect duration = %f"), Data.EffectSpec.Duration);
 	Super::PostGameplayEffectExecute(Data);
+	return;
 	FGameplayEffectContextHandle Context = Data.EffectSpec.GetContext();
 	UAbilitySystemComponent* Source = Context.GetOriginalInstigatorAbilitySystemComponent();
 
@@ -410,15 +430,15 @@ void UAP_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 		TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
 		TargetCharacter = Cast<AAP_Hero>(TargetActor);
 	}
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
-	{
-		// Handle other health changes such as from healing or direct modifiers
-		// First clamp it
-		SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
-	}
-	else if (Data.EvaluatedData.Attribute == GetManaAttribute())
-	{
-		// Clamp mana
-		SetMana(FMath::Clamp(GetMana(), 0.0f, GetMaxMana()));
-	}
+	//if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	//{
+	//	// Handle other health changes such as from healing or direct modifiers
+	//	// First clamp it
+	//	SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
+	//}
+	//else if (Data.EvaluatedData.Attribute == GetManaAttribute())
+	//{
+	//	// Clamp mana
+	//	SetMana(FMath::Clamp(GetMana(), 0.0f, GetMaxMana()));
+	//}
 }

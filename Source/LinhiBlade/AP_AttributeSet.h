@@ -26,15 +26,18 @@ public:
 
 	// Constructor and overrides
 	UAP_AttributeSet();
-	virtual void InitFromMetaDataTable(const UDataTable* DataTable) override;
-	virtual void PrintDebug() override;
-	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	void AdjustEnergy(float NewValue);
 	void AdjustVitality(float NewValue);
 	void AdjustAgility(float NewValue);
 	void AdjustStrength(float NewValue);
 	void AdjustAllCoreValue(float NewStr, float NewAgi, float NewVit, float NewEne);
 	void AdjustAllCoreValue();
+	void AdjustAttribute(const FGameplayAttribute& Attribute, float& NewValue);
+
+	virtual void InitFromMetaDataTable(const UDataTable* DataTable) override;
+	virtual void PrintDebug() override;
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -159,9 +162,6 @@ public:
 		
 
 protected:
-	/** Helper function to proportionally adjust the value of an attribute when it's associated max attribute changes. (i.e. When MaxHealth increases, Health increases by an amount that maintains the same percentage as before) */
-	void AdjustAttributeForMaxChange(FGameplayAttributeData& AffectedAttribute, const FGameplayAttributeData& MaxAttribute, float NewMaxValue, const FGameplayAttribute& AffectedAttributeProperty);
-
 	// These OnRep functions exist to make sure that the ability system internal representations are synchronized properly during replication
 	UFUNCTION()
 		virtual void OnRep_Strength();
@@ -220,6 +220,6 @@ protected:
 	UFUNCTION()
 		virtual void OnRep_DeathTime();
 	static const float ATTACK_SPEED_MAX;
-	static const float ATTACK_SPEED_SECOND_MIN;
-	static const float ATTACK_SPEED_SECOND_MAX;
+	static const float ATTACK_COOLDOWN_MIN;
+	static const float ATTACK_COOLDOWN_MAX;
 };
