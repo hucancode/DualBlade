@@ -26,7 +26,15 @@ public:
 
 	// Constructor and overrides
 	UAP_AttributeSet();
+	virtual void InitFromMetaDataTable(const UDataTable* DataTable) override;
+	virtual void PrintDebug() override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	void AdjustEnergy(float NewValue);
+	void AdjustVitality(float NewValue);
+	void AdjustAgility(float NewValue);
+	void AdjustStrength(float NewValue);
+	void AdjustAllCoreValue(float NewStr, float NewAgi, float NewVit, float NewEne);
+	void AdjustAllCoreValue();
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

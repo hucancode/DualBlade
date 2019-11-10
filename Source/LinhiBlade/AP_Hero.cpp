@@ -77,7 +77,7 @@ AAP_Hero::AAP_Hero()
 void AAP_Hero::BeginPlay()
 {
 	Super::BeginPlay();
-	//UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::BeginPlay(), AllStats=%x"), AllStats);
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::BeginPlay(), AllStats=%x"), AllStats);
 	SetupAbilities();
 	SetupStats();
 	AbilitySystem->AbilityCommittedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityCommitted);
@@ -87,17 +87,7 @@ void AAP_Hero::BeginPlay()
 	{
 		SpawnDefaultController();
 	}
-	if (HasMatchingGameplayTag(
-		FGameplayTag::RequestGameplayTag("Combat.Team_1")))
-	{
-		SetGenericTeamId((uint8)EGameTeam::Team1);
-	}
-	else if (HasMatchingGameplayTag(
-		FGameplayTag::RequestGameplayTag("Combat.Team_2")))
-	{
-		SetGenericTeamId((uint8)EGameTeam::Team2);
-	}
-	else
+	if (GetGenericTeamId() == FGenericTeamId::NoTeam)
 	{
 		SetGenericTeamId((uint8)EGameTeam::Neutral);
 	}
@@ -105,29 +95,34 @@ void AAP_Hero::BeginPlay()
 
 void AAP_Hero::SetupAbilities()
 {
-	if (Role == ROLE_Authority && !bAbilitiesInitialized)
+	if (!HasAuthority())
 	{
-		const int32 Level = 0;
-		if (!AbilitySet)
-		{
-			return;
-		}
-		GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability1));
-		GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability2));
-		GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability3));
-		GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability4));
-		GiveAbility(Level, AbilitySet->Find(
-			Job == EJob::Job1 ? EAbilitySlot::Ability5 :
-			Job == EJob::Job2 ? EAbilitySlot::Ability6 :
-			Job == EJob::Job3 ? EAbilitySlot::Ability7 :
-			Job == EJob::Job4 ? EAbilitySlot::Ability8 :
-			Job == EJob::Job5 ? EAbilitySlot::Ability9 : 
-			EAbilitySlot::Ability5));
-		GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability10));
-		GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability11));
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
-		bAbilitiesInitialized = true;
+		return;
 	}
+	if (bAbilitiesInitialized)
+	{
+		return;
+	}
+	if (!AbilitySet)
+	{
+		return;
+	}
+	const int32 Level = 0;
+	GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability1));
+	GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability2));
+	GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability3));
+	GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability4));
+	GiveAbility(Level, AbilitySet->Find(
+		Job == EJob::Job1 ? EAbilitySlot::Ability5 :
+		Job == EJob::Job2 ? EAbilitySlot::Ability6 :
+		Job == EJob::Job3 ? EAbilitySlot::Ability7 :
+		Job == EJob::Job4 ? EAbilitySlot::Ability8 :
+		Job == EJob::Job5 ? EAbilitySlot::Ability9 : 
+		EAbilitySlot::Ability5));
+	GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability10));
+	GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability11));
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
+	bAbilitiesInitialized = true;
 }
 
 bool AAP_Hero::IsBuffPresent(const TSubclassOf<UGameplayEffect> Effect)
@@ -150,23 +145,25 @@ void AAP_Hero::GiveExp(float Amount)
 
 void AAP_Hero::SetupStats()
 {
-	if (Role == ROLE_Authority && !bStatsInitialized)
+	if (!HasAuthority())
 	{
-		/*UE_LOG(LogTemp, Warning, TEXT("setup stats, starting..."));*/
-		FGameplayEffectContextHandle EffectContext = AbilitySystem->MakeEffectContext();
-		EffectContext.AddSourceObject(this);
-
-		FGameplayEffectSpecHandle NewHandle = AbilitySystem->MakeOutgoingSpec(BaseStats, 1.0f, EffectContext);
-		if (NewHandle.IsValid())
-		{
-			FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystem->ApplyGameplayEffectSpecToTarget(*NewHandle.Data.Get(), AbilitySystem);
-			bStatsInitialized = true;
-		}
+		return;
 	}
-	else
+	if (bStatsInitialized)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("won't setup stats because this is not server"));
+		return;
 	}
+	if (!StartingStats)
+	{
+		return;
+	}
+	if (!StartingStats->IsValidLowLevel())
+	{
+		return;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("setup stats, starting..."));
+	AllStats->InitFromMetaDataTable(StartingStats);
+	bStatsInitialized = true;
 }
 
 void AAP_Hero::GiveAbility(const int32& Level, TSubclassOf<UGameplayAbility> Ability)
@@ -184,24 +181,24 @@ void AAP_Hero::GiveAbility(const int32& Level, TSubclassOf<UGameplayAbility> Abi
 
 void AAP_Hero::RemoveAllAbilities()
 {
-	if (Role == ROLE_Authority)
+	if (!HasAuthority())
 	{
-		AbilityHandles.Empty();
-		AbilityStates.Empty();
-		AbilitySystem->CancelAllAbilities();
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, 
-			FGameplayTag::RequestGameplayTag("Event.TriggerPassiveDetach"), FGameplayEventData());
-		const auto AllAbility = AbilitySystem->GetActivatableAbilities();
-		for (auto Ability : AllAbility)
-		{
-			AllStats->SetAbilityPoint(AllStats->GetAbilityPoint() + Ability.Level);
-		}
-		AbilityPointChange.Broadcast();
-		// potential crash here (known bug, but still have't found any effective fix)
-		// basically you need to make sure no skill are in the middle of activation before remove them
-		AbilitySystem->ClearAllAbilities();
-		bAbilitiesInitialized = false;
+		return;
 	}
+	AbilityHandles.Empty();
+	AbilityStates.Empty();
+	AbilitySystem->CancelAllAbilities();
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, 
+		FGameplayTag::RequestGameplayTag("Event.TriggerPassiveDetach"), FGameplayEventData());
+	const auto AllAbility = AbilitySystem->GetActivatableAbilities();
+	for (auto Ability : AllAbility)
+	{
+		AllStats->SetAbilityPoint(AllStats->GetAbilityPoint() + Ability.Level);
+	}
+	// potential crash here (known bug, but still have't found any effective fix)
+	// basically you need to make sure no skill are in the middle of activation before remove them
+	AbilitySystem->ClearAllAbilities();
+	bAbilitiesInitialized = false;
 }
 
 int AAP_Hero::GetAbilityLevel(int AbilitySlot)
@@ -222,56 +219,62 @@ void AAP_Hero::SetAbilityLevel(int AbilitySlot, int Level)
 {
 	bool valid = AbilityHandles.IsValidIndex(AbilitySlot);
 	UE_LOG(LogTemp, Warning, TEXT("about to set ability level %d, valid=%d"), AbilitySlot, valid);
-	if (valid && AbilitySystem && bAbilitiesInitialized)
+	if (!valid || !AbilitySystem || !bAbilitiesInitialized)
 	{
-		auto Ability = AbilitySystem->FindAbilitySpecFromHandle(AbilityHandles[AbilitySlot]);
-		if (Ability)
-		{
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
-			Ability->Level = Level;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveDetach"), FGameplayEventData());
-		}
+		return;
 	}
+	auto Ability = AbilitySystem->FindAbilitySpecFromHandle(AbilityHandles[AbilitySlot]);
+	if (!Ability)
+	{
+		return;
+	}
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
+	Ability->Level = Level;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveDetach"), FGameplayEventData());
 }
 void AAP_Hero::ActivateAbility(int AbilitySlot)
 {
 	bool valid = AbilityHandles.IsValidIndex(AbilitySlot);
 	UE_LOG(LogTemp, Warning, TEXT("about to activate ability %d, valid=%d"), AbilitySlot, valid);
-	if (valid && AbilitySystem && bStatsInitialized && bAbilitiesInitialized)
+	if (!valid || !AbilitySystem || !bAbilitiesInitialized)
 	{
-		// If bAllowRemoteActivation is true, it will remotely activate local / server abilities, if false it will only try to locally activate the ability
-		bool ret = AbilitySystem->TryActivateAbility(AbilityHandles[AbilitySlot], true);
-		if (ret)
-		{
-			AbilityStates[AbilitySlot] = EAbilityState::Casting;
-			AbilityCastDelegate.Broadcast(AbilitySlot);
-		}
-		UE_LOG(LogTemp, Warning, TEXT("activate ability, ret = %d"), ret);
+		return;
 	}
+	// If bAllowRemoteActivation is true, it will remotely activate local / server abilities, if false it will only try to locally activate the ability
+	bool ret = AbilitySystem->TryActivateAbility(AbilityHandles[AbilitySlot], true);
+	if (ret)
+	{
+		AbilityStates[AbilitySlot] = EAbilityState::Casting;
+		AbilityChangedDelegate.Broadcast(EAbilityState::Casting, AbilitySlot);
+	}
+	UE_LOG(LogTemp, Warning, TEXT("activate ability, ret = %d"), ret);
 }
 
 void AAP_Hero::CancelAllAttack()
 {
-	if (AbilitySystem)
+	if (!AbilitySystem)
 	{
-		AbilitySystem->CancelAllAbilities();
-		UE_LOG(LogTemp, Warning, TEXT("cancel all ability"));
+		return;
 	}
+	AbilitySystem->CancelAllAbilities();
+	UE_LOG(LogTemp, Warning, TEXT("cancel all ability"));
 }
 
 void AAP_Hero::RemoveAllChannelingEffect()
 {
-	if (AbilitySystem)
+	if (!AbilitySystem)
 	{
-		if (ChannelEffectCount)
-		{
-			static FGameplayTagContainer Container =
-				FGameplayTag::RequestGameplayTag("Combat.Channeling").GetSingleTagContainer();
-			AbilitySystem->RemoveActiveEffectsWithGrantedTags(Container);
-			UE_LOG(LogTemp, Warning, TEXT("cancel all channeling ability"));
-			ChannelEffectCount = 0;
-		}
+		return;
 	}
+	if (!ChannelEffectCount)
+	{
+		return;
+	}
+	static FGameplayTagContainer Container =
+		FGameplayTag::RequestGameplayTag("Combat.Channeling").GetSingleTagContainer();
+	AbilitySystem->RemoveActiveEffectsWithGrantedTags(Container);
+	UE_LOG(LogTemp, Warning, TEXT("cancel all channeling ability"));
+	ChannelEffectCount = 0;
 }
 
 float AAP_Hero::GetAbilityCooldown(int AbilitySlot)
@@ -384,12 +387,12 @@ void AAP_Hero::PossessedBy(AController * NewController)
 void AAP_Hero::OnRep_Controller()
 {
 	Super::OnRep_Controller();
-
 	// Our controller changed, must update ActorInfo on AbilitySystemComponent
-	if (AbilitySystem)
+	if (!AbilitySystem)
 	{
-		AbilitySystem->RefreshAbilityActorInfo();
+		return;
 	}
+	AbilitySystem->RefreshAbilityActorInfo();
 }
 
 void AAP_Hero::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -470,7 +473,7 @@ void AAP_Hero::OnAbilityActivated(UGameplayAbility * Ability)
 		return;
 	}
 	AbilityStates[Index] = EAbilityState::Casting;
-	AbilityCastDelegate.Broadcast(Index);
+	AbilityChangedDelegate.Broadcast(EAbilityState::Casting, Index);
 }
 
 void AAP_Hero::OnAbilityCommitted(UGameplayAbility* Ability)
@@ -482,33 +485,30 @@ void AAP_Hero::OnAbilityCommitted(UGameplayAbility* Ability)
 	{
 		return;
 	}
-	if (!Ability->CheckCooldown(Handle, Ability->GetCurrentActorInfo()))
+	if (Ability->CheckCooldown(Handle, Ability->GetCurrentActorInfo()))
 	{
-		AbilityStates[Index] = EAbilityState::OnCooldown;
-		AbilityGoneCooldown.Broadcast(Index);
-		FGameplayEffectQuery query;
-		query.EffectDefinition = Ability->GetCooldownGameplayEffect()->GetClass();
-		TArray<FActiveGameplayEffectHandle> Handles = AbilitySystem->GetActiveEffects(query);
-		UE_LOG(LogTemp, Warning, TEXT("setting up delegate..."));
-		if (Handles.Num())
-		{
-			FActiveGameplayEffectHandle CooldownEffect = Handles.Last();
-			FOnActiveGameplayEffectRemoved_Info* Delegate = AbilitySystem->OnGameplayEffectRemoved_InfoDelegate(CooldownEffect);
-			if (Delegate)
-			{
-				Delegate->AddUObject(this, &AAP_Hero::OnAbilityOffCooldown);
-				UE_LOG(LogTemp, Warning, TEXT("delegate setup successful"));
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("can't find delegate, setup unsuccessful"));
-			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("can't find cooldown effect, setup unsuccessful"));
-		}
+		return;
 	}
+	AbilityStates[Index] = EAbilityState::OnCooldown;
+	AbilityChangedDelegate.Broadcast(EAbilityState::OnCooldown, Index);
+	FGameplayEffectQuery query;
+	query.EffectDefinition = Ability->GetCooldownGameplayEffect()->GetClass();
+	TArray<FActiveGameplayEffectHandle> Handles = AbilitySystem->GetActiveEffects(query);
+	UE_LOG(LogTemp, Warning, TEXT("setting up delegate..."));
+	if (!Handles.Num())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("can't find cooldown effect, setup unsuccessful"));
+		return;
+	}
+	FActiveGameplayEffectHandle CooldownEffect = Handles.Last();
+	FOnActiveGameplayEffectRemoved_Info* Delegate = AbilitySystem->OnGameplayEffectRemoved_InfoDelegate(CooldownEffect);
+	if (!Delegate)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("can't find delegate, setup unsuccessful"));
+		return;
+	}
+	Delegate->AddUObject(this, &AAP_Hero::OnAbilityOffCooldown);
+	UE_LOG(LogTemp, Warning, TEXT("delegate setup successful"));
 }
 
 void AAP_Hero::OnAbilityEnded(UGameplayAbility* Ability)
@@ -520,16 +520,14 @@ void AAP_Hero::OnAbilityEnded(UGameplayAbility* Ability)
 	{
 		return;
 	}
-	if (!Ability->CheckCooldown(Handle, Ability->GetCurrentActorInfo()))
+	if (Ability->CheckCooldown(Handle, Ability->GetCurrentActorInfo()))
 	{
 		AbilityStates[Index] = EAbilityState::OnCooldown;
-		//AbilityGoneCooldown.Broadcast(Index);
+		//AbilityChangedDelegate.Broadcast(EAbilityState::OnCooldown, Index);
+		return;
 	}
-	else
-	{
-		AbilityStates[Index] = EAbilityState::Ready;
-		AbilityOffCooldown.Broadcast(Index);
-	}
+	AbilityStates[Index] = EAbilityState::Ready;
+	AbilityChangedDelegate.Broadcast(EAbilityState::Ready, Index);
 }
 
 void AAP_Hero::OnAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplayEffectRemovalInfo)
@@ -545,7 +543,7 @@ void AAP_Hero::OnAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplay
 		return;
 	}
 	AbilityStates[(int)Slot] = EAbilityState::Ready;
-	AbilityOffCooldown.Broadcast((int)Slot);
+	AbilityChangedDelegate.Broadcast(EAbilityState::Ready, (int)Slot);
 }
 
 void AAP_Hero::GetAllUnitInRange(TArray<AAP_Hero*>& Result, float Radius)
@@ -554,58 +552,58 @@ void AAP_Hero::GetAllUnitInRange(TArray<AAP_Hero*>& Result, float Radius)
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(SphereTargetingOverlap), false);
 	TArray<FOverlapResult> Overlaps;
 	FCollisionShape Shape = FCollisionShape::MakeSphere(Radius);
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetAllUnitInRange %s"), *GetActorLocation().ToString());
 	GetWorld()->OverlapMultiByChannel(Overlaps, GetActorLocation(), FQuat::Identity, Channel, Shape, Params);
 #if ENABLE_DRAW_DEBUG
 	DrawDebugSphere(GetWorld(), GetActorLocation(), Radius, 10, FColor::Green, false, 1.5f);
 #endif
 	for (auto Overlap: Overlaps)
 	{
-		if (Overlap.bBlockingHit)
+		if (!Overlap.bBlockingHit)
 		{
-			auto Hero = Cast<AAP_Hero>(Overlap.Actor);
-			if (Hero)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetAllUnitInRange add %s"), *Hero->GetName());
-				Result.Add(Hero);
-			}
+			continue;
 		}
+		auto Unit = Cast<AAP_Hero>(Overlap.Actor);
+		if (!Unit)
+		{
+			continue;
+		}
+		Result.AddUnique(Unit);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetAllUnitInRange got %d"), Result.Num());
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetAllUnitInRange, at %s,  got %d"), *GetActorLocation().ToString(), Result.Num());
 }
 
-void AAP_Hero::HandleHealthChanged(float NewValue)
+void AAP_Hero::GetAllEnemyInRange(TArray<AAP_Hero*>& Result, float Radius)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::HandleHealthChanged %f"), NewValue);
-	if (!bStatsInitialized)
+	GetAllUnitInRange(Result, Radius);
+	for (int i = Result.Num() - 1; i >= 0; i--)
 	{
-		return;
+		auto Unit = Result[i];
+		if (GetTeamAttitudeTowards(*Unit) == ETeamAttitude::Hostile)
+		{
+			continue;
+		}
+		Result.RemoveAt(i);
 	}
-	OnHealthChanged(NewValue, GetHealthPercent());
-	if (!HasAuthority())
+}
+
+void AAP_Hero::GetAllAllyInRange(TArray<AAP_Hero*>& Result, float Radius)
+{
+	GetAllUnitInRange(Result, Radius);
+	for (int i = Result.Num() - 1; i >= 0; i--)
 	{
-		return;
+		auto Unit = Result[i];
+		if (GetTeamAttitudeTowards(*Unit) == ETeamAttitude::Friendly)
+		{
+			continue;
+		}
+		Result.RemoveAt(i);
 	}
-	if (NewValue > 0.0f)
-	{
-		return;
-	}
-	GrantBountyExp();
-	EnterDeath();
 }
 
 void AAP_Hero::GrantBountyExp()
 {
 	TArray<AAP_Hero*> Enemies;
-	GetAllUnitInRange(Enemies, EXP_AQUIRING_RANGE);
-	for (int i = Enemies.Num() - 1; i >= 0; i--)
-	{
-		auto Enemy = Enemies[i];
-		if (GetTeamAttitudeTowards(*Enemy) != ETeamAttitude::Hostile)
-		{
-			Enemies.RemoveAt(i);
-		}
-	}
+	GetAllEnemyInRange(Enemies, EXP_AQUIRING_RANGE);
 	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GrantBountyExp got %d enemies"), Enemies.Num());
 	if (!Enemies.Num())
 	{
@@ -620,13 +618,69 @@ void AAP_Hero::GrantBountyExp()
 	}
 }
 
+void AAP_Hero::OnStatsChanged(const FGameplayAttribute& Attribute, float NewValue)
+{
+	// at this moment, AllStats->Get<attribute name here>() still return the old value, use with caution
+	if (Attribute == UAP_AttributeSet::GetHealthAttribute())
+	{
+		return HandleHealthChanged(NewValue);
+	}
+	if (Attribute == UAP_AttributeSet::GetManaAttribute())
+	{
+		return HandleManaChanged(NewValue);
+	}
+	if (Attribute == UAP_AttributeSet::GetLevelAttribute())
+	{
+		return HandleLevelChanged(NewValue);
+	}
+	if (Attribute == UAP_AttributeSet::GetMaxHealthAttribute())
+	{
+		return HandleHealthChanged(NewValue);
+	}
+	if (Attribute == UAP_AttributeSet::GetExperienceAttribute())
+	{
+		return HandleExpChanged(NewValue);
+	}
+	if (Attribute == UAP_AttributeSet::GetMoveSpeedAttribute())
+	{
+		return HandleMoveSpeedChanged(NewValue);
+	}
+	if (Attribute == UAP_AttributeSet::GetTurnRateAttribute())
+	{
+		return HandleTurnRateChanged(NewValue);
+	}
+	StatChangedDelegate.Broadcast(Attribute, NewValue);
+}
+
+void AAP_Hero::HandleHealthChanged(float NewValue)
+{
+	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::HandleHealthChanged %f"), NewValue);
+	if (!bStatsInitialized)
+	{
+		return;
+	}
+	float m = AllStats->GetMaxHealth();
+	OnHealthChanged(NewValue, NewValue / (m > 0.0f ? m : 1.0f));
+	if (!HasAuthority())
+	{
+		return;
+	}
+	if (NewValue > 0.0f)
+	{
+		return;
+	}
+	GrantBountyExp();
+	EnterDeath();
+}
+
 void AAP_Hero::HandleManaChanged(float NewValue)
 {
 	if (!bStatsInitialized)
 	{
 		return;
 	}
-	OnManaChanged(NewValue, GetManaPercent());
+	float m = AllStats->GetMaxMana();
+	OnManaChanged(NewValue, NewValue / (m > 0.0f ? m : 1.0f));
 }
 void AAP_Hero::HandleLevelChanged(float NewValue)
 {
@@ -757,8 +811,6 @@ bool AAP_Hero::LevelUpAbility(int AbilitySlot)
 	}
 	AllStats->SetAbilityPoint(Potential - 1.0f);
 	Ability.Level += 1;
-	AbilityPointChange.Broadcast();
-	AbilityLevelUp.Broadcast(AbilitySlot);
 	return true;
 }
 
@@ -801,6 +853,7 @@ void AAP_Hero::Respawn_Implementation()
 void AAP_Hero::EnterDeath_Implementation()
 {
 	AbilitySystem->CancelAllAbilities();
+	// TODO: remove all timed buff
 	GetCharacterMovement()->StopMovementImmediately();
 	float DeathTime = AllStats->GetDeathTime();
 	OnDeath(DeathTime);

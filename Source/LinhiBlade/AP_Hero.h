@@ -49,8 +49,8 @@ class LINHIBLADE_API AAP_Hero : public ACharacter, public IAbilitySystemInterfac
 {
 	GENERATED_BODY()
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStatEventDelegate);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityEventDelegate, int, AbilitySlot);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FStatEventDelegate, FGameplayAttribute, Attribute, float, Value);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAbilityEventDelegate, EAbilityState, NewState, int, AbilitySlot);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnGameplayEffectAppliedDelegate, UAbilitySystemComponent*, Source, const FGameplayEffectSpec&, Spec, FActiveGameplayEffectHandle, Handle);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGameplayEffectRemovedDelegate, const FGameplayEffectRemovalInfo&, Info);
 
@@ -141,6 +141,12 @@ protected:
 		bool IsAbilityBusy(int AbilitySlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void GetAllUnitInRange(TArray<AAP_Hero*>& Result, float Radius);
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void GetAllEnemyInRange(TArray<AAP_Hero*>& Result, float Radius);
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void GetAllAllyInRange(TArray<AAP_Hero*>& Result, float Radius);
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void GrantBountyExp();
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
@@ -226,11 +232,7 @@ protected:
 	UFUNCTION(Category = "Abilities")
 		void OnAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplayEffectRemovalInfo);
 	
-
-	void GetAllEnemyInRange();
-	void GrantBountyExp();
-
-	// Called from RPGAllStats, these call BP events above
+	void OnStatsChanged(const FGameplayAttribute& Attribute, float NewValue);
 	void HandleHealthChanged(float NewValue);
 	void HandleManaChanged(float NewValue);
 	void HandleLevelChanged(float NewValue);
@@ -247,35 +249,14 @@ protected:
 	 * @param AbilitySlot Which skill are being cast
 	 */
 	UPROPERTY(BlueprintAssignable)
-		FAbilityEventDelegate AbilityCastDelegate;
-	/**
-	 * Called when a spell gone cooldown
-	 *
-	 * @param AbilitySlot Which skill are being cast
-	 */
-	UPROPERTY(BlueprintAssignable)
-		FAbilityEventDelegate AbilityGoneCooldown;
+		FAbilityEventDelegate AbilityChangedDelegate;
 	/**
 	 * Called when a spell off cooldown
 	 *
 	 * @param AbilitySlot Which skill is just off cooldown
 	 */
 	UPROPERTY(BlueprintAssignable)
-		FAbilityEventDelegate AbilityOffCooldown;
-	/**
-	 * Called when a spell off cooldown
-	 *
-	 * @param AbilitySlot Which skill is just off cooldown
-	 */
-	UPROPERTY(BlueprintAssignable)
-		FAbilityEventDelegate AbilityLevelUp;
-	/**
-	 * Called when a spell off cooldown
-	 *
-	 * @param AbilitySlot Which skill is just off cooldown
-	 */
-	UPROPERTY(BlueprintAssignable)
-		FStatEventDelegate AbilityPointChange;
+		FStatEventDelegate StatChangedDelegate;
 
 	/**
 	 * Called when a gamplay effect applied to self
@@ -313,7 +294,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Abilities)
 		EJob Job;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Abilities)
-		TSubclassOf<UGameplayEffect> BaseStats;
+		UDataTable* StartingStats;
 
 	UPROPERTY()
 		TArray<FGameplayAbilitySpecHandle> AbilityHandles;
