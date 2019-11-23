@@ -264,11 +264,7 @@ void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, floa
 	if (Attribute == GetMaxHealthAttribute())
 	{
 		float Delta = GetMaxHealth() - GetHealth();
-		if (FMath::IsNearlyZero(Delta))
-		{
-			return;
-		}
-		float NewHealth = FMath::Clamp(NewValue - Delta, 1.0f, GetMaxHealth());
+		float NewHealth = FMath::Clamp(NewValue - Delta, 1.0f, NewValue);
 		return SetHealth(NewHealth);
 	}
 	if (Attribute == GetHealthAttribute())
@@ -279,11 +275,7 @@ void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, floa
 	if (Attribute == GetMaxManaAttribute())
 	{
 		float Delta = GetMaxMana() - GetMana();
-		if (FMath::IsNearlyZero(Delta))
-		{
-			return;
-		}
-		float NewMana = FMath::Clamp(NewValue - Delta, 1.0f, GetMaxMana());
+		float NewMana = FMath::Clamp(NewValue - Delta, 1.0f, NewValue);
 		return SetMana(NewMana);
 	}
 	if (Attribute == GetManaAttribute())
