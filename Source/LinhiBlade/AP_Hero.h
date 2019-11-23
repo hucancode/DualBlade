@@ -14,6 +14,7 @@
 #include <AP_GameplayAbilitySet.h>
 #include "AP_Hero.generated.h"
 
+#define UE_LOG_FAST(Format, ...) UE_LOG(LogTemp, Display, Format, ##__VA_ARGS__)
 
 UENUM(BlueprintType)
 enum class EAbilityState : uint8
@@ -353,6 +354,10 @@ public:
 	// blueprint proxy function
 	UFUNCTION(BlueprintCallable)
 		bool IsAlly();
+	UFUNCTION(BlueprintCallable)
+		bool IsHostile();
+	UFUNCTION(BlueprintCallable)
+		bool IsDead() const;
 	UFUNCTION(BlueprintCallable)
 		void SetJob(EJob NewJob);
 };

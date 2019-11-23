@@ -64,7 +64,7 @@ AAP_Hero::AAP_Hero()
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
 	AllStats = CreateDefaultSubobject<UAP_AttributeSet>(TEXT("AllStats"));;
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::AAP_Hero(), AllStats=%x"), AllStats);
+	UE_LOG_FAST(TEXT("AAP_Hero::AAP_Hero(), AllStats=%x"), AllStats);
 
 	AbilitySet = 0;
 	bStatsInitialized = false;
@@ -77,7 +77,7 @@ AAP_Hero::AAP_Hero()
 void AAP_Hero::BeginPlay()
 {
 	Super::BeginPlay();
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::BeginPlay(), AllStats=%x"), AllStats);
+	UE_LOG_FAST(TEXT("AAP_Hero::BeginPlay(), AllStats=%x"), AllStats);
 	SetupAbilities();
 	SetupStats();
 	AbilitySystem->AbilityCommittedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityCommitted);
@@ -139,7 +139,7 @@ int AAP_Hero::GetBuffStack(const TSubclassOf<UGameplayEffect> Effect)
 
 void AAP_Hero::GiveExp(float Amount)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GiveExp %f"), Amount);
+	UE_LOG_FAST(TEXT("AAP_Hero::GiveExp %f"), Amount);
 	AllStats->SetExperience(AllStats->GetExperience() + Amount);
 }
 
@@ -161,7 +161,7 @@ void AAP_Hero::SetupStats()
 	{
 		return;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("setup stats, starting..."));
+	UE_LOG_FAST(TEXT("setup stats, starting..."));
 	AllStats->InitFromMetaDataTable(StartingStats);
 	bStatsInitialized = true;
 }
@@ -170,7 +170,7 @@ void AAP_Hero::GiveAbility(const int32& Level, TSubclassOf<UGameplayAbility> Abi
 {
 	if (!Ability->IsValidLowLevel())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GiveAbility failed"));
+		UE_LOG_FAST(TEXT("AAP_Hero::GiveAbility failed"));
 		return;
 	}
 	FGameplayAbilitySpecHandle handle = AbilitySystem->GiveAbility(
@@ -218,7 +218,7 @@ int AAP_Hero::GetAbilityLevel(int AbilitySlot)
 void AAP_Hero::SetAbilityLevel(int AbilitySlot, int Level)
 {
 	bool valid = AbilityHandles.IsValidIndex(AbilitySlot);
-	UE_LOG(LogTemp, Warning, TEXT("about to set ability level %d, valid=%d"), AbilitySlot, valid);
+	UE_LOG_FAST(TEXT("about to set ability level %d, valid=%d"), AbilitySlot, valid);
 	if (!valid || !AbilitySystem || !bAbilitiesInitialized)
 	{
 		return;
@@ -235,7 +235,7 @@ void AAP_Hero::SetAbilityLevel(int AbilitySlot, int Level)
 void AAP_Hero::ActivateAbility(int AbilitySlot)
 {
 	bool valid = AbilityHandles.IsValidIndex(AbilitySlot);
-	UE_LOG(LogTemp, Warning, TEXT("about to activate ability %d, valid=%d"), AbilitySlot, valid);
+	UE_LOG_FAST(TEXT("about to activate ability %d, valid=%d"), AbilitySlot, valid);
 	if (!valid || !AbilitySystem || !bAbilitiesInitialized)
 	{
 		return;
@@ -247,7 +247,7 @@ void AAP_Hero::ActivateAbility(int AbilitySlot)
 		AbilityStates[AbilitySlot] = EAbilityState::Casting;
 		AbilityChangedDelegate.Broadcast(EAbilityState::Casting, AbilitySlot);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("activate ability, ret = %d"), ret);
+	UE_LOG_FAST(TEXT("activate ability, ret = %d"), ret);
 }
 
 void AAP_Hero::CancelAllAttack()
@@ -257,7 +257,7 @@ void AAP_Hero::CancelAllAttack()
 		return;
 	}
 	AbilitySystem->CancelAllAbilities();
-	UE_LOG(LogTemp, Warning, TEXT("cancel all ability"));
+	UE_LOG_FAST(TEXT("cancel all ability"));
 }
 
 void AAP_Hero::RemoveAllChannelingEffect()
@@ -273,7 +273,7 @@ void AAP_Hero::RemoveAllChannelingEffect()
 	static FGameplayTagContainer Container =
 		FGameplayTag::RequestGameplayTag("Combat.Channeling").GetSingleTagContainer();
 	AbilitySystem->RemoveActiveEffectsWithGrantedTags(Container);
-	UE_LOG(LogTemp, Warning, TEXT("cancel all channeling ability"));
+	UE_LOG_FAST(TEXT("cancel all channeling ability"));
 	ChannelEffectCount = 0;
 }
 
@@ -283,16 +283,16 @@ float AAP_Hero::GetAbilityCooldown(int AbilitySlot)
 		&& AbilityHandles.IsValidIndex(AbilitySlot)
 		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(AbilitySlot)
 		&& AbilitySystem->GetActivatableAbilities()[AbilitySlot].GetAbilityInstances().Num();
-	UE_LOG(LogTemp, Warning, TEXT("about to check ability cooldown %d, valid=%d"), AbilitySlot, valid);
+	UE_LOG_FAST(TEXT("about to check ability cooldown %d, valid=%d"), AbilitySlot, valid);
 	float ret = 0.0f;
 	if (!valid)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("valid false return %f"), ret);
+		UE_LOG_FAST(TEXT("valid false return %f"), ret);
 		return ret;
 	}
 	UGameplayAbility* ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot].GetAbilityInstances().Last();
 	ret = ability->GetCooldownTimeRemaining();
-	UE_LOG(LogTemp, Warning, TEXT("return %f"), ret);
+	UE_LOG_FAST(TEXT("return %f"), ret);
 	return ret;
 }
 
@@ -302,11 +302,11 @@ float AAP_Hero::GetAbilityCooldownPercent(int AbilitySlot)
 		&& AbilityHandles.IsValidIndex(AbilitySlot)
 		&& AbilitySystem->GetActivatableAbilities().IsValidIndex(AbilitySlot)
 		&& AbilitySystem->GetActivatableAbilities()[AbilitySlot].GetAbilityInstances().Num();
-	UE_LOG(LogTemp, Warning, TEXT("about to check ability cooldown percent %d, valid=%d"), AbilitySlot, valid);
+	UE_LOG_FAST(TEXT("about to check ability cooldown percent %d, valid=%d"), AbilitySlot, valid);
 	float ret = 0.0f;
 	if (!valid)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("valid false return %f"), ret);
+		UE_LOG_FAST(TEXT("valid false return %f"), ret);
 		return ret;
 	}
 	UGameplayAbility* ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot].GetAbilityInstances().Last();
@@ -316,11 +316,11 @@ float AAP_Hero::GetAbilityCooldownPercent(int AbilitySlot)
 	ability->GetCooldownTimeRemainingAndDuration(handle, ability->GetCurrentActorInfo(), remaining, duration);
 	if (duration == 0.0f)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("duration = 0, return %f"), ret);
+		UE_LOG_FAST(TEXT("duration = 0, return %f"), ret);
 		return ret;
 	}
 	ret = remaining / duration;
-	UE_LOG(LogTemp, Warning, TEXT("return %f"), ret);
+	UE_LOG_FAST(TEXT("return %f"), ret);
 	return ret;
 }
 
@@ -424,19 +424,19 @@ void AAP_Hero::SetGenericTeamId(const FGenericTeamId& Id)
 		Id == (uint8)EGameTeam::Team2 ? T2 :
 		TN);
 	TeamId = Id;
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::SetGenericTeamId %d"), (uint8)TeamId);
+	UE_LOG_FAST(TEXT("AAP_Hero::SetGenericTeamId %d"), (uint8)TeamId);
 	OnTeamUpdated(Id);
 }
 
 FGenericTeamId AAP_Hero::GetGenericTeamId() const
 {
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetGenericTeamId %d"), (uint8)TeamId);
+	UE_LOG_FAST(TEXT("AAP_Hero::GetGenericTeamId %d"), (uint8)TeamId);
 	return TeamId;
 }
 
 void AAP_Hero::OnGameplayEffectAppliedToSelf(UAbilitySystemComponent * Source, const FGameplayEffectSpec & Spec, FActiveGameplayEffectHandle Handle)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::OnGameplayEffectAppliedToSelf duration = %f"), Spec.GetDuration());
+	UE_LOG_FAST(TEXT("AAP_Hero::OnGameplayEffectAppliedToSelf duration = %f"), Spec.GetDuration());
 	GameplayEffectAppliedToSelf.Broadcast(Source, Spec, Handle);
 	FOnActiveGameplayEffectRemoved_Info* Delegate = AbilitySystem->OnGameplayEffectRemoved_InfoDelegate(Handle);
 	if (Delegate)
@@ -465,7 +465,7 @@ void AAP_Hero::OnGameplayEffectRemovedFromSelf(const FGameplayEffectRemovalInfo 
 
 void AAP_Hero::OnAbilityActivated(UGameplayAbility * Ability)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::OnAbilityActivated %s"), *Ability->GetFName().ToString());
+	UE_LOG_FAST(TEXT("AAP_Hero::OnAbilityActivated %s"), *Ability->GetFName().ToString());
 	FGameplayAbilitySpecHandle Handle = Ability->GetCurrentAbilitySpecHandle();
 	int Index = AbilityHandles.Find(Handle);
 	if (Index == INDEX_NONE)
@@ -478,7 +478,7 @@ void AAP_Hero::OnAbilityActivated(UGameplayAbility * Ability)
 
 void AAP_Hero::OnAbilityCommitted(UGameplayAbility* Ability)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::OnAbilityCommitted %s"), *Ability->GetFName().ToString());
+	UE_LOG_FAST(TEXT("AAP_Hero::OnAbilityCommitted %s"), *Ability->GetFName().ToString());
 	FGameplayAbilitySpecHandle Handle = Ability->GetCurrentAbilitySpecHandle();
 	int Index = AbilityHandles.Find(Handle);
 	if (Index == INDEX_NONE)
@@ -494,26 +494,26 @@ void AAP_Hero::OnAbilityCommitted(UGameplayAbility* Ability)
 	FGameplayEffectQuery query;
 	query.EffectDefinition = Ability->GetCooldownGameplayEffect()->GetClass();
 	TArray<FActiveGameplayEffectHandle> Handles = AbilitySystem->GetActiveEffects(query);
-	UE_LOG(LogTemp, Warning, TEXT("setting up delegate..."));
+	UE_LOG_FAST(TEXT("setting up delegate..."));
 	if (!Handles.Num())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("can't find cooldown effect, setup unsuccessful"));
+		UE_LOG_FAST(TEXT("can't find cooldown effect, setup unsuccessful"));
 		return;
 	}
 	FActiveGameplayEffectHandle CooldownEffect = Handles.Last();
 	FOnActiveGameplayEffectRemoved_Info* Delegate = AbilitySystem->OnGameplayEffectRemoved_InfoDelegate(CooldownEffect);
 	if (!Delegate)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("can't find delegate, setup unsuccessful"));
+		UE_LOG_FAST(TEXT("can't find delegate, setup unsuccessful"));
 		return;
 	}
 	Delegate->AddUObject(this, &AAP_Hero::OnAbilityOffCooldown);
-	UE_LOG(LogTemp, Warning, TEXT("delegate setup successful"));
+	UE_LOG_FAST(TEXT("delegate setup successful"));
 }
 
 void AAP_Hero::OnAbilityEnded(UGameplayAbility* Ability)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::OnAbilityEnded %s"), *Ability->GetFName().ToString());
+	UE_LOG_FAST(TEXT("AAP_Hero::OnAbilityEnded %s"), *Ability->GetFName().ToString());
 	FGameplayAbilitySpecHandle Handle = Ability->GetCurrentAbilitySpecHandle();
 	int Index = AbilityHandles.Find(Handle);
 	if (Index == INDEX_NONE)
@@ -532,14 +532,14 @@ void AAP_Hero::OnAbilityEnded(UGameplayAbility* Ability)
 
 void AAP_Hero::OnAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplayEffectRemovalInfo)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::OnAbilityOffCooldown"));
+	UE_LOG_FAST(TEXT("AAP_Hero::OnAbilityOffCooldown"));
 	// this is not the actual ability we are concerning, just a default ability instance
 	// weird but i don't know why
 	const UGameplayAbility* AbilityInfo = InGameplayEffectRemovalInfo.EffectContext.GetAbility();
 	EAbilitySlot Slot = AbilitySet->Find(AbilityInfo);
 	if (Slot == EAbilitySlot::Ability_Invalid)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("an ability just gone off cooldown, but it seems doesn't belong to this actor %s/%s"), *GetFName().ToString(), *AbilityInfo->GetFName().ToString());
+		UE_LOG_FAST(TEXT("an ability just gone off cooldown, but it seems doesn't belong to this actor %s/%s"), *GetFName().ToString(), *AbilityInfo->GetFName().ToString());
 		return;
 	}
 	AbilityStates[(int)Slot] = EAbilityState::Ready;
@@ -569,7 +569,7 @@ void AAP_Hero::GetAllUnitInRange(TArray<AAP_Hero*>& Result, float Radius)
 		}
 		Result.AddUnique(Unit);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GetAllUnitInRange, at %s,  got %d"), *GetActorLocation().ToString(), Result.Num());
+	UE_LOG_FAST(TEXT("AAP_Hero::GetAllUnitInRange, at %s,  got %d"), *GetActorLocation().ToString(), Result.Num());
 }
 
 void AAP_Hero::GetAllEnemyInRange(TArray<AAP_Hero*>& Result, float Radius)
@@ -604,7 +604,7 @@ void AAP_Hero::GrantBountyExp()
 {
 	TArray<AAP_Hero*> Enemies;
 	GetAllEnemyInRange(Enemies, EXP_AQUIRING_RANGE);
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::GrantBountyExp got %d enemies"), Enemies.Num());
+	UE_LOG_FAST(TEXT("AAP_Hero::GrantBountyExp got %d enemies"), Enemies.Num());
 	if (!Enemies.Num())
 	{
 		return;
@@ -654,7 +654,7 @@ void AAP_Hero::OnStatsChanged(const FGameplayAttribute& Attribute, float NewValu
 
 void AAP_Hero::HandleHealthChanged(float NewValue)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::HandleHealthChanged %f"), NewValue);
+	UE_LOG_FAST(TEXT("AAP_Hero::HandleHealthChanged %f"), NewValue);
 	if (!bStatsInitialized)
 	{
 		return;
@@ -696,13 +696,13 @@ void AAP_Hero::HandleExpChanged(float NewValue)
 	{
 		return;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("exp changed, exp now is %f/%f"), NewValue, AllStats->GetRequiredExp());
+	UE_LOG_FAST(TEXT("exp changed, exp now is %f/%f"), NewValue, AllStats->GetRequiredExp());
 	OnExpChanged(NewValue, GetExpPercent());
 }
 
 void AAP_Hero::HandleMoveSpeedChanged(float NewValue)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::HandleMoveSpeedChanged"));
+	UE_LOG_FAST(TEXT("AAP_Hero::HandleMoveSpeedChanged"));
 	if (!bStatsInitialized)
 	{
 		return;
@@ -712,7 +712,7 @@ void AAP_Hero::HandleMoveSpeedChanged(float NewValue)
 
 void AAP_Hero::HandleTurnRateChanged(float NewValue)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::HandleTurnRateChanged"));
+	UE_LOG_FAST(TEXT("AAP_Hero::HandleTurnRateChanged"));
 	if (!bStatsInitialized)
 	{
 		return;
@@ -783,7 +783,7 @@ bool AAP_Hero::CanActivateAbility(int AbilitySlot) const
 		&& AbilityHandles.IsValidIndex(AbilitySlot);
 	if (!valid)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AAP_Hero::CanActivateAbility false because invalid index"));
+		UE_LOG_FAST(TEXT("AAP_Hero::CanActivateAbility false because invalid index"));
 		return false;
 	}
 	auto Ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot].Ability;
@@ -847,6 +847,7 @@ void AAP_Hero::Respawn_Implementation()
 {
 	AllStats->SetHealth(AllStats->GetMaxHealth());
 	AllStats->SetMana(AllStats->GetMaxMana());
+	SpawnDefaultController();
 	OnRespawn();
 }
 
@@ -856,11 +857,23 @@ void AAP_Hero::EnterDeath_Implementation()
 	// TODO: remove all timed buff
 	GetCharacterMovement()->StopMovementImmediately();
 	float DeathTime = AllStats->GetDeathTime();
+	if (GetController() && GetController()->IsValidLowLevel())
+	{
+		auto AIController = Cast<AAIController>(GetController());
+		AIController->UnPossess();
+		AIController->Destroy();
+	}
+	else
+	{
+		UE_LOG_FAST(TEXT("found no controller, weird"));
+	}
 	OnDeath(DeathTime);
 	FTimerHandle DeathTimerHandle;
 	GetWorldTimerManager().SetTimer(DeathTimerHandle,
 		this, &AAP_Hero::Respawn, DeathTime, false, -1.0f);
 	SelectHero(false);
+	
+	
 }
 
 bool AAP_Hero::IsVisibleToTeam(FGameplayTag TeamTag)
@@ -911,10 +924,11 @@ void AAP_Hero::SetLogicalController(AController* NewController)
 {
 	LogicalController = NewController;
 	auto RTSController = Cast<AAP_RTSPlayerController>(NewController);
-	if (RTSController->IsValidLowLevel())
+	if (!RTSController->IsValidLowLevel())
 	{
-		SetTeam(RTSController->Team);
+		return;
 	}
+	SetTeam(RTSController->Team);
 }
 
 void AAP_Hero::SetTeam(const EGameTeam Id)
@@ -936,6 +950,22 @@ bool AAP_Hero::IsAlly()
 		return Me->GetAttituteTowardPlayer(ThisUnit) == ETeamAttitude::Type::Friendly;
 	}
 	return false;
+}
+
+bool AAP_Hero::IsHostile()
+{
+	auto Me = Cast<AAP_RTSPlayerController>(GetWorld()->GetFirstPlayerController());
+	auto ThisUnit = Cast<AAP_RTSPlayerController>(LogicalController);
+	if (Me && ThisUnit)
+	{
+		return Me->GetAttituteTowardPlayer(ThisUnit) == ETeamAttitude::Type::Hostile;
+	}
+	return false;
+}
+
+bool AAP_Hero::IsDead() const
+{
+	return AllStats->GetHealth() <= 0.0f;
 }
 
 void AAP_Hero::SetJob(EJob NewJob)

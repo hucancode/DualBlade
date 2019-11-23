@@ -12,7 +12,8 @@ enum class EGameTeam : uint8
 {
 	Neutral,
 	Team1,
-	Team2
+	Team2,
+	NoTeam
 };
 
 UCLASS()
