@@ -7,6 +7,7 @@
 #include "Templates/SubclassOf.h"
 #include "Engine/DataAsset.h"
 #include "Abilities/GameplayAbility.h"
+#include "AP_GameplayItem.h"
 #include "AP_GameplayAbilitySet.generated.h"
 
 class UAbilitySystemComponent;
@@ -19,37 +20,7 @@ class UAbilitySystemComponent;
  *	E.g., "Ability1" is the command string that is bound to AbilitySystemComponent::ActivateAbility(1). The Meta data only *suggests*
  *	that you are binding "Ability1" to LMB by default in your projects DefaultInput.ini.
  */
-UENUM(BlueprintType)
-enum EAbilitySlot
-{
-	Ability1 = 0			UMETA(DisplayName = "Ability1 (A)"),
-	Ability2				UMETA(DisplayName = "Ability2 (Q)"),
-	Ability3				UMETA(DisplayName = "Ability3 (W)"),
-	Ability4				UMETA(DisplayName = "Ability4 (E)"),
-	Ability5				UMETA(DisplayName = "Ability5 (R1)"),
-	Ability6				UMETA(DisplayName = "Ability6 (R2)"),
-	Ability7				UMETA(DisplayName = "Ability7 (R3)"),
-	Ability8				UMETA(DisplayName = "Ability8 (R4)"),
-	Ability9				UMETA(DisplayName = "Ability9 (R5)"),
-	Ability10				UMETA(DisplayName = "Ability10 (D)"),
-	Ability11				UMETA(DisplayName = "Ability11 (F)"),
-	Ability_Invalid			UMETA(DisplayName = "Ability_Invalid"),
-};
 
-/**
- *	Example struct that pairs a enum input command to a GameplayAbilityClass.6
- */
-USTRUCT()
-struct FGameplayAbilitySlotInfo
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY(EditAnywhere, Category = BindInfo)
-	TEnumAsByte<EAbilitySlot>	Slot;
-
-	UPROPERTY(EditAnywhere, Category = BindInfo)
-	TSubclassOf<UGameplayAbility>	GameplayAbilityClass;
-};
 
 /**
  *	This is an example DataAsset that could be used for defining a set of abilities to give to an AbilitySystemComponent and bind to an input command.
@@ -57,17 +28,15 @@ struct FGameplayAbilitySlotInfo
  *	
  *	
  */
+
 UCLASS()
 class LINHIBLADE_API UAP_GameplayAbilitySet : public UDataAsset
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	UAP_GameplayAbilitySet();
 public:
 	UPROPERTY(EditAnywhere, Category = AbilitySet)
-	TMap< TEnumAsByte<EAbilitySlot>, TSubclassOf<UGameplayAbility>>	Abilities;
-	EAbilitySlot Find(const UGameplayAbility* Ability);
-	TSubclassOf<UGameplayAbility> Find(EAbilitySlot Slot);
+		TArray<TSubclassOf<UGameplayAbility> > Abilities;
 };

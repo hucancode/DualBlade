@@ -22,8 +22,10 @@ UCLASS()
 class LINHIBLADE_API UAP_AttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
-public:
 
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAttributeEventDelegate, const FGameplayAttribute, Attribute, float, NewValue);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGenericEventDelegate);
+public:
 	// Constructor and overrides
 	UAP_AttributeSet();
 	void AdjustEnergy(float NewValue);
@@ -33,13 +35,25 @@ public:
 	void AdjustAllCoreValue(float NewStr, float NewAgi, float NewVit, float NewEne);
 	void AdjustAllCoreValue();
 	void AdjustAttribute(const FGameplayAttribute& Attribute, float& NewValue);
-
+public:
+	void GiveExp(float Amount);
+	float GetExpPercent();
+	float GetHealthPercent();
+	float GetManaPercent();
+public:
 	virtual void InitFromMetaDataTable(const UDataTable* DataTable) override;
 	virtual void PrintDebug() override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UPROPERTY()
+	FAttributeEventDelegate OnAttributeChanged;
+	UPROPERTY()
+	FGenericEventDelegate OnLevelUp; 
+	UPROPERTY()
+	FGenericEventDelegate OnDeath;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Core", ReplicatedUsing = OnRep_Strength)
 		FGameplayAttributeData Strength;
@@ -159,8 +173,11 @@ public:
 		UPROPERTY(BlueprintReadOnly, Category = "Items", ReplicatedUsing = OnRep_Armor)
 		FGameplayAttributeData Armor;
 	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Armor)
-		
-
+		/** Base Damage is divided by DefensePower to get actual damage done, so 1.0 means no bonus */
+		UPROPERTY(BlueprintReadOnly, Category = "Items", ReplicatedUsing = OnRep_Gold)
+		FGameplayAttributeData Gold;
+	ATTRIBUTE_ACCESSORS(UAP_AttributeSet, Gold)
+	
 protected:
 	// These OnRep functions exist to make sure that the ability system internal representations are synchronized properly during replication
 	UFUNCTION()
@@ -186,6 +203,8 @@ protected:
 		virtual void OnRep_AbilityPoint();
 	UFUNCTION()
 		virtual void OnRep_StatPoint();
+	UFUNCTION()
+		virtual void OnRep_DeathTime();
 
 	UFUNCTION()
 		virtual void OnRep_PhysicalPower();
@@ -218,7 +237,8 @@ protected:
 	UFUNCTION()
 		virtual void OnRep_Armor();
 	UFUNCTION()
-		virtual void OnRep_DeathTime();
+		virtual void OnRep_Gold();
+	
 	static const float ATTACK_SPEED_MAX;
 	static const float ATTACK_COOLDOWN_MIN;
 	static const float ATTACK_COOLDOWN_MAX;

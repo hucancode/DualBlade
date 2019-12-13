@@ -6,8 +6,6 @@
 #include "Engine/Engine.h"
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
-#include "AP_Hero.h"
-
 
 const float UAP_AttributeSet::ATTACK_SPEED_MAX = 2000.0f;
 // at max attack speed, time between atk is 0.1s
@@ -54,6 +52,7 @@ UAP_AttributeSet::UAP_AttributeSet()
 	, MaxManaGrowRate(1.0f)
 	, MaxMana(1.f)
 	, Armor(1.0f)
+	, Gold(0.0f)
 {
 }
 
@@ -131,9 +130,9 @@ void UAP_AttributeSet::OnRep_Armor()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Armor);
 }
-void UAP_AttributeSet::OnRep_DeathTime()
+void UAP_AttributeSet::OnRep_Gold()
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, DeathTime);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Gold);
 }
 
 void UAP_AttributeSet::OnRep_Evasion()
@@ -204,6 +203,10 @@ void UAP_AttributeSet::OnRep_StatPoint()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, StatPoint);
 }
+void UAP_AttributeSet::OnRep_DeathTime()
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, DeathTime);
+}
 
 void UAP_AttributeSet::OnRep_PhysicalPower()
 {
@@ -213,6 +216,16 @@ void UAP_AttributeSet::OnRep_PhysicalPower()
 void UAP_AttributeSet::OnRep_AttackSpeed()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, AttackSpeed);
+}
+
+float UAP_AttributeSet::GetHealthPercent()
+{
+	return 0.0f;
+}
+
+float UAP_AttributeSet::GetManaPercent()
+{
+	return 0.0f;
 }
 
 void UAP_AttributeSet::InitFromMetaDataTable(const UDataTable* DataTable)
@@ -243,20 +256,8 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 {
 	Super::PreAttributeChange(Attribute, NewValue);
 	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange %s %f"), *Attribute.GetName(), NewValue);
-	UAbilitySystemComponent* AC = GetOwningAbilitySystemComponent();
-	if (!AC)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange AC null"));
-		return;
-	}
-	AAP_Hero* Owner = Cast<AAP_Hero>(AC->GetOwner());
-	if (!Owner->IsValidLowLevel())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange owner is not an AAP_Hero"));
-		return;
-	}
 	AdjustAttribute(Attribute, NewValue);
-	Owner->OnStatsChanged(Attribute, NewValue);
+	OnAttributeChanged.Broadcast(Attribute, NewValue);
 }
 
 void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, float& NewValue)
@@ -270,6 +271,10 @@ void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, floa
 	if (Attribute == GetHealthAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth());
+		if (NewValue <= 0.0f)
+		{
+			OnDeath.Broadcast();
+		}
 		return;
 	}
 	if (Attribute == GetMaxManaAttribute())
@@ -315,6 +320,7 @@ void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, floa
 		}
 		SetExperience(0.0f);
 		SetLevel(GetLevel() + 1.0f);
+		OnLevelUp.Broadcast();
 	}
 	if (Attribute == GetLevelAttribute())
 	{
@@ -328,6 +334,16 @@ void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, floa
 		SetDeathTime(NewDeathTime);
 		return;
 	}
+}
+
+void UAP_AttributeSet::GiveExp(float Amount)
+{
+	SetExperience(GetExperience() + Amount);
+}
+
+float UAP_AttributeSet::GetExpPercent()
+{
+	return 0.0f;
 }
 
 void UAP_AttributeSet::AdjustEnergy(float NewValue)
@@ -400,37 +416,4 @@ void UAP_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbac
 {
 	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PostGameplayEffectExecute, effect duration = %f"), Data.EffectSpec.Duration);
 	Super::PostGameplayEffectExecute(Data);
-	return;
-	FGameplayEffectContextHandle Context = Data.EffectSpec.GetContext();
-	UAbilitySystemComponent* Source = Context.GetOriginalInstigatorAbilitySystemComponent();
-
-	// Compute the delta between old and new, if it is available
-	float DeltaValue = 0;
-	if (Data.EvaluatedData.ModifierOp == EGameplayModOp::Type::Additive)
-	{
-		// If this was additive, store the raw delta value to be passed along later
-		DeltaValue = Data.EvaluatedData.Magnitude;
-	}
-
-	// Get the Target actor, which should be our owner
-	AActor* TargetActor = nullptr;
-	AController* TargetController = nullptr;
-	AAP_Hero* TargetCharacter = nullptr;
-	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
-	{
-		TargetActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
-		TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
-		TargetCharacter = Cast<AAP_Hero>(TargetActor);
-	}
-	//if (Data.EvaluatedData.Attribute == GetHealthAttribute())
-	//{
-	//	// Handle other health changes such as from healing or direct modifiers
-	//	// First clamp it
-	//	SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
-	//}
-	//else if (Data.EvaluatedData.Attribute == GetManaAttribute())
-	//{
-	//	// Clamp mana
-	//	SetMana(FMath::Clamp(GetMana(), 0.0f, GetMaxMana()));
-	//}
 }

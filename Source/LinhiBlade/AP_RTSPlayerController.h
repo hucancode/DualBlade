@@ -4,9 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "AP_Hero.h"
 #include "AP_GameMode.h"
-
+#include "GameplayTagContainer.h"
 #include "AP_RTSPlayerController.generated.h"
 
 /**

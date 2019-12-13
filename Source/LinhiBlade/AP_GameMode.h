@@ -10,10 +10,10 @@
 UENUM(BlueprintType)
 enum class EGameTeam : uint8
 {
-	Neutral,
-	Team1,
-	Team2,
-	NoTeam
+	Neutral = 0,
+	Team1 = 1,
+	Team2 = 2,
+	NoTeam = 3
 };
 
 UCLASS()

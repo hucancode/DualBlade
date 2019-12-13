@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Abilities/GameplayAbility.h"
 #include "DrawDebugHelpers.h"
+#include "AbilitySystemInterface.h"
 
 void AAP_TargetActor_Unit::BeginPlay()
 {
@@ -43,11 +44,11 @@ void AAP_TargetActor_Unit::ConfirmTargetingAndContinue()
 		FHitResult HitResult = PerformTrace();
 		TWeakObjectPtr<AActor> HitActor = HitResult.Actor;
 
-		AAP_Hero* Hero = Cast<AAP_Hero>(HitActor);
-		if (Hero)
+		auto unit = Cast<IAbilitySystemInterface>(HitActor);
+		if (unit)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("ConfirmTargetingAndContinue(), Nice, hit a hero"));
-			HitActors.Add(Hero);
+			HitActors.Add(HitActor);
 			Handle = StartLocation.MakeTargetDataHandleFromActors(HitActors);
 		}
 		else
@@ -107,25 +108,25 @@ void AAP_TargetActor_Unit::Tick(float DeltaTime)
 			}
 		}
 #endif // ENABLE_DRAW_DEBUG
-		TWeakObjectPtr<AActor> HitActor = HitResult.Actor;
+		AActor* HitActor = HitResult.Actor.Get();
 
-		AAP_Hero* Hero = Cast<AAP_Hero>(HitActor);
-		if (Hero)
+		auto unit = Cast<IAbilitySystemInterface>(HitActor);
+		if (unit)
 		{
 			//UE_LOG(LogTemp, Warning, TEXT("Tick(), Nice, hit a hero"));
-			if (LastUnitHighlighted && LastUnitHighlighted != Hero)
+			if (LastUnitHighlighted && LastUnitHighlighted != HitActor)
 			{
 				//UE_LOG(LogTemp, Warning, TEXT("Tick(), turn off highlight for last hero"));
-				LastUnitHighlighted->GetMesh()->SetRenderCustomDepth(false);
-				LastUnitHighlighted = Hero;
+				//LastUnitHighlighted->GetMesh()->SetRenderCustomDepth(false);
+				LastUnitHighlighted = HitActor;
 				//UE_LOG(LogTemp, Warning, TEXT("Tick(), turn on highlight for current hero"));
-				Hero->GetMesh()->SetRenderCustomDepth(true);
+				//unit->GetMesh()->SetRenderCustomDepth(true);
 			}
 			else
 			{
 				//UE_LOG(LogTemp, Warning, TEXT("Tick(), turn on highlight for newly found hero"));
-				Hero->GetMesh()->SetRenderCustomDepth(true);
-				LastUnitHighlighted = Hero;
+				//HitActor->GetMesh()->SetRenderCustomDepth(true);
+				LastUnitHighlighted = HitActor;
 			}
 		}
 		else
@@ -148,7 +149,7 @@ void AAP_TargetActor_Unit::TurnOffTargetHighlight()
 	if (LastUnitHighlighted)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("TurnOffTargetHighlight(), turn off highlight for last hero"));
-		LastUnitHighlighted->GetMesh()->SetRenderCustomDepth(false);
+		//LastUnitHighlighted->GetMesh()->SetRenderCustomDepth(false);
 		LastUnitHighlighted = nullptr;
 	}
 }

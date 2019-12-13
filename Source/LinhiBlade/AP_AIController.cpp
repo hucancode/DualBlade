@@ -2,7 +2,6 @@
 
 
 #include "AP_AIController.h"
-#include <LinhiBlade\AP_Hero.h>
 #include <LinhiBlade\AP_GameMode.h>
 
 void AAP_AIController::SetGenericTeamId(const FGenericTeamId& Id)

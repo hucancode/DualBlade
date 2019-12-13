@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbilityTargetActor.h"
-#include "AP_Hero.h"
 #include "AP_TargetActor_Unit.generated.h"
 
 /**
@@ -31,5 +30,5 @@ protected:
 	void TurnOffTargetHighlight();
 	FHitResult PerformTrace();
 protected:
-	AAP_Hero* LastUnitHighlighted;
+	AActor* LastUnitHighlighted;
 };
