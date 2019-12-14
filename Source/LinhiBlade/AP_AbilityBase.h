@@ -50,8 +50,4 @@ public:
 public:
 	UFUNCTION(BlueprintCallable)
 		ECollisionChannel GetTraceChannel();
-	UFUNCTION(BlueprintCallable)
-		bool LineTraceUnit(FVector Start, FVector Direction, AActor*& OutActor);
-	UFUNCTION(BlueprintCallable)
-		bool LineTraceGround(FVector Start, FVector Direction, FVector& OutLocation);
 };

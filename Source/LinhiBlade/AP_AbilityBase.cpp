@@ -25,7 +25,7 @@ ECollisionChannel UAP_AbilityBase::GetTraceChannel()
 		ret = ECollisionChannel::ECC_GameTraceChannel3; //Floor
 		break;
 	case ETargetingPolicy::UnitAll:
-		ret = ECollisionChannel::ECC_GameTraceChannel11; //UnitAll
+		ret = ECollisionChannel::ECC_GameTraceChannel11; //Unit_All
 		break;
 	case ETargetingPolicy::UnitAlly:
 		// need to calculate this on run time
@@ -45,33 +45,3 @@ ECollisionChannel UAP_AbilityBase::GetTraceChannel()
 	return ret;
 }
 
-bool UAP_AbilityBase::LineTraceUnit(FVector Start, FVector Direction, AActor*& OutActor)
-{
-	if (TargetingPolicy < ETargetingPolicy::UnitAll)
-	{
-		return false;
-	}
-	FHitResult HitResult;
-	FVector End = Start + Direction * RAY_LENGTH;
-	ECollisionChannel Channel = GetTraceChannel();
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(GetOwningActorFromActorInfo());
-	bool hit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, Channel, Params);
-	OutActor = HitResult.GetActor();
-	return hit;
-}
-
-bool UAP_AbilityBase::LineTraceGround(FVector Start, FVector Direction, FVector& OutLocation)
-{
-	if (TargetingPolicy != ETargetingPolicy::Ground)
-	{
-		return false;
-	}
-	FHitResult HitResult;
-	FVector End = Start + Direction * RAY_LENGTH;
-	ECollisionChannel Channel = GetTraceChannel();
-	FCollisionQueryParams Params;
-	bool hit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, Channel, Params);
-	OutLocation = HitResult.Location;
-	return hit;
-}

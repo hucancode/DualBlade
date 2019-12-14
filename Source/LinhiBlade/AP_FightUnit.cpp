@@ -6,6 +6,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 AAP_FightUnit::AAP_FightUnit()
@@ -240,4 +241,55 @@ void AAP_FightUnit::Respawn()
 
 void AAP_FightUnit::HandleLevelUp()
 {
+}
+
+
+bool AAP_FightUnit::LineTraceUnit(int AbilitySlot, FVector Start, FVector Direction, AActor*& OutActor)
+{
+	auto Ability = AbilityUser->GetAbility(AbilitySlot);
+	if (!Ability)
+	{
+		return false;
+	}
+	if (Ability->TargetingPolicy < ETargetingPolicy::UnitAll)
+	{
+		return false;
+	}
+	FHitResult HitResult;
+	FVector End = Start + Direction * RAY_LENGTH;
+	ECollisionChannel Channel = Ability->GetTraceChannel();
+	FCollisionQueryParams Params = FCollisionQueryParams::DefaultQueryParam;
+	if (Ability->TargetingPolicy == ETargetingPolicy::UnitAllyExcludeSelf)
+	{
+		Params.AddIgnoredActor(this);
+	}
+	TArray<FHitResult> HitResults;
+	bool hit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, Channel, Params);
+	OutActor = HitResult.GetActor();
+	auto world = GetWorld();
+	UE_LOG(LogTemp, Warning, TEXT("UAP_AbilityBase::LineTraceUnit Start (%s) End (%s) Channel %d, hit %d"), *Start.ToString(), *End.ToString(), Channel, hit);
+#ifdef ENABLE_DRAW_DEBUG
+	FVector EndPoint = HitResult.Actor.IsValid() ? HitResult.ImpactPoint : HitResult.TraceEnd;
+	DrawDebugSphere(GetWorld(), EndPoint, 16, 10, FColor::Green, false);
+#endif // ENABLE_DRAW_DEBUG
+	return hit;
+}
+
+bool AAP_FightUnit::LineTraceGround(int AbilitySlot, FVector Start, FVector Direction, FVector& OutLocation)
+{
+	auto Ability = AbilityUser->GetAbility(AbilitySlot);
+	if (!Ability)
+	{
+		return false;
+	}
+	if (Ability->TargetingPolicy != ETargetingPolicy::Ground)
+	{
+		return false;
+	}
+	FHitResult HitResult;
+	FVector End = Start + Direction * RAY_LENGTH;
+	ECollisionChannel Channel = Ability->GetTraceChannel();
+	bool hit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, Channel);
+	OutLocation = HitResult.Location;
+	return hit;
 }

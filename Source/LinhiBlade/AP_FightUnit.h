@@ -60,9 +60,14 @@ public:
 	void						HandleCloakStarted(ECloakingLevel Level);
 	void						HandleCloakFinished(ECloakingLevel Level);
 	void						HandleDeath();
+	void						HandleLevelUp();
+	UFUNCTION(BlueprintCallable)
 	void						GrantBountyExp();
 	void						Respawn();
-	void						HandleLevelUp();
+	UFUNCTION(BlueprintCallable)
+	bool						LineTraceUnit(int AbilitySlot, FVector Start, FVector Direction, AActor*& OutActor);
+	UFUNCTION(BlueprintCallable)
+	bool						LineTraceGround(int AbilitySlot, FVector Start, FVector Direction, FVector& OutLocation);
 public:
 	FDeathEventDelegate			OnDeath;
 	FRespawnEventDelegate		OnRespawn;
