@@ -291,5 +291,8 @@ bool AAP_FightUnit::LineTraceGround(int AbilitySlot, FVector Start, FVector Dire
 	ECollisionChannel Channel = Ability->GetTraceChannel();
 	bool hit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, Channel);
 	OutLocation = HitResult.Location;
+#ifdef ENABLE_DRAW_DEBUG
+	DrawDebugSphere(GetWorld(), OutLocation, 16, 10, FColor::Green, false);
+#endif // ENABLE_DRAW_DEBUG
 	return hit;
 }
