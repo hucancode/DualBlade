@@ -64,8 +64,9 @@ AActor* UItemUser::FindShop()
 	TArray<FOverlapResult> Overlaps;
 	auto Location = GetOwner()->GetActorLocation();
 	auto Rotation = FQuat::Identity;
-	auto Channel = ECollisionChannel::ECC_GameTraceChannel12;
+	auto Channel = ECollisionChannel::ECC_Pawn;
 	auto Shape = FCollisionShape::MakeSphere(BuyRange);
+	auto ObjectToScan = FCollisionObjectQueryParams(Channel);
 	if (LastSeenShop && LastSeenShop->IsValidLowLevel())
 	{
 		if (FVector::Dist(Location, LastSeenShop->GetActorLocation()) <= BuyRange)
@@ -73,7 +74,8 @@ AActor* UItemUser::FindShop()
 			return LastSeenShop;
 		}
 	}
-	GetWorld()->OverlapMultiByChannel(Overlaps, Location, Rotation, Channel, Shape);
+	//GetWorld()->OverlapMultiByChannel(Overlaps, Location, Rotation, Channel, Shape);
+	GetWorld()->OverlapMultiByObjectType(Overlaps, Location, Rotation, ObjectToScan, Shape);
 	AActor* shop = nullptr;
 	float d, dmin = 9999999.0f;
 	for (auto Overlap : Overlaps)
