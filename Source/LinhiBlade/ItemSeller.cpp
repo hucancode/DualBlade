@@ -2,6 +2,7 @@
 
 
 #include "ItemSeller.h"
+#include "ItemUser.h"
 
 // Sets default values for this component's properties
 UItemSeller::UItemSeller()
@@ -32,37 +33,29 @@ void UItemSeller::TickComponent(float DeltaTime, ELevelTick TickType, FActorComp
 	// ...
 }
 
-FShopItem UItemSeller::SellItem(int ShopSlot)
+bool UItemSeller::SellItem(int ShopSlot, UItemUser* User, TSubclassOf<UAP_GameplayItem>& OutItem)
 {
-	if (!Items.IsValidIndex(ShopSlot))
+	if (!Items->IsValidIndex(ShopSlot))
 	{
-		return FShopItem();
+		return false;
 	}
-	if (!Items[ShopSlot].Stock)
+	if (!Items->StockAt(ShopSlot))
 	{
-		return FShopItem();
+		return false;
 	}
-	Items[ShopSlot].Stock -= 1;
-	return Items[ShopSlot];
+	auto price = Items->PriceAt(ShopSlot);
+	if (User->GetGold() < Items->PriceAt(ShopSlot))
+	{
+		return false;
+	}
+	User->GiveGold(-price);
+	OutItem = Items->Take(ShopSlot);
+	return true;
 }
 
-void UItemSeller::RetriveItem(TSubclassOf<UAP_GameplayItem> Item)
+void UItemSeller::ReturnItem(TSubclassOf<UAP_GameplayItem> Item, UItemUser* User)
 {
-	for (size_t i = 0; i < Items.Num(); i++)
-	{
-		if (Items[i].Item->GetClass() == Item)
-		{
-			Items[i].Stock++;
-		}
-	}
+	int price = Item.GetDefaultObject()->Price * RESELL_FALL_OFF_RATE;
+	User->GiveGold(price);
+	Items->Give(Item);
 }
-
-void UItemSeller::IncreaseStock(int ShopSlot)
-{
-	if (!Items.IsValidIndex(ShopSlot))
-	{
-		return;
-	}
-	Items[ShopSlot].Stock++;
-}
-

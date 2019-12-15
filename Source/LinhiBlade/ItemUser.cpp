@@ -2,6 +2,7 @@
 
 
 #include "ItemUser.h"
+#include "ItemSeller.h"
 
 #ifndef UE_LOG_FAST
 #define UE_LOG_FAST(Format, ...) UE_LOG(LogTemp, Display, Format, ##__VA_ARGS__)
@@ -23,6 +24,7 @@ void UItemUser::BeginPlay()
 {
 	Super::BeginPlay();
 	Gold = 0;
+	LastSeenShop = nullptr;
 	// ...
 	
 }
@@ -36,20 +38,65 @@ void UItemUser::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 	// ...
 }
 
-void UItemUser::BuyItem(UItemSeller* Seller, int Slot)
+void UItemUser::BuyItem_Implementation(UItemSeller* Seller, int Slot)
 {
-	auto item = Seller->SellItem(Slot);
-	if (item.Stock < 0)
+	auto my_location = GetOwner()->GetActorLocation();
+	auto shop_location = Seller->GetOwner()->GetActorLocation();
+	if (FVector::Dist(my_location, shop_location) > BuyRange)
 	{
 		return;
 	}
-	if (item.Price > Gold)
+	BuyItemUncheck(Seller, Slot);
+}
+
+void UItemUser::BuyItemUncheck(UItemSeller* Seller, int Slot)
+{
+	TSubclassOf<UAP_GameplayItem> item;
+	if(!Seller->SellItem(Slot, this, item))
 	{
-		Seller->IncreaseStock(Slot);
 		return;
 	}
-	GiveGold(-item.Price);
-	GiveItem(item.Item->GetClass());
+	GiveItem(item);
+}
+
+AActor* UItemUser::FindShop()
+{
+	TArray<FOverlapResult> Overlaps;
+	auto Location = GetOwner()->GetActorLocation();
+	auto Rotation = FQuat::Identity;
+	auto Channel = ECollisionChannel::ECC_GameTraceChannel12;
+	auto Shape = FCollisionShape::MakeSphere(BuyRange);
+	if (LastSeenShop && LastSeenShop->IsValidLowLevel())
+	{
+		if (FVector::Dist(Location, LastSeenShop->GetActorLocation()) <= BuyRange)
+		{
+			return LastSeenShop;
+		}
+	}
+	GetWorld()->OverlapMultiByChannel(Overlaps, Location, Rotation, Channel, Shape);
+	AActor* shop = nullptr;
+	float d, dmin = 9999999.0f;
+	for (auto Overlap : Overlaps)
+	{
+		d = FVector::Dist(GetOwner()->GetActorLocation(), Overlap.Actor->GetActorLocation());
+		if (d > dmin)
+		{
+			continue;
+		}
+		if (!Overlap.Actor->GetComponentByClass(UItemSeller::StaticClass()))
+		{
+			continue;
+		}
+		dmin = d;
+		shop = Overlap.Actor.Get();
+	}
+	LastSeenShop = shop;
+	return shop;
+}
+
+int UItemUser::GetGold()
+{
+	return Gold;
 }
 
 void UItemUser::GiveGold_Implementation(int Amount)
@@ -134,7 +181,9 @@ void UItemUser::GiveItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
 		return;
 	}
 	UAP_GameplayItem* item = Item.GetDefaultObject();
-	StashItems.Add(item);
+	UAP_GameplayItem* ret = NewObject<UAP_GameplayItem>(GetOwner(), item->Name, RF_NoFlags, item);
+	ret->CurrentStack = 1;
+	StashItems.Add(ret);
 }
 
 void UItemUser::EquipItem_Implementation(int Slot)

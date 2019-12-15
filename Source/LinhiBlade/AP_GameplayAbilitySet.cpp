@@ -2,7 +2,3 @@
 
 #include "AP_GameplayAbilitySet.h"
 #include "AbilitySystemComponent.h"
-
-UAP_GameplayAbilitySet::UAP_GameplayAbilitySet()
-{
-}

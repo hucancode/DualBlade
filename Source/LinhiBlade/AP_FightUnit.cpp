@@ -26,10 +26,17 @@ AAP_FightUnit::AAP_FightUnit()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	GetCapsuleComponent()->InitCapsuleSize(5.f, 90.0f);
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Rotate character to moving direction
+	//GetCharacterMovement()->bOrientRotationToMovement = true; // Rotate character to moving direction
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
+	GetCharacterMovement()->SetUpdateNavAgentWithOwnersCollisions(false);
+	GetCharacterMovement()->NavAgentProps.AgentHeight = 90.0f;
+	GetCharacterMovement()->NavAgentProps.AgentRadius = 5.0f;
+	bUseControllerRotationPitch = 0;
+	bUseControllerRotationYaw = 0;
+	bUseControllerRotationRoll = 0;
 }
 
 // Called when the game starts or when spawned

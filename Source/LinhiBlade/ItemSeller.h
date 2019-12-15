@@ -5,26 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "LinhiBlade/AP_GameplayItem.h"
+#include "AP_GameplayItemSet.h"
 #include "ItemSeller.generated.h"
 
-USTRUCT(BlueprintType)
-struct FShopItem
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-		UAP_GameplayItem* Item;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-		int Price;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-		int Stock;
-	FShopItem()
-	{
-		Stock = -1;
-		Price = 0;
-	}
-};
-
+#define RESELL_FALL_OFF_RATE 0.5f
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class LINHIBLADE_API UItemSeller : public UActorComponent
 {
@@ -41,13 +25,11 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-		TArray<FShopItem> Items;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UAP_GameplayItemSet* Items;
 	UFUNCTION(BlueprintCallable)
-		FShopItem SellItem(int ShopSlot);
+		bool SellItem(int ShopSlot, class UItemUser* User, TSubclassOf<UAP_GameplayItem>& OutItem);
 	UFUNCTION()
-		void RetriveItem(TSubclassOf<UAP_GameplayItem> Item);
-	UFUNCTION()
-		void IncreaseStock(int ShopSlot);
+		void ReturnItem(TSubclassOf<UAP_GameplayItem> Item, class UItemUser* User);
 };

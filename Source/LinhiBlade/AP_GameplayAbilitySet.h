@@ -35,8 +35,6 @@ class LINHIBLADE_API UAP_GameplayAbilitySet : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	UAP_GameplayAbilitySet();
-public:
 	UPROPERTY(EditAnywhere, Category = AbilitySet)
 		TArray<TSubclassOf<UGameplayAbility> > Abilities;
 };

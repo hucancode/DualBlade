@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "LinhiBlade/AP_GameplayItem.h"
-#include "ItemSeller.h"
 #include "ItemUser.generated.h"
 
 #define EQUIPMENT_SLOT_COUNT 6
@@ -30,12 +29,15 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		int Gold;
-
 	UPROPERTY()
+		AActor* LastSeenShop;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float BuyRange;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		TArray<UAP_GameplayItem*> StashItems;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		TArray<UAP_GameplayItem*> EquipedItems;
 
 	UPROPERTY(BlueprintAssignable)
@@ -47,28 +49,36 @@ public:
 	UPROPERTY(BlueprintAssignable)
 		FItemEventDelegate OnItemRemoved;
 	
-	UFUNCTION(BlueprintCallable)
-		void BuyItem(UItemSeller* Seller, int Slot);
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+		void BuyItem(class UItemSeller* Seller, int Slot);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
+	UFUNCTION()
+		void BuyItemUncheck(UItemSeller* Seller, int Slot);
+
+	UFUNCTION(BlueprintPure)
+		AActor* FindShop();
+
+	UFUNCTION(BlueprintPure)
+		int GetGold();
+
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
 		void GiveGold(int Amount);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
 		void GiveItem(TSubclassOf<UAP_GameplayItem> Item);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
 		void EquipItem(int Slot);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
 		void GiveEquipItem(TSubclassOf<UAP_GameplayItem> Item);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
 		void UnequipItem(int Slot);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
 		void RemoveItem(int Slot);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
 		void UnequipRemoveItem(int Slot);
-
 };

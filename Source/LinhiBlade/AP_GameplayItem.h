@@ -27,8 +27,19 @@ UCLASS(BlueprintType, Blueprintable)
 class LINHIBLADE_API UAP_GameplayItem : public UObject
 {
 	GENERATED_BODY()
-
 public:
+	UAP_GameplayItem() :
+		Price(0),
+		MaxStack(1),
+		CurrentStack(0),
+		Icon(nullptr),
+		Category(EItemCategory::Consumable)
+	{}
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FName Name;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		uint8 Price;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		uint8 MaxStack;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
