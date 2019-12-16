@@ -82,27 +82,27 @@ public:
 		void HandleAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplayEffectRemovalInfo);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		int GetAbilityCount() const;
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	UFUNCTION(BlueprintPure, Category = "Abilities")
 		UAP_AbilityBase* GetAbility(int AbilitySlot) const;
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	UFUNCTION(BlueprintPure, Category = "Abilities")
 		bool CanActivateAbility(int AbilitySlot) const;
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		bool LevelUpAbility(int AbilitySlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		int ResetAbilityLevel(int AbilitySlot);
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	UFUNCTION(BlueprintPure, Category = "Abilities")
 		float GetAbilityCooldown(int AbilitySlot);
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	UFUNCTION(BlueprintPure, Category = "Abilities")
 		float GetAbilityCooldownPercent(int AbilitySlot);
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	UFUNCTION(BlueprintPure, Category = "Abilities")
 		EAbilityState GetAbilityState(int AbilitySlot);
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	UFUNCTION(BlueprintPure, Category = "Abilities")
 		bool GetAbilityAutoCastEnabled(int AbilitySlot);
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	UFUNCTION(BlueprintPure, Category = "Abilities")
 		bool IsAbilityBusy(int AbilitySlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void RemoveAllAbilities();
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	UFUNCTION(BlueprintPure, Category = "Abilities")
 		int GetAbilityLevel(int AbilitySlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void ActivateAbility(int AbilitySlot);
