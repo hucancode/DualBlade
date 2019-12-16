@@ -17,6 +17,7 @@ class LINHIBLADE_API UItemUser : public UActorComponent
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FItemAbilityEventDelegate, TSubclassOf<UAP_AbilityBase>, Ability);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FItemEventDelegate, UAP_GameplayItem*, Item);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGoldEventDelegate, int, Gold);
 public:	
 	// Sets default values for this component's properties
 	UItemUser();
@@ -47,7 +48,13 @@ public:
 	UPROPERTY(BlueprintAssignable)
 		FItemEventDelegate OnItemEquipped;
 	UPROPERTY(BlueprintAssignable)
+		FItemEventDelegate OnItemUnequipped;
+	UPROPERTY(BlueprintAssignable)
+		FItemEventDelegate OnItemGiven;
+	UPROPERTY(BlueprintAssignable)
 		FItemEventDelegate OnItemRemoved;
+	UPROPERTY(BlueprintAssignable)
+		FGoldEventDelegate OnGoldChange;
 	
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
 		void BuyItem(class UItemSeller* Seller, int Slot);

@@ -105,6 +105,7 @@ void UItemUser::GiveGold_Implementation(int Amount)
 {
 	Gold += Amount;
 	Gold = FMath::Max(0, Gold);
+	OnGoldChange.Broadcast(Gold);
 }
 
 void UItemUser::UnequipRemoveItem_Implementation(int Slot)
@@ -121,7 +122,9 @@ void UItemUser::UnequipRemoveItem_Implementation(int Slot)
 	{
 		return;
 	}
+	auto item = EquipedItems[Slot];
 	EquipedItems.RemoveAt(Slot);
+	OnItemEquipped.Broadcast(item);
 }
 
 void UItemUser::RemoveItem_Implementation(int Slot)
@@ -138,7 +141,9 @@ void UItemUser::RemoveItem_Implementation(int Slot)
 	{
 		return;
 	}
+	auto item = StashItems[Slot];
 	StashItems.RemoveAt(Slot);
+	OnItemRemoved.Broadcast(item);
 }
 
 void UItemUser::UnequipItem_Implementation(int Slot)
@@ -166,6 +171,7 @@ void UItemUser::UnequipItem_Implementation(int Slot)
 		OnAbilityRemoved.Broadcast(Ability);
 	}
 	EquipedItems.RemoveAt(Slot);
+	OnItemUnequipped.Broadcast(item);
 }
 
 void UItemUser::GiveItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
@@ -186,6 +192,8 @@ void UItemUser::GiveItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
 	UAP_GameplayItem* ret = NewObject<UAP_GameplayItem>(GetOwner(), item->Name, RF_NoFlags, item);
 	ret->CurrentStack = 1;
 	StashItems.Add(ret);
+	UE_LOG_FAST(TEXT("give item success, now we have %d items"), StashItems.Num());
+	OnItemGiven.Broadcast(ret);
 }
 
 void UItemUser::EquipItem_Implementation(int Slot)
@@ -212,6 +220,7 @@ void UItemUser::EquipItem_Implementation(int Slot)
 		OnAbilityAdded.Broadcast(Ability);
 	}
 	EquipedItems.Add(item);
+	OnItemEquipped.Broadcast(item);
 }
 
 void UItemUser::GiveEquipItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
