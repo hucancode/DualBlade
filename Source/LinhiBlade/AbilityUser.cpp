@@ -71,7 +71,7 @@ void UAbilityUser::GiveAbility(TSubclassOf<UAP_AbilityBase> Ability)
 	}
 	AbilityHandles.Add(handle);
 	AbilityStates.AddDefaulted();
-	OnAbilitySlotChanged.Broadcast(AbilityHandles.Num() - 1);
+	OnAbilitySlotChanged.Broadcast(AbilityHandles.Num());
 	UE_LOG_FAST(TEXT("give ability %d"), AbilityHandles.Num());
 }
 
@@ -85,7 +85,7 @@ void UAbilityUser::RemoveAbility(TSubclassOf<UAP_AbilityBase> Ability)
 	}
 	AbilityHandles.RemoveAt(index);
 	AbilityStates.RemoveAt(index);
-	OnAbilitySlotChanged.Broadcast(AbilityHandles.Num() - 1);
+	OnAbilitySlotChanged.Broadcast(AbilityHandles.Num());
 }
 
 void UAbilityUser::HandleEffectApplied(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle)
