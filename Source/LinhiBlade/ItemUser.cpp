@@ -52,6 +52,10 @@ void UItemUser::BuyItem_Implementation(UItemSeller* Seller, int Slot)
 void UItemUser::BuyItemUncheck(UItemSeller* Seller, int Slot)
 {
 	TSubclassOf<UAP_GameplayItem> item;
+	if (StashItems.Num() >= STASH_SLOT_COUNT)
+	{
+		return;
+	}
 	if(!Seller->SellItem(Slot, this, item))
 	{
 		return;
@@ -124,7 +128,7 @@ void UItemUser::UnequipRemoveItem_Implementation(int Slot)
 	}
 	auto item = EquipedItems[Slot];
 	EquipedItems.RemoveAt(Slot);
-	OnItemEquipped.Broadcast(item);
+	OnItemUnequipped.Broadcast(item);
 }
 
 void UItemUser::RemoveItem_Implementation(int Slot)
@@ -160,7 +164,7 @@ void UItemUser::UnequipItem_Implementation(int Slot)
 	{
 		return;
 	}
-	if (StashItems.Num() > STASH_SLOT_COUNT)
+	if (StashItems.Num() >= STASH_SLOT_COUNT)
 	{
 		return;
 	}
@@ -184,7 +188,7 @@ void UItemUser::GiveItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
 	{
 		return;
 	}
-	if (EquipedItems.Num() > EQUIPMENT_SLOT_COUNT)
+	if (StashItems.Num() >= STASH_SLOT_COUNT)
 	{
 		return;
 	}
@@ -211,16 +215,20 @@ void UItemUser::EquipItem_Implementation(int Slot)
 		return;
 	}
 	UAP_GameplayItem* item = StashItems[Slot];
-	if (EquipedItems.Num() > EQUIPMENT_SLOT_COUNT)
+	if (EquipedItems.Num() >= EQUIPMENT_SLOT_COUNT)
 	{
 		return;
 	}
+	StashItems.RemoveAt(Slot);
 	for (auto Ability : item->GrantedAbilities)
 	{
+		UE_LOG_FAST(TEXT("OnAbilityAdded.Broadcast(Ability) %d"), OnAbilityAdded.IsBound());
 		OnAbilityAdded.Broadcast(Ability);
+		
 	}
 	EquipedItems.Add(item);
 	OnItemEquipped.Broadcast(item);
+	UE_LOG_FAST(TEXT("UItemUser::EquipItem_Implementation"));
 }
 
 void UItemUser::GiveEquipItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
@@ -234,10 +242,12 @@ void UItemUser::GiveEquipItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
 		return;
 	}
 	UAP_GameplayItem* item = Item.GetDefaultObject();
-	EquipedItems.Add(item);
+	UAP_GameplayItem* ret = NewObject<UAP_GameplayItem>(GetOwner(), item->Name, RF_NoFlags, item);
+	EquipedItems.Add(ret);
 	for (auto Ability : item->GrantedAbilities)
 	{
 		OnAbilityAdded.Broadcast(Ability);
 	}
+	OnItemEquipped.Broadcast(ret);
 }
 

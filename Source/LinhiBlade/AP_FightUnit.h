@@ -49,20 +49,33 @@ public:
 	virtual bool				HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
 	virtual bool				HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
 public:
+	UFUNCTION()
 	void						HandleAbilityStateChanged(int AbilitySlot);
+	UFUNCTION()
 	void						HandleAbilitySlotChanged(int AbilitySlot);
+	UFUNCTION()
 	void						HandleEffectApplied(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle);
+	UFUNCTION()
 	void						HandleEffectRemoved(const FGameplayEffectRemovalInfo& Info);
+	UFUNCTION()
 	void						HandleAttributeChanged(const FGameplayAttribute Attribute, float NewValue);
+	UFUNCTION()
 	void						HandleAbilityAdded(TSubclassOf<UAP_AbilityBase> Ability);
+	UFUNCTION()
 	void						HandleAbilityRemoved(TSubclassOf<UAP_AbilityBase> Ability);
+	UFUNCTION()
 	void						HandleTeamChanged(EGameTeam Team);
+	UFUNCTION()
 	void						HandleCloakStarted(ECloakingLevel Level);
+	UFUNCTION()
 	void						HandleCloakFinished(ECloakingLevel Level);
+	UFUNCTION()
 	void						HandleDeath();
+	UFUNCTION()
 	void						HandleLevelUp();
 	UFUNCTION(BlueprintCallable)
 	void						GrantBountyExp();
+	UFUNCTION()
 	void						Respawn();
 	UFUNCTION(BlueprintCallable)
 	bool						LineTraceUnit(int AbilitySlot, FVector Start, FVector Direction, AActor*& OutActor);
