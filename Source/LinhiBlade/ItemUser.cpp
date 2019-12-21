@@ -25,7 +25,7 @@ void UItemUser::BeginPlay()
 	Super::BeginPlay();
 	Gold = 0;
 	LastSeenShop = nullptr;
-	// ...
+	CurrentWeapon = EWeaponCategory::None;
 	
 }
 
@@ -34,8 +34,6 @@ void UItemUser::BeginPlay()
 void UItemUser::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
 }
 
 void UItemUser::BuyItem_Implementation(UItemSeller* Seller, int Slot)
@@ -109,7 +107,7 @@ void UItemUser::GiveGold_Implementation(int Amount)
 {
 	Gold += Amount;
 	Gold = FMath::Max(0, Gold);
-	OnGoldChange.Broadcast(Gold);
+	OnGoldChanged.Broadcast(Gold);
 }
 
 void UItemUser::UnequipRemoveItem_Implementation(int Slot)
@@ -129,6 +127,7 @@ void UItemUser::UnequipRemoveItem_Implementation(int Slot)
 	auto item = EquipedItems[Slot];
 	EquipedItems.RemoveAt(Slot);
 	OnItemUnequipped.Broadcast(item);
+	UpdateWeapon();
 }
 
 void UItemUser::RemoveItem_Implementation(int Slot)
@@ -176,6 +175,7 @@ void UItemUser::UnequipItem_Implementation(int Slot)
 	}
 	EquipedItems.RemoveAt(Slot);
 	OnItemUnequipped.Broadcast(item);
+	UpdateWeapon();
 }
 
 void UItemUser::GiveItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
@@ -222,13 +222,12 @@ void UItemUser::EquipItem_Implementation(int Slot)
 	StashItems.RemoveAt(Slot);
 	for (auto Ability : item->GrantedAbilities)
 	{
-		UE_LOG_FAST(TEXT("OnAbilityAdded.Broadcast(Ability) %d"), OnAbilityAdded.IsBound());
 		OnAbilityAdded.Broadcast(Ability);
 		
 	}
 	EquipedItems.Add(item);
 	OnItemEquipped.Broadcast(item);
-	UE_LOG_FAST(TEXT("UItemUser::EquipItem_Implementation"));
+	UpdateWeapon();
 }
 
 void UItemUser::GiveEquipItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
@@ -249,5 +248,28 @@ void UItemUser::GiveEquipItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
 		OnAbilityAdded.Broadcast(Ability);
 	}
 	OnItemEquipped.Broadcast(ret);
+	UpdateWeapon();
 }
 
+void UItemUser::UpdateWeapon()
+{
+	auto new_weapon = EWeaponCategory::None;
+	for (auto item : EquipedItems)
+	{
+		new_weapon = item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
+			item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
+			item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
+			item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
+			item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
+			item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe : new_weapon;
+		if (new_weapon != EWeaponCategory::None)
+		{
+			break;
+		}
+	}
+	if (new_weapon != CurrentWeapon)
+	{
+		CurrentWeapon = new_weapon;
+		OnWeaponChanged.Broadcast();
+	}
+}

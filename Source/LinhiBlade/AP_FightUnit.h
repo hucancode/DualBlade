@@ -20,13 +20,31 @@
 
 #define EXP_AQUIRING_RANGE 800.0f
 
+UENUM(BlueprintType)
+enum class EFightStyle :uint8
+{
+	BareHand = 0,
+	Axe = 1,
+	AxeMelee = 2,
+	Bow = 3,
+	Dagger = 4,
+	DualSword = 5,
+	Katana1 = 6,
+	Katana2 = 7,
+	Katana3 = 8,
+	MagicStaff = 9,
+	SwordAndShield = 10,
+	SwordNoShield = 11,
+	SwordMelee = 12
+};
+
 UCLASS()
 class LINHIBLADE_API AAP_FightUnit : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDeathEventDelegate, const float, DeathTime);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRespawnEventDelegate);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGeneralEventDelegate);
 public:
 	// Sets default values for this character's properties
 	AAP_FightUnit();
@@ -53,6 +71,7 @@ public:
 	void						HandleAbilityStateChanged(int AbilitySlot);
 	UFUNCTION()
 	void						HandleAbilitySlotChanged(int AbilitySlot);
+	
 	UFUNCTION()
 	void						HandleEffectApplied(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle);
 	UFUNCTION()
@@ -63,6 +82,8 @@ public:
 	void						HandleAbilityAdded(TSubclassOf<UAP_AbilityBase> Ability);
 	UFUNCTION()
 	void						HandleAbilityRemoved(TSubclassOf<UAP_AbilityBase> Ability);
+	UFUNCTION()
+	void						HandleWeaponChanged(); 
 	UFUNCTION()
 	void						HandleTeamChanged(EGameTeam Team);
 	UFUNCTION()
@@ -82,8 +103,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool						LineTraceGround(int AbilitySlot, FVector Start, FVector Direction, FVector& OutLocation);
 public:
-	FDeathEventDelegate			OnDeath;
-	FRespawnEventDelegate		OnRespawn;
+	UPROPERTY(BlueprintAssignable)
+		FDeathEventDelegate			OnDeath;
+	UPROPERTY(BlueprintAssignable)
+		FGeneralEventDelegate		OnRespawn;
+	UPROPERTY(BlueprintAssignable)
+		FGeneralEventDelegate		OnFightStyleChanged;
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FightUnit, meta = (AllowPrivateAccess = "true"))
 		UAbilitySystemComponent*	AbilitySystem;
@@ -95,6 +120,8 @@ protected:
 		UTeamAgent*					TeamAgent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FightUnit)
 		UAP_AttributeSet*			Stats;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = FightUnit)
+		EFightStyle					FightStyle;
 protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = Abilities)
 		FGameplayTagContainer		GameplayTags;

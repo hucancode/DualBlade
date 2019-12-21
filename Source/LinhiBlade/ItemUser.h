@@ -10,6 +10,19 @@
 #define EQUIPMENT_SLOT_COUNT 6
 #define STASH_SLOT_COUNT 8
 
+UENUM(BlueprintType)
+enum class EWeaponCategory :uint8
+{
+	None = 0,
+	Axe = 1,
+	Bow = 2,
+	Dagger = 3,
+	DualSword = 4,
+	Katana = 5,
+	MagicStaff = 6,
+	SwordAndShield = 7
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class LINHIBLADE_API UItemUser : public UActorComponent
 {
@@ -18,6 +31,7 @@ class LINHIBLADE_API UItemUser : public UActorComponent
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FItemAbilityEventDelegate, TSubclassOf<UAP_AbilityBase>, Ability);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FItemEventDelegate, UAP_GameplayItem*, Item);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGoldEventDelegate, int, Gold);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWeaponEventDelegate);
 public:	
 	// Sets default values for this component's properties
 	UItemUser();
@@ -40,6 +54,8 @@ public:
 		TArray<UAP_GameplayItem*> StashItems;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		TArray<UAP_GameplayItem*> EquipedItems;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		EWeaponCategory CurrentWeapon;
 
 	UPROPERTY(BlueprintAssignable)
 		FItemAbilityEventDelegate OnAbilityAdded;
@@ -54,7 +70,9 @@ public:
 	UPROPERTY(BlueprintAssignable)
 		FItemEventDelegate OnItemRemoved;
 	UPROPERTY(BlueprintAssignable)
-		FGoldEventDelegate OnGoldChange;
+		FGoldEventDelegate OnGoldChanged;
+	UPROPERTY(BlueprintAssignable)
+		FWeaponEventDelegate OnWeaponChanged;
 	
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
 		void BuyItem(class UItemSeller* Seller, int Slot);
@@ -88,4 +106,5 @@ public:
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
 		void UnequipRemoveItem(int Slot);
+	void UpdateWeapon();
 };

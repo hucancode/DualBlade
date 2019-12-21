@@ -61,9 +61,11 @@ void AAP_FightUnit::BeginPlay()
 	Stats->OnLevelUp.AddDynamic(this, &AAP_FightUnit::HandleLevelUp);
 	ItemUser->OnAbilityAdded.AddDynamic(this, &AAP_FightUnit::HandleAbilityAdded);
 	ItemUser->OnAbilityRemoved.AddDynamic(this, &AAP_FightUnit::HandleAbilityRemoved);
+	ItemUser->OnWeaponChanged.AddDynamic(this, &AAP_FightUnit::HandleWeaponChanged);
 	TeamAgent->OnTeamChanged.AddDynamic(this, &AAP_FightUnit::HandleTeamChanged);
 	TeamAgent->OnCloakStarted.AddDynamic(this, &AAP_FightUnit::HandleCloakStarted);
 	TeamAgent->OnCloakFinished.AddDynamic(this, &AAP_FightUnit::HandleCloakFinished);
+	FightStyle = EFightStyle::BareHand;
 }
 
 // Called every frame
@@ -177,6 +179,23 @@ void AAP_FightUnit::HandleAbilityRemoved(TSubclassOf<UAP_AbilityBase> Ability)
 	AbilityUser->RemoveAbility(Ability);
 }
 
+void AAP_FightUnit::HandleWeaponChanged()
+{
+	auto new_style = ItemUser->CurrentWeapon == EWeaponCategory::Axe ? EFightStyle::Axe :
+		ItemUser->CurrentWeapon == EWeaponCategory::Bow ? EFightStyle::Bow :
+		ItemUser->CurrentWeapon == EWeaponCategory::Dagger ? EFightStyle::Dagger :
+		ItemUser->CurrentWeapon == EWeaponCategory::DualSword ? EFightStyle::DualSword :
+		ItemUser->CurrentWeapon == EWeaponCategory::Katana ? EFightStyle::Katana1 :
+		ItemUser->CurrentWeapon == EWeaponCategory::MagicStaff ? EFightStyle::MagicStaff :
+		ItemUser->CurrentWeapon == EWeaponCategory::SwordAndShield ? EFightStyle::SwordAndShield :
+		EFightStyle::BareHand;
+	if (new_style != FightStyle)
+	{
+		FightStyle = new_style;
+		OnFightStyleChanged.Broadcast();
+	}
+}
+
 void AAP_FightUnit::HandleTeamChanged(EGameTeam Team)
 {
 	auto T1 = FGameplayTag::RequestGameplayTag("Combat.Team_1");
@@ -222,7 +241,8 @@ void AAP_FightUnit::HandleDeath()
 {
 	AbilitySystem->CancelAllAbilities();
 	// TODO: remove all timed buff
-	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->Deactivate();
+	//GetWorld()->RemoveActor(this);
 	float DeathTime = Stats->GetDeathTime();
 	auto AIController = Cast<AAIController>(GetController());
 	if (AIController)
@@ -243,6 +263,8 @@ void AAP_FightUnit::HandleDeath()
 
 void AAP_FightUnit::Respawn()
 {
+	GetCharacterMovement()->Activate();
+	SpawnDefaultController();
 	OnRespawn.Broadcast();
 }
 
