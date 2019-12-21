@@ -257,11 +257,13 @@ void UItemUser::UpdateWeapon()
 	for (auto item : EquipedItems)
 	{
 		new_weapon = item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
-			item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
-			item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
-			item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
-			item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
-			item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe : new_weapon;
+			item->Category == EItemCategory::WeaponBow ? EWeaponCategory::Bow :
+			item->Category == EItemCategory::WeaponDagger ? EWeaponCategory::Dagger :
+			item->Category == EItemCategory::WeaponDualSword ? EWeaponCategory::DualSword :
+			item->Category == EItemCategory::WeaponKatana ? EWeaponCategory::Katana :
+			item->Category == EItemCategory::WeaponMagicStaff ? EWeaponCategory::MagicStaff :
+			item->Category == EItemCategory::WeaponSwordAndShield ? EWeaponCategory::SwordAndShield : 
+			EWeaponCategory::None;
 		if (new_weapon != EWeaponCategory::None)
 		{
 			break;
