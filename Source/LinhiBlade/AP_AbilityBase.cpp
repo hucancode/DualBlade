@@ -2,14 +2,163 @@
 
 
 #include "AP_AbilityBase.h"
+#include "AP_AttributeSet.h"
+#include "AbilitySystemInterface.h"
+#include "AP_AttributeChangeData.h"
 
 UAP_AbilityBase::UAP_AbilityBase()
 {
-
+	{
+		FAbilityTriggerData data;
+		data.TriggerTag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_By_Controller");
+		AbilityTriggers.Add(data);
+	}
+	{
+		FAbilityTriggerData data;
+		data.TriggerTag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Event");
+		AbilityTriggers.Add(data);
+	}
+	auto ImplementedInBlueprint = [](const UFunction* Func) -> bool
+	{
+		return Func && ensure(Func->GetOuter())
+			&& (Func->GetOuter()->IsA(UBlueprintGeneratedClass::StaticClass()) || Func->GetOuter()->IsA(UDynamicClass::StaticClass()));
+	};
+	{
+		static FName FuncName = FName(TEXT("OnOwnerMoved"));
+		HasBlueprintOnOwnerMoved = ImplementedInBlueprint(GetClass()->FindFunctionByName(FuncName));
+	}
+	{
+		static FName FuncName = FName(TEXT("OnOwnerDamaged"));
+		HasBlueprintOnOwnerDamaged = ImplementedInBlueprint(GetClass()->FindFunctionByName(FuncName));
+	}
+	{
+		static FName FuncName = FName(TEXT("OnOwnerDamageDealt"));
+		HasBlueprintOnOwnerDamageDealt = ImplementedInBlueprint(GetClass()->FindFunctionByName(FuncName));
+	}
+	{
+		static FName FuncName = FName(TEXT("OnOwnerAttributeChanged"));
+		HasBlueprintOnOwnerAttributeChanged = ImplementedInBlueprint(GetClass()->FindFunctionByName(FuncName));
+	}
 }
 UAP_AbilityBase::~UAP_AbilityBase()
 {
 
+}
+
+bool UAP_AbilityBase::ShouldAbilityRespondToEvent(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayEventData* Payload) const
+{
+	bool ret = Super::ShouldAbilityRespondToEvent(ActorInfo, Payload);
+	if (!ret)
+	{
+		return false;
+	}
+	{
+		auto tag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_By_Controller");
+		bool tag_matched = Payload->EventTag.MatchesTag(tag);
+		if (tag_matched)
+		{
+			if (!Payload->OptionalObject)
+			{
+				return false;
+			}
+			auto other = Payload->OptionalObject->GetClass();
+			auto me = GetClass();
+			if (other != me)
+			{
+				return false;
+			}
+			return true;
+		}
+	}
+	{
+		auto tag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Moved");
+		bool tag_matched = Payload->EventTag.MatchesTag(tag);
+		if (tag_matched && !HasBlueprintOnOwnerMoved)
+		{
+			return false;
+		}
+	}
+	{
+		auto tag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Damaged");
+		bool tag_matched = Payload->EventTag.MatchesTag(tag);
+		if (tag_matched && !HasBlueprintOnOwnerDamaged)
+		{
+			return false;
+		}
+	}
+	{
+		auto tag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Damage_Dealt");
+		bool tag_matched = Payload->EventTag.MatchesTag(tag);
+		if (tag_matched && !HasBlueprintOnOwnerDamageDealt)
+		{
+			return false;
+		}
+	}
+	{
+		auto tag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Attribute_Changed");
+		bool tag_matched = Payload->EventTag.MatchesTag(tag);
+		if (tag_matched && !HasBlueprintOnOwnerAttributeChanged)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+void UAP_AbilityBase::ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+{
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	{
+		auto tag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Moved");
+		bool tag_matched = TriggerEventData->EventTag.MatchesTag(tag);
+		if (tag_matched)
+		{
+			OnOwnerMoved(TriggerEventData->EventMagnitude);
+		}
+	}
+	{
+		auto tag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Damaged");
+		bool tag_matched = TriggerEventData->EventTag.MatchesTag(tag);
+		if (tag_matched)
+		{
+			auto instigator = Cast<IAbilitySystemInterface>(TriggerEventData->Instigator);
+			if (instigator)
+			{
+				auto asc = instigator->GetAbilitySystemComponent();
+				OnOwnerDamaged(TriggerEventData->EventMagnitude, asc);
+			}
+		}
+	}
+	{
+		auto tag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Damage_Dealt");
+		bool tag_matched = TriggerEventData->EventTag.MatchesTag(tag);
+		if (tag_matched)
+		{
+			auto target = Cast<IAbilitySystemInterface>(TriggerEventData->Target);
+			if (target)
+			{
+				auto asc = target->GetAbilitySystemComponent();
+				OnOwnerDamageDealt(TriggerEventData->EventMagnitude, asc);
+			}
+		}
+	}
+	{
+		auto tag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Attribute_Changed");
+		bool tag_matched = TriggerEventData->EventTag.MatchesTag(tag);
+		if (tag_matched)
+		{
+			auto owner = Cast<IAbilitySystemInterface>(TriggerEventData->Instigator);
+			if (owner)
+			{
+				auto asc = owner->GetAbilitySystemComponent();
+				auto attribute = Cast<UAP_AttributeChangeData>(TriggerEventData->OptionalObject);
+				if (attribute)
+				{
+					OnOwnerAttributeChanged(attribute->Attribute, attribute->NewValue, attribute->AllAttribute);
+				}
+			}
+		}
+	}
 }
 
 ECollisionChannel UAP_AbilityBase::GetTraceChannel()

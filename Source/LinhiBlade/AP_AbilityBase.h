@@ -22,9 +22,10 @@ UENUM(BlueprintType)
 enum class EActivatingPolicy :uint8
 {
 	PassivePermanent = 0,
-	PassiveTrigger = 1,
+	PassiveOnEvent = 1,
 	Toggle = 2,
-	Active = 3
+	Active = 3,
+	ActiveAutocast = 4
 };
 
 /**
@@ -38,6 +39,8 @@ class LINHIBLADE_API UAP_AbilityBase : public UGameplayAbility
 public:
 	UAP_AbilityBase();
 	virtual ~UAP_AbilityBase();
+	virtual bool ShouldAbilityRespondToEvent(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayEventData* Payload) const;
+	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		ETargetingPolicy TargetingPolicy;
@@ -50,4 +53,17 @@ public:
 public:
 	UFUNCTION(BlueprintCallable)
 		ECollisionChannel GetTraceChannel();
+public:
+	UFUNCTION(BlueprintImplementableEvent, Category = Ability)
+		void OnOwnerMoved(float Magnitude);
+	bool HasBlueprintOnOwnerMoved;
+	UFUNCTION(BlueprintImplementableEvent, Category = Ability)
+		void OnOwnerDamaged(float Magnitude, UAbilitySystemComponent* Instigator);
+	bool HasBlueprintOnOwnerDamaged;
+	UFUNCTION(BlueprintImplementableEvent, Category = Ability)
+		void OnOwnerDamageDealt(float Magnitude, UAbilitySystemComponent* Target);
+	bool HasBlueprintOnOwnerDamageDealt;
+	UFUNCTION(BlueprintImplementableEvent, Category = Ability)
+		void OnOwnerAttributeChanged(FGameplayAttribute Attribute, float NewValue, class UAP_AttributeSet* AllAttribute);
+	bool HasBlueprintOnOwnerAttributeChanged;
 };

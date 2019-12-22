@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
+#include "AP_AttributeChangeData.h"
 
 // Sets default values
 AAP_FightUnit::AAP_FightUnit()
@@ -34,6 +35,9 @@ AAP_FightUnit::AAP_FightUnit()
 	GetCharacterMovement()->SetUpdateNavAgentWithOwnersCollisions(false);
 	GetCharacterMovement()->NavAgentProps.AgentHeight = 90.0f;
 	GetCharacterMovement()->NavAgentProps.AgentRadius = 5.0f;
+	GetMesh()->SetRelativeRotation(FQuat::MakeFromEuler(FVector::DownVector * 90.0f));
+	GetMesh()->SetRelativeLocation(FVector::DownVector * 85.0f);
+	GetMesh()->bPerBoneMotionBlur = false;
 	bUseControllerRotationPitch = 0;
 	bUseControllerRotationYaw = 0;
 	bUseControllerRotationRoll = 0;
@@ -166,6 +170,21 @@ void AAP_FightUnit::HandleAttributeChanged(const FGameplayAttribute Attribute, f
 	if (Attribute == UAP_AttributeSet::GetTurnRateAttribute())
 	{
 		GetCharacterMovement()->RotationRate.Yaw = NewValue;
+	}
+	auto tag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Attribute_Changed");
+	UAP_AttributeChangeData attribute_changed_dto;
+	attribute_changed_dto.NewValue = NewValue;
+	attribute_changed_dto.Attribute = Attribute;
+	attribute_changed_dto.AllAttribute = Stats;
+	FGameplayEventData payload;
+	payload.Instigator = this;
+	payload.Target = this;
+	payload.OptionalObject = &attribute_changed_dto;
+	payload.EventTag = tag;
+	if (AbilitySystem)
+	{
+		FScopedPredictionWindow NewScopedWindow(AbilitySystem, true);
+		AbilitySystem->HandleGameplayEvent(tag, &payload);
 	}
 }
 

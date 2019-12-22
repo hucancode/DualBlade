@@ -48,11 +48,11 @@ public:
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintAssignable)
 	FAttributeEventDelegate OnAttributeChanged;
-	UPROPERTY()
+	UPROPERTY(BlueprintAssignable)
 	FGenericEventDelegate OnLevelUp; 
-	UPROPERTY()
+	UPROPERTY(BlueprintAssignable)
 	FGenericEventDelegate OnDeath;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Core", ReplicatedUsing = OnRep_Strength)
