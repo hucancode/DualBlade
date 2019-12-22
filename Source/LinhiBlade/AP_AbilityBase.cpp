@@ -13,11 +13,6 @@ UAP_AbilityBase::UAP_AbilityBase()
 		data.TriggerTag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_By_Controller");
 		AbilityTriggers.Add(data);
 	}
-	{
-		FAbilityTriggerData data;
-		data.TriggerTag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Event");
-		AbilityTriggers.Add(data);
-	}
 	auto ImplementedInBlueprint = [](const UFunction* Func) -> bool
 	{
 		return Func && ensure(Func->GetOuter())
