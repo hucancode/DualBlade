@@ -172,20 +172,21 @@ void AAP_FightUnit::HandleAttributeChanged(const FGameplayAttribute Attribute, f
 		GetCharacterMovement()->RotationRate.Yaw = NewValue;
 	}
 	auto tag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Attribute_Changed");
-	UAP_AttributeChangeData attribute_changed_dto;
-	attribute_changed_dto.NewValue = NewValue;
-	attribute_changed_dto.Attribute = Attribute;
-	attribute_changed_dto.AllAttribute = Stats;
+	auto dto = NewObject<UAP_AttributeChangeData>(this, TEXT("DTO"));
+	dto->NewValue = NewValue;
+	dto->Attribute = Attribute;
+	dto->AllAttribute = Stats;
 	FGameplayEventData payload;
 	payload.Instigator = this;
 	payload.Target = this;
-	payload.OptionalObject = &attribute_changed_dto;
+	payload.OptionalObject = dto;
 	payload.EventTag = tag;
 	if (AbilitySystem)
 	{
 		FScopedPredictionWindow NewScopedWindow(AbilitySystem, true);
 		AbilitySystem->HandleGameplayEvent(tag, &payload);
 	}
+	dto->MarkPendingKill();
 }
 
 void AAP_FightUnit::HandleAbilityAdded(TSubclassOf<UAP_AbilityBase> Ability)
@@ -256,17 +257,27 @@ void AAP_FightUnit::GrantBountyExp()
 	}
 }
 
+bool AAP_FightUnit::IsDead()
+{
+	if (!Stats)
+	{
+		return true;
+	}
+	return Stats->GetHealth() <= 0.0f;
+}
+
 void AAP_FightUnit::HandleDeath()
 {
 	AbilitySystem->CancelAllAbilities();
 	// TODO: remove all timed buff
 	GetCharacterMovement()->Deactivate();
-	//GetWorld()->RemoveActor(this);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetVisibility(false);
+	GetMesh()->Deactivate();
 	float DeathTime = Stats->GetDeathTime();
 	auto AIController = Cast<AAIController>(GetController());
 	if (AIController)
 	{
-		
 		AIController->UnPossess();
 		AIController->Destroy();
 	}
@@ -276,14 +287,19 @@ void AAP_FightUnit::HandleDeath()
 	}
 	GrantBountyExp();
 	OnDeath.Broadcast(DeathTime);
-	FTimerHandle DeathTimerHandle;
 	GetWorldTimerManager().SetTimer(DeathTimerHandle, this, &AAP_FightUnit::Respawn, DeathTime, false, -1.0f);
 }
 
 void AAP_FightUnit::Respawn()
 {
+	GetWorldTimerManager().ClearTimer(DeathTimerHandle);
 	GetCharacterMovement()->Activate();
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetMesh()->SetVisibility(true);
+	GetMesh()->Activate();
 	SpawnDefaultController();
+	Stats->SetHealth(Stats->GetMaxHealth());
+	Stats->SetMana(Stats->GetMaxMana());
 	OnRespawn.Broadcast();
 }
 
@@ -314,7 +330,6 @@ bool AAP_FightUnit::LineTraceUnit(int AbilitySlot, FVector Start, FVector Direct
 	TArray<FHitResult> HitResults;
 	bool hit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, Channel, Params);
 	OutActor = HitResult.GetActor();
-	auto world = GetWorld();
 	UE_LOG(LogTemp, Warning, TEXT("UAP_AbilityBase::LineTraceUnit Start (%s) End (%s) Channel %d, hit %d"), *Start.ToString(), *End.ToString(), Channel, hit);
 #ifdef ENABLE_DRAW_DEBUG
 	FVector EndPoint = HitResult.Actor.IsValid() ? HitResult.ImpactPoint : HitResult.TraceEnd;

@@ -96,7 +96,9 @@ public:
 	void						HandleLevelUp();
 	UFUNCTION(BlueprintCallable)
 	void						GrantBountyExp();
-	UFUNCTION()
+	UFUNCTION(BlueprintPure)
+	bool						IsDead();
+	UFUNCTION(BlueprintCallable)
 	void						Respawn();
 	UFUNCTION(BlueprintCallable)
 	bool						LineTraceUnit(int AbilitySlot, FVector Start, FVector Direction, AActor*& OutActor);
@@ -127,4 +129,5 @@ protected:
 		FGameplayTagContainer		GameplayTags;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Abilities)
 		UDataTable*					StartingStats;
+	FTimerHandle					DeathTimerHandle;
 };
