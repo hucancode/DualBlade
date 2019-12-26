@@ -111,7 +111,7 @@ public:
 		FGeneralEventDelegate		OnRespawn;
 	UPROPERTY(BlueprintAssignable)
 		FGeneralEventDelegate		OnFightStyleChanged;
-protected:
+public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FightUnit, meta = (AllowPrivateAccess = "true"))
 		UAbilitySystemComponent*	AbilitySystem;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FightUnit, meta = (AllowPrivateAccess = "true"))

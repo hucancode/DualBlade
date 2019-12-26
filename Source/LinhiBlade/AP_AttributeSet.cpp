@@ -7,12 +7,6 @@
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
 
-const float UAP_AttributeSet::ATTACK_SPEED_MAX = 2000.0f;
-// at max attack speed, time between atk is 0.1s
-const float UAP_AttributeSet::ATTACK_COOLDOWN_MIN = 0.1f;
-// at min attack speed, time between atk is 5.0s
-const float UAP_AttributeSet::ATTACK_COOLDOWN_MAX = 5.0f;
-
 UAP_AttributeSet::UAP_AttributeSet()
 	: Strength(1.0f)
 	, Agility(1.0f)
@@ -52,7 +46,6 @@ UAP_AttributeSet::UAP_AttributeSet()
 	, MaxManaGrowRate(1.0f)
 	, MaxMana(1.f)
 	, Armor(1.0f)
-	, Gold(0.0f)
 {
 }
 
@@ -130,10 +123,6 @@ void UAP_AttributeSet::OnRep_Armor()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Armor);
 }
-void UAP_AttributeSet::OnRep_Gold()
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Gold);
-}
 
 void UAP_AttributeSet::OnRep_Evasion()
 {
@@ -167,11 +156,6 @@ void UAP_AttributeSet::OnRep_Vitality()
 void UAP_AttributeSet::OnRep_Energy()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Energy);
-}
-
-void UAP_AttributeSet::OnRep_Money()
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Money);
 }
 
 void UAP_AttributeSet::OnRep_Level()
@@ -220,12 +204,20 @@ void UAP_AttributeSet::OnRep_AttackSpeed()
 
 float UAP_AttributeSet::GetHealthPercent()
 {
-	return 0.0f;
+	if (GetMaxHealth() <= 0.0f)
+	{
+		return 0.0f;
+	}
+	return GetHealth() / GetMaxHealth();
 }
 
 float UAP_AttributeSet::GetManaPercent()
 {
-	return 0.0f;
+	if (GetMaxMana() <= 0.0f)
+	{
+		return 0.0f;
+	}
+	return GetMana() / GetMaxMana();
 }
 
 void UAP_AttributeSet::InitFromMetaDataTable(const UDataTable* DataTable)
@@ -236,7 +228,6 @@ void UAP_AttributeSet::InitFromMetaDataTable(const UDataTable* DataTable)
 
 void UAP_AttributeSet::PrintDebug()
 {
-	return;
 	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PrintDebug ..."));
 	for (TFieldIterator<UProperty> It(GetClass(), EFieldIteratorFlags::IncludeSuper); It; ++It)
 	{
@@ -247,7 +238,7 @@ void UAP_AttributeSet::PrintDebug()
 			check(StructProperty);
 			FGameplayAttributeData* DataPtr = StructProperty->ContainerPtrToValuePtr<FGameplayAttributeData>(this);
 			check(DataPtr);
-			UE_LOG(LogTemp, Warning, TEXT("%s %f"), *Property->GetName(),  DataPtr->GetBaseValue());
+			UE_LOG(LogTemp, Warning, TEXT("%s %f(%f)"), *Property->GetName(),  DataPtr->GetBaseValue(), DataPtr->GetCurrentValue());
 		}
 	}
 }
@@ -260,13 +251,30 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 	OnAttributeChanged.Broadcast(Attribute, NewValue);
 }
 
+void UAP_AttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
+{
+	Super::PreAttributeBaseChange(Attribute, NewValue);
+	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeBaseChange %s %f"), *Attribute.GetName(), NewValue);
+	//AdjustAttribute(Attribute, NewValue);
+	//OnAttributeChanged.Broadcast(Attribute, NewValue);
+}
+
+void UAP_AttributeSet::OnAttributeAggregatorCreated(const FGameplayAttribute& Attribute, FAggregator* NewAggregator) const
+{
+	Super::OnAttributeAggregatorCreated(Attribute, NewAggregator);
+	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::OnAttributeAggregatorCreated %s"), *Attribute.GetName());
+}
+
 void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	if (Attribute == GetMaxHealthAttribute())
 	{
 		float Delta = GetMaxHealth() - GetHealth();
 		float NewHealth = FMath::Clamp(NewValue - Delta, 1.0f, NewValue);
-		return SetHealth(NewHealth);
+		float new_percent = NewValue > 0.0f ? (NewHealth / NewValue) : 0.0f;
+		SetHealthUnsafe(NewHealth);
+		OnHealthPercentChanged.Broadcast(new_percent);
+		return;
 	}
 	if (Attribute == GetHealthAttribute())
 	{
@@ -275,17 +283,26 @@ void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, floa
 		{
 			OnDeath.Broadcast();
 		}
+		float max_health = GetMaxHealth();
+		float new_percent = max_health > 0.0f ? (NewValue/max_health) : 0.0f;
+		OnHealthPercentChanged.Broadcast(new_percent);
 		return;
 	}
 	if (Attribute == GetMaxManaAttribute())
 	{
 		float Delta = GetMaxMana() - GetMana();
-		float NewMana = FMath::Clamp(NewValue - Delta, 1.0f, NewValue);
-		return SetMana(NewMana);
+		float NewMana = FMath::Clamp(NewValue - Delta, 0.0f, NewValue);
+		float new_percent = NewValue > 0.0f ? (NewMana / NewValue) : 0.0f;
+		SetManaUnsafe(NewMana);
+		OnManaPercentChanged.Broadcast(new_percent);
+		return;
 	}
 	if (Attribute == GetManaAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxMana());
+		float max_mana = GetMaxMana();
+		float new_percent = max_mana > 0.0f ? (NewValue / max_mana) : 0.0f;
+		OnManaPercentChanged.Broadcast(new_percent);
 		return;
 	}
 	if (Attribute == GetStrengthAttribute())
@@ -336,6 +353,33 @@ void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, floa
 	}
 }
 
+void UAP_AttributeSet::SetHealthUnsafe(float NewHealth)
+{
+	if (NewHealth <= 0.0f)
+	{
+		OnDeath.Broadcast();
+	}
+	Health.SetBaseValue(NewHealth);
+	Health.SetCurrentValue(NewHealth);
+	float max_health = GetMaxHealth();
+	float new_percent = max_health > 0.0f ? (NewHealth / max_health) : 0.0f;
+	OnHealthPercentChanged.Broadcast(new_percent);
+}
+
+void UAP_AttributeSet::SetManaUnsafe(float NewMana)
+{
+	Mana.SetBaseValue(NewMana);
+	Mana.SetCurrentValue(NewMana);
+	float max_mana = GetMaxMana();
+	float new_percent = max_mana > 0.0f ? (NewMana / max_mana) : 0.0f;
+	OnManaPercentChanged.Broadcast(new_percent);
+}
+
+void UAP_AttributeSet::PrintAllStats()
+{
+	PrintDebug();
+}
+
 void UAP_AttributeSet::GiveExp(float Amount)
 {
 	SetExperience(GetExperience() + Amount);
@@ -343,57 +387,47 @@ void UAP_AttributeSet::GiveExp(float Amount)
 
 float UAP_AttributeSet::GetExpPercent()
 {
-	return 0.0f;
+	if (GetRequiredExp() <= 0.0f)
+	{
+		return 0.0f;
+	}
+	return GetExperience()/GetRequiredExp();
 }
 
 void UAP_AttributeSet::AdjustEnergy(float NewValue)
 {
-	auto AC = GetOwningAbilitySystemComponent();
 	float NewMagicalPower = NewValue * MagicalPowerGrowRate;
 	float NewManaRegen = NewValue * ManaRegenGrowRate;
 	float NewMaxMana = NewValue * MaxManaGrowRate;
-	AC->SetNumericAttributeBase(
-		GetMagicalPowerAttribute(), NewMagicalPower);
-	AC->SetNumericAttributeBase(
-		GetManaRegenAttribute(), NewManaRegen);
-	AC->SetNumericAttributeBase(
-		GetMaxManaAttribute(), NewMaxMana);
+	SetMagicalPower(NewMagicalPower);
+	SetManaRegen(NewManaRegen);
+	SetMaxMana(NewMaxMana);
 }
 
 void UAP_AttributeSet::AdjustVitality(float NewValue)
 {
-	auto AC = GetOwningAbilitySystemComponent();
 	float NewHealthRegen = NewValue * HealthRegenGrowRate;
 	float NewMaxHealth = NewValue * MaxHealthGrowRate;
-	AC->SetNumericAttributeBase(
-		GetHealthRegenAttribute(), NewHealthRegen);
-	AC->SetNumericAttributeBase(
-		GetMaxHealthAttribute(), NewMaxHealth);
+	SetHealthRegen(NewHealthRegen);
+	SetMaxHealth(NewMaxHealth);
 }
 
 void UAP_AttributeSet::AdjustAgility(float NewValue)
 {
-	auto AC = GetOwningAbilitySystemComponent();
 	float NewEvasion = NewValue * EvasionGrowRate;
 	float NewMoveSpeed = NewValue * MoveSpeedGrowRate;
 	float NewTurnRate = NewValue * TurnRateGrowRate;
-	AC->SetNumericAttributeBase(
-		GetEvasionAttribute(), NewEvasion);
-	AC->SetNumericAttributeBase(
-		GetMoveSpeedAttribute(), NewMoveSpeed);
-	AC->SetNumericAttributeBase(
-		GetTurnRateAttribute(), NewTurnRate);
+	SetEvasion(NewEvasion);
+	SetMoveSpeed(NewMoveSpeed);
+	SetTurnRate(NewTurnRate);
 }
 
 void UAP_AttributeSet::AdjustStrength(float NewValue)
 {
-	auto AC = GetOwningAbilitySystemComponent();
 	float NewPhysicalPower = NewValue * PhysicalPowerGrowRate;
 	float NewAttackSpeed = NewValue * AttackSpeedGrowRate;
-	AC->SetNumericAttributeBase(
-		GetPhysicalPowerAttribute(), NewPhysicalPower);
-	AC->SetNumericAttributeBase(
-		GetAttackSpeedAttribute(), NewAttackSpeed);
+	SetPhysicalPower(NewPhysicalPower);
+	SetAttackSpeed(NewAttackSpeed);
 }
 
 void UAP_AttributeSet::AdjustAllCoreValue(float NewStr, float NewAgi, float NewVit, float NewEne)
