@@ -104,6 +104,8 @@ public:
 	bool						LineTraceUnit(int AbilitySlot, FVector Start, FVector Direction, AActor*& OutActor);
 	UFUNCTION(BlueprintCallable)
 	bool						LineTraceGround(int AbilitySlot, FVector Start, FVector Direction, FVector& OutLocation);
+	UFUNCTION(BlueprintCallable)
+	void						UseNewFighStyle(EFightStyle NewStyle);
 public:
 	UPROPERTY(BlueprintAssignable)
 		FDeathEventDelegate			OnDeath;

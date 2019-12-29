@@ -359,3 +359,13 @@ bool AAP_FightUnit::LineTraceGround(int AbilitySlot, FVector Start, FVector Dire
 #endif // ENABLE_DRAW_DEBUG
 	return hit;
 }
+
+void AAP_FightUnit::UseNewFighStyle(EFightStyle NewStyle)
+{
+	if (FightStyle == NewStyle)
+	{
+		return;
+	}
+	FightStyle = NewStyle;
+	OnFightStyleChanged.Broadcast();
+}
