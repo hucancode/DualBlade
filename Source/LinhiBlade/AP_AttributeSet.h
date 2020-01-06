@@ -50,6 +50,16 @@ public:
 		void PrintAllStats();
 	UFUNCTION(BlueprintCallable)
 		void GiveExp(float Amount);
+	UFUNCTION(BlueprintCallable)
+		float TakeStatPoint(float Point = 1.0f);
+	UFUNCTION(BlueprintCallable)
+		void StrengthUp(float Point = 1.0f);
+	UFUNCTION(BlueprintCallable)
+		void AgilityUp(float Point = 1.0f);
+	UFUNCTION(BlueprintCallable)
+		void VitalityUp(float Point = 1.0f);
+	UFUNCTION(BlueprintCallable)
+		void EnergyUp(float Point = 1.0f);
 	UFUNCTION(BlueprintPure)
 		float GetExpPercent();
 	UFUNCTION(BlueprintPure)

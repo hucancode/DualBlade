@@ -385,6 +385,61 @@ void UAP_AttributeSet::GiveExp(float Amount)
 	SetExperience(GetExperience() + Amount);
 }
 
+float UAP_AttributeSet::TakeStatPoint(float Point)
+{
+	if (GetStatPoint() <= 0.0f)
+	{
+		return 0.0f;
+	}
+	if (GetStatPoint() >= Point)
+	{
+		SetStatPoint(GetStatPoint() - Point);
+		
+	}
+	else
+	{
+		Point = GetStatPoint();
+		SetStatPoint(0.0f);
+	}
+	return Point;
+}
+
+void UAP_AttributeSet::StrengthUp(float Point)
+{
+	Point = TakeStatPoint(Point);
+	if (Point > 0.0f)
+	{
+		SetStrength(GetStrength() + Point);
+	}
+}
+
+void UAP_AttributeSet::AgilityUp(float Point)
+{
+	Point = TakeStatPoint(Point);
+	if (Point > 0.0f)
+	{
+		SetAgility(GetAgility() + Point);
+	}
+}
+
+void UAP_AttributeSet::VitalityUp(float Point)
+{
+	Point = TakeStatPoint(Point);
+	if (Point > 0.0f)
+	{
+		SetVitality(GetVitality() + Point);
+	}
+}
+
+void UAP_AttributeSet::EnergyUp(float Point)
+{
+	Point = TakeStatPoint(Point);
+	if (Point > 0.0f)
+	{
+		SetEnergy(GetEnergy() + Point);
+	}
+}
+
 float UAP_AttributeSet::GetExpPercent()
 {
 	if (GetRequiredExp() <= 0.0f)
