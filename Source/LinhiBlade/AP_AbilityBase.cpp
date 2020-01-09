@@ -6,6 +6,10 @@
 #include "AbilitySystemInterface.h"
 #include "AP_AttributeChangeData.h"
 
+#ifndef UE_LOG_FAST
+#define UE_LOG_FAST(Format, ...) UE_LOG(LogTemp, Display, Format, ##__VA_ARGS__)
+#endif
+
 UAP_AbilityBase::UAP_AbilityBase()
 {
 	{
@@ -54,14 +58,17 @@ bool UAP_AbilityBase::ShouldAbilityRespondToEvent(const FGameplayAbilityActorInf
 		{
 			if (!Payload->OptionalObject)
 			{
+				UE_LOG_FAST(TEXT("ShouldAbilityRespondToEvent, return false supplied object null"));
 				return false;
 			}
 			auto other = Payload->OptionalObject->GetClass();
 			auto me = GetClass();
 			if (other != me)
 			{
+				UE_LOG_FAST(TEXT("ShouldAbilityRespondToEvent, return false supplied object not match"));
 				return false;
 			}
+			UE_LOG_FAST(TEXT("ShouldAbilityRespondToEvent, return true"));
 			return true;
 		}
 	}
@@ -70,6 +77,7 @@ bool UAP_AbilityBase::ShouldAbilityRespondToEvent(const FGameplayAbilityActorInf
 		bool tag_matched = Payload->EventTag.MatchesTag(tag);
 		if (tag_matched && !HasBlueprintOnOwnerMoved)
 		{
+			UE_LOG_FAST(TEXT("ShouldAbilityRespondToEvent, return false blueprint not implemented"));
 			return false;
 		}
 	}
@@ -78,6 +86,7 @@ bool UAP_AbilityBase::ShouldAbilityRespondToEvent(const FGameplayAbilityActorInf
 		bool tag_matched = Payload->EventTag.MatchesTag(tag);
 		if (tag_matched && !HasBlueprintOnOwnerDamaged)
 		{
+			UE_LOG_FAST(TEXT("ShouldAbilityRespondToEvent, return false blueprint not implemented"));
 			return false;
 		}
 	}
@@ -86,6 +95,7 @@ bool UAP_AbilityBase::ShouldAbilityRespondToEvent(const FGameplayAbilityActorInf
 		bool tag_matched = Payload->EventTag.MatchesTag(tag);
 		if (tag_matched && !HasBlueprintOnOwnerDamageDealt)
 		{
+			UE_LOG_FAST(TEXT("ShouldAbilityRespondToEvent, return false blueprint not implemented"));
 			return false;
 		}
 	}
@@ -94,15 +104,22 @@ bool UAP_AbilityBase::ShouldAbilityRespondToEvent(const FGameplayAbilityActorInf
 		bool tag_matched = Payload->EventTag.MatchesTag(tag);
 		if (tag_matched && !HasBlueprintOnOwnerAttributeChanged)
 		{
+			UE_LOG_FAST(TEXT("ShouldAbilityRespondToEvent, return false blueprint not implemented"));
 			return false;
 		}
 	}
+	UE_LOG_FAST(TEXT("ShouldAbilityRespondToEvent, return true"));
 	return true;
 }
 
 void UAP_AbilityBase::ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
+	UE_LOG_FAST(TEXT("ActivateAbility, preparing to activate ability"));
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	if (!TriggerEventData)
+	{
+		return;
+	}
 	{
 		auto tag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_On_Moved");
 		bool tag_matched = TriggerEventData->EventTag.MatchesTag(tag);

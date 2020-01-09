@@ -9,6 +9,8 @@
 #include "DrawDebugHelpers.h"
 #include "AP_AttributeChangeData.h"
 
+#define ABILITY_MAX_LEVEL 4
+
 // Sets default values
 AAP_FightUnit::AAP_FightUnit()
 {
@@ -255,6 +257,22 @@ void AAP_FightUnit::GrantBountyExp()
 		}
 		Enemy->Stats->GiveExp(ExpPerUnit);
 	}
+}
+
+void AAP_FightUnit::LevelUpAbility(int AbilitySlot)
+{
+	float points = Stats->GetAbilityPoint();
+	if(points < 1.0f)
+	{
+		return;
+	}
+	int level = AbilityUser->GetAbilityLevel(AbilitySlot);
+	if (level >= ABILITY_MAX_LEVEL)
+	{
+		return;
+	}
+	AbilityUser->LevelUpAbility(AbilitySlot);
+	Stats->SetAbilityPoint(points - 1.0f);
 }
 
 bool AAP_FightUnit::IsDead()

@@ -96,6 +96,8 @@ public:
 	void						HandleLevelUp();
 	UFUNCTION(BlueprintCallable)
 	void						GrantBountyExp();
+	UFUNCTION(BlueprintCallable)
+	void						LevelUpAbility(int AbilitySlot);
 	UFUNCTION(BlueprintPure)
 	bool						IsDead();
 	UFUNCTION(BlueprintCallable)

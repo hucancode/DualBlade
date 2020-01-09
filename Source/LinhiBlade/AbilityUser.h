@@ -60,6 +60,8 @@ public:
 	UPROPERTY(BlueprintAssignable)
 		FAbilityEventDelegate OnAbilitySlotChanged;
 	UPROPERTY(BlueprintAssignable)
+		FAbilityEventDelegate OnAbilityLevelChanged;
+	UPROPERTY(BlueprintAssignable)
 		FEffectAppliedDelegate OnEffectApplied;
 	UPROPERTY(BlueprintAssignable)
 		FEffectRemovedDelegate OnEffectRemoved;

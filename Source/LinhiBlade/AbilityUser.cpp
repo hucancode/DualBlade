@@ -254,6 +254,14 @@ bool UAbilityUser::CanActivateAbility(int AbilitySlot) const
 	}
 	auto handle = AbilityHandles[AbilitySlot];
 	auto spec = AbilitySystem->FindAbilitySpecFromHandle(handle);
+	if (!spec)
+	{
+		return false;
+	}
+	if (spec->Level <= 0)
+	{
+		return false;
+	}
 	FGameplayTagContainer source_tag;
 	AbilitySystem->GetOwnedGameplayTags(source_tag);
 	auto actor_info = AbilitySystem->AbilityActorInfo.Get();
@@ -282,6 +290,7 @@ bool UAbilityUser::LevelUpAbility(int AbilitySlot)
 		return false;
 	}
 	spec->Level += 1;
+	OnAbilityLevelChanged.Broadcast(AbilitySlot);
 	return true;
 }
 
@@ -299,7 +308,8 @@ int UAbilityUser::ResetAbilityLevel(int AbilitySlot)
 		return 0;
 	}
 	int ret = spec->Level;
-	spec->Level += 1;
+	spec->Level = 0;
+	OnAbilityLevelChanged.Broadcast(AbilitySlot);
 	return ret;
 }
 

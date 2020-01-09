@@ -351,6 +351,16 @@ void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, floa
 		SetDeathTime(NewDeathTime);
 		return;
 	}
+	if (Attribute == GetAbilityPointAttribute())
+	{
+		OnAbilityPointChanged.Broadcast(NewValue);
+		return;
+	}
+	if (Attribute == GetStatPointAttribute())
+	{
+		OnStatPointChanged.Broadcast(NewValue);
+		return;
+	}
 }
 
 void UAP_AttributeSet::SetHealthUnsafe(float NewHealth)

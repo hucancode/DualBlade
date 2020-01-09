@@ -83,6 +83,10 @@ public:
 	UPROPERTY(BlueprintAssignable)
 		FValueChangeEventDelegate OnManaPercentChanged;
 	UPROPERTY(BlueprintAssignable)
+		FValueChangeEventDelegate OnAbilityPointChanged;
+	UPROPERTY(BlueprintAssignable)
+		FValueChangeEventDelegate OnStatPointChanged;
+	UPROPERTY(BlueprintAssignable)
 		FGenericEventDelegate OnLevelUp; 
 	UPROPERTY(BlueprintAssignable)
 		FGenericEventDelegate OnDeath;
