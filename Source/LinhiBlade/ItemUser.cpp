@@ -26,7 +26,6 @@ void UItemUser::BeginPlay()
 	Gold = 0;
 	LastSeenShop = nullptr;
 	CurrentWeapon = EWeaponCategory::None;
-	
 }
 
 
@@ -169,10 +168,6 @@ void UItemUser::UnequipItem_Implementation(int Slot)
 	}
 	auto item = EquipedItems[Slot];
 	StashItems.Add(item);
-	for (auto Ability : item->GrantedAbilities)
-	{
-		OnAbilityRemoved.Broadcast(Ability);
-	}
 	EquipedItems.RemoveAt(Slot);
 	OnItemUnequipped.Broadcast(item);
 	UpdateWeapon();
@@ -220,11 +215,6 @@ void UItemUser::EquipItem_Implementation(int Slot)
 		return;
 	}
 	StashItems.RemoveAt(Slot);
-	for (auto Ability : item->GrantedAbilities)
-	{
-		OnAbilityAdded.Broadcast(Ability);
-		
-	}
 	EquipedItems.Add(item);
 	OnItemEquipped.Broadcast(item);
 	UpdateWeapon();
@@ -243,10 +233,6 @@ void UItemUser::GiveEquipItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
 	UAP_GameplayItem* item = Item.GetDefaultObject();
 	UAP_GameplayItem* ret = NewObject<UAP_GameplayItem>(GetOwner(), item->Name, RF_NoFlags, item);
 	EquipedItems.Add(ret);
-	for (auto Ability : item->GrantedAbilities)
-	{
-		OnAbilityAdded.Broadcast(Ability);
-	}
 	OnItemEquipped.Broadcast(ret);
 	UpdateWeapon();
 }
@@ -254,6 +240,7 @@ void UItemUser::GiveEquipItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
 void UItemUser::UpdateWeapon()
 {
 	auto new_weapon = EWeaponCategory::None;
+	UAP_GameplayItem* new_weapon_object = nullptr;
 	for (auto item : EquipedItems)
 	{
 		new_weapon = item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
@@ -266,6 +253,7 @@ void UItemUser::UpdateWeapon()
 			EWeaponCategory::None;
 		if (new_weapon != EWeaponCategory::None)
 		{
+			new_weapon_object = item;
 			break;
 		}
 	}
@@ -273,5 +261,47 @@ void UItemUser::UpdateWeapon()
 	{
 		CurrentWeapon = new_weapon;
 		OnWeaponChanged.Broadcast();
+	}
+	if (new_weapon_object != CurrentWeaponObject)
+	{
+		RemoveWeaponAbility(CurrentWeaponObject);
+		CurrentWeaponObject = new_weapon_object;
+		GiveWeaponAbility(CurrentWeaponObject);
+	}
+}
+
+void UItemUser::GiveWeaponAbility_Implementation(UAP_GameplayItem* Item)
+{
+	if (!Item)
+	{
+		for (auto Ability : BareHandAbilities)
+		{
+			OnAbilityAdded.Broadcast(Ability);
+		}
+	}
+	else
+	{
+		for (auto Ability : Item->GrantedAbilities)
+		{
+			OnAbilityAdded.Broadcast(Ability);
+		}
+	}
+}
+
+void UItemUser::RemoveWeaponAbility_Implementation(UAP_GameplayItem* Item)
+{
+	if (!Item)
+	{
+		for (auto Ability : BareHandAbilities)
+		{
+			OnAbilityRemoved.Broadcast(Ability);
+		}
+	}
+	else
+	{
+		for (auto Ability : Item->GrantedAbilities)
+		{
+			OnAbilityRemoved.Broadcast(Ability);
+		}
 	}
 }

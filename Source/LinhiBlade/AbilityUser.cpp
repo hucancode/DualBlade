@@ -211,34 +211,6 @@ UAP_AbilityBase* UAbilityUser::GetAbility(int AbilitySlot) const
 		return nullptr;
 	}
 	auto ability = Cast<UAP_AbilityBase>(spec->Ability);
-	bool can_activate = CanActivateAbility(AbilitySlot);
-	if (ability->GetCostGameplayEffect())
-	{
-		bool can_apply_cost = AbilitySystem->CanApplyAttributeModifiers(ability->GetCostGameplayEffect(), 1.0f, AbilitySystem->MakeEffectContext());
-		FGameplayEffectSpec	Spec(ability->GetCostGameplayEffect(), AbilitySystem->MakeEffectContext(), 1.0f);
-		Spec.CalculateModifierMagnitudes();
-		const FGameplayModifierInfo& ModDef = Spec.Def->Modifiers[0];
-		const FModifierSpec& ModSpec = Spec.Modifiers[0];
-		auto owner = Cast<AAP_FightUnit>(GetOwner());
-		const UAttributeSet* Set = owner->Stats;
-		float CurrentValue = ModDef.Attribute.GetNumericValueChecked(Set);
-		float CostValue = ModSpec.GetEvaluatedMagnitude();
-		auto is_numeric = Cast<UNumericProperty>(ModDef.Attribute.GetUProperty());
-		
-		UE_LOG_FAST(
-			TEXT("get ability %d(%s) return %x, can activate = %d, CurrentValue = %f, CostValue = %f, is_numeric = %d"), 
-			AbilitySlot, *ability->GetName(), ability, can_activate, CurrentValue, CostValue, is_numeric);
-		if (!is_numeric)
-		{
-			const UStructProperty* StructProperty = Cast<UStructProperty>(ModDef.Attribute.GetUProperty());
-			const FGameplayAttributeData* DataPtr = StructProperty->ContainerPtrToValuePtr<FGameplayAttributeData>(Set);
-			auto current_value = DataPtr->GetCurrentValue();
-			auto base_value = DataPtr->GetBaseValue();
-			UE_LOG_FAST(
-				TEXT("get ability stat info, current_value %f base_value %f"),
-				current_value, base_value);
-		}
-	}
 	return ability;
 }
 

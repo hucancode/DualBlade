@@ -58,6 +58,7 @@ void AAP_FightUnit::BeginPlay()
 	{
 		SetGenericTeamId((uint8)EGameTeam::Neutral);
 	}
+	FightStyle = EFightStyle::BareHand;
 	AbilityUser->OnAbilityStateChanged.AddDynamic(this, &AAP_FightUnit::HandleAbilityStateChanged);
 	AbilityUser->OnAbilitySlotChanged.AddDynamic(this, &AAP_FightUnit::HandleAbilitySlotChanged);
 	AbilityUser->OnEffectApplied.AddDynamic(this, &AAP_FightUnit::HandleEffectApplied);
@@ -71,7 +72,7 @@ void AAP_FightUnit::BeginPlay()
 	TeamAgent->OnTeamChanged.AddDynamic(this, &AAP_FightUnit::HandleTeamChanged);
 	TeamAgent->OnCloakStarted.AddDynamic(this, &AAP_FightUnit::HandleCloakStarted);
 	TeamAgent->OnCloakFinished.AddDynamic(this, &AAP_FightUnit::HandleCloakFinished);
-	FightStyle = EFightStyle::BareHand;
+	ItemUser->GiveWeaponAbility(nullptr);
 }
 
 // Called every frame

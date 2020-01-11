@@ -56,6 +56,10 @@ public:
 		TArray<UAP_GameplayItem*> EquipedItems;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		EWeaponCategory CurrentWeapon;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		UAP_GameplayItem* CurrentWeaponObject;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSubclassOf<UAP_AbilityBase> > BareHandAbilities;
 
 	UPROPERTY(BlueprintAssignable)
 		FItemAbilityEventDelegate OnAbilityAdded;
@@ -91,7 +95,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
 		void GiveItem(TSubclassOf<UAP_GameplayItem> Item);
-
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+		void GiveWeaponAbility(UAP_GameplayItem* Item);
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+		void RemoveWeaponAbility(UAP_GameplayItem* Item);
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
 		void EquipItem(int Slot);
 
