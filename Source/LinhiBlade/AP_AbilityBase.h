@@ -51,9 +51,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float Range;
 public:
-	UFUNCTION(BlueprintCallable)
-		ECollisionChannel GetTraceChannel();
-public:
 	UFUNCTION(BlueprintImplementableEvent, Category = Ability)
 		void OnOwnerMoved(float Magnitude);
 	bool HasBlueprintOnOwnerMoved;

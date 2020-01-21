@@ -94,6 +94,7 @@ public:
 	void						HandleDeath();
 	UFUNCTION()
 	void						HandleLevelUp();
+	
 	UFUNCTION(BlueprintCallable)
 	void						GrantBountyExp();
 	UFUNCTION(BlueprintCallable)
@@ -103,9 +104,19 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void						Respawn();
 	UFUNCTION(BlueprintCallable)
-	bool						LineTraceUnit(int AbilitySlot, FVector Start, FVector Direction, AActor*& OutActor);
+	bool						LineTraceAlly(FVector Start, FVector Direction, AActor*& OutActor, bool IgnoreMe);
 	UFUNCTION(BlueprintCallable)
-	bool						LineTraceGround(int AbilitySlot, FVector Start, FVector Direction, FVector& OutLocation);
+	bool						LineTraceEnemy(FVector Start, FVector Direction, AActor*& OutActor);
+	UFUNCTION(BlueprintCallable)
+	bool						LineTraceUnit(FVector Start, FVector Direction, AActor*& OutActor, bool IgnoreMe = true);
+	UFUNCTION(BlueprintCallable)
+	bool						LineTraceGround(FVector Start, FVector Direction, FVector& OutLocation);
+	UFUNCTION(BlueprintCallable)
+	void						GetAllUnitInRange(TArray<AActor*>& Result, float Radius, bool IgnoreMe = true);
+	UFUNCTION(BlueprintCallable)
+	void						GetAllEnemyInRange(TArray<AActor*>& Result, float Radius);
+	UFUNCTION(BlueprintCallable)
+	void						GetAllAllyInRange(TArray<AActor*>& Result, float Radius);
 	UFUNCTION(BlueprintCallable)
 	void						UseNewFighStyle(EFightStyle NewStyle);
 public:

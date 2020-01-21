@@ -220,7 +220,8 @@ bool UAbilityUser::CanActivateAbility(int AbilitySlot) const
 	{
 		return false;
 	}
-	if (AbilityStates[AbilitySlot] != EAbilityState::Ready)
+	if (AbilityStates[AbilitySlot] != EAbilityState::Ready && 
+		AbilityStates[AbilitySlot] != EAbilityState::Casting)
 	{
 		return false;
 	}

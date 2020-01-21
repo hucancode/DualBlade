@@ -49,6 +49,7 @@ bool UAP_AbilityBase::ShouldAbilityRespondToEvent(const FGameplayAbilityActorInf
 	bool ret = Super::ShouldAbilityRespondToEvent(ActorInfo, Payload);
 	if (!ret)
 	{
+		UE_LOG_FAST(TEXT("ShouldAbilityRespondToEvent, return false because parent call return false"));
 		return false;
 	}
 	{
@@ -65,7 +66,7 @@ bool UAP_AbilityBase::ShouldAbilityRespondToEvent(const FGameplayAbilityActorInf
 			auto me = GetClass();
 			if (other != me)
 			{
-				UE_LOG_FAST(TEXT("ShouldAbilityRespondToEvent, return false supplied object not match"));
+				UE_LOG_FAST(TEXT("ShouldAbilityRespondToEvent, return false supplied object not match, other(%s) - me(%s)"), *other->GetName(), *me->GetName());
 				return false;
 			}
 			UE_LOG_FAST(TEXT("ShouldAbilityRespondToEvent, return true"));
@@ -171,38 +172,5 @@ void UAP_AbilityBase::ActivateAbility(FGameplayAbilitySpecHandle Handle, const F
 			}
 		}
 	}
-}
-
-ECollisionChannel UAP_AbilityBase::GetTraceChannel()
-{
-	// Those channel are subject to change
-	// See DefaultEngine.ini for lastest update
-	auto ret = ECollisionChannel();
-	switch (TargetingPolicy)
-	{
-	case ETargetingPolicy::None:
-		break;
-	case ETargetingPolicy::Ground:
-		ret = ECollisionChannel::ECC_GameTraceChannel3; //Floor
-		break;
-	case ETargetingPolicy::UnitAll:
-		ret = ECollisionChannel::ECC_GameTraceChannel11; //Unit_All
-		break;
-	case ETargetingPolicy::UnitAlly:
-		// need to calculate this on run time
-		ret = ECollisionChannel::ECC_GameTraceChannel8; //Unit_Team1
-		break;
-	case ETargetingPolicy::UnitAllyExcludeSelf:
-		// need to calculate this on run time
-		ret = ECollisionChannel::ECC_GameTraceChannel8; //Unit_Team1
-		break;
-	case ETargetingPolicy::UnitEnemy:
-		// need to calculate this on run time
-		ret = ECollisionChannel::ECC_GameTraceChannel9; //Unit_Team2
-		break;
-	default:
-		break;
-	}
-	return ret;
 }
 

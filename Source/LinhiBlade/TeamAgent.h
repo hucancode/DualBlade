@@ -45,7 +45,16 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	UFUNCTION(BlueprintCallable)
+		void SetOverriddenController(AController* NewController);
+	UFUNCTION(BlueprintCallable)
 		void SetLogicalController(AController* NewController);
+	UFUNCTION(BlueprintPure)
+		AController* GetController();
+	UFUNCTION(BlueprintPure)
+		ECollisionChannel GetTraceChannelEnemy();
+	UFUNCTION(BlueprintPure)
+		ECollisionChannel GetTraceChannelAlly();
+
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
 		void EnterCloak(ECloakingLevel Level);
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
@@ -67,12 +76,7 @@ public:
 		bool IsUnderControlOf(AController* OtherController);
 	UFUNCTION(BlueprintCallable)
 		bool IsUnderMyControl();
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		void GetAllUnitInRange(TArray<AActor*>& Result, float Radius);
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		void GetAllEnemyInRange(TArray<AActor*>& Result, float Radius);
-	UFUNCTION(BlueprintCallable, Category = "Abilities")
-		void GetAllAllyInRange(TArray<AActor*>& Result, float Radius);
 protected:
 	AController* LogicalController;
+	AController* OverriddenController;
 };

@@ -10,10 +10,10 @@
 UENUM(BlueprintType)
 enum class EGameTeam : uint8
 {
-	Neutral = 0,
-	Team1 = 1,
-	Team2 = 2,
-	NoTeam = 3
+	NoTeam = 0,
+	Neutral = 1,
+	Team1 = 2,
+	Team2 = 3
 };
 
 UCLASS()
@@ -22,8 +22,21 @@ class LINHIBLADE_API AAP_GameMode : public AGameModeBase
 	GENERATED_BODY()
 	
 public:
+	AAP_GameMode();
 	virtual void StartPlay();
 	UFUNCTION(Category = "Artificial Intelligence", BlueprintPure)
-		static ETeamAttitude::Type GetAttitude(FGenericTeamId From, FGenericTeamId Toward);
-
+	static ETeamAttitude::Type GetAttitude(FGenericTeamId From, FGenericTeamId Toward);
+public:
+	UFUNCTION(BlueprintPure)
+		ECollisionChannel GetTraceChannelAlly(EGameTeam Team);
+	UFUNCTION(BlueprintPure)
+		ECollisionChannel GetTraceChannelEnemy(EGameTeam Team);
+	UFUNCTION(BlueprintPure)
+		ECollisionChannel GetTraceChannelNeutral();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TMap<EGameTeam, TEnumAsByte<ECollisionChannel>> TeamCollisionChannel;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TEnumAsByte<ECollisionChannel> GroundCollisionChannel;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TEnumAsByte<ECollisionChannel> UnitCollisionChannel;
 };

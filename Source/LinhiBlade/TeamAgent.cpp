@@ -38,6 +38,24 @@ void UTeamAgent::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
 	// ...
 }
 
+void UTeamAgent::SetOverriddenController(AController* NewController)
+{
+	if (NewController)
+	{
+		auto RTSController = Cast<AAP_RTSPlayerController>(NewController);
+		if (!RTSController->IsValidLowLevel())
+		{
+			return;
+		}
+		OverriddenController = NewController;
+		SetTeam(RTSController->Team);
+	}
+	else
+	{
+		SetLogicalController(LogicalController);
+	}
+}
+
 void UTeamAgent::SetLogicalController(AController* NewController)
 {
 	auto RTSController = Cast<AAP_RTSPlayerController>(NewController);
@@ -47,6 +65,27 @@ void UTeamAgent::SetLogicalController(AController* NewController)
 	}
 	LogicalController = NewController;
 	SetTeam(RTSController->Team);
+}
+
+AController* UTeamAgent::GetController()
+{
+	if (OverriddenController)
+	{
+		return OverriddenController;
+	}
+	return LogicalController;
+}
+
+ECollisionChannel UTeamAgent::GetTraceChannelEnemy()
+{
+	ECollisionChannel::ECC_GameTraceChannel8; //Unit_Team1
+	ECollisionChannel::ECC_GameTraceChannel9; //Unit_Team2
+	return ECollisionChannel::ECC_GameTraceChannel11; //Unit_All
+}
+
+ECollisionChannel UTeamAgent::GetTraceChannelAlly()
+{
+	return ECollisionChannel::ECC_GameTraceChannel11; //Unit_All
 }
 
 void UTeamAgent::EnterCloak_Implementation(ECloakingLevel Level)
@@ -96,7 +135,7 @@ EGameTeam UTeamAgent::GetTeam()
 bool UTeamAgent::IsAlly()
 {
 	auto Me = Cast<AAP_RTSPlayerController>(GetWorld()->GetFirstPlayerController());
-	auto ThisUnit = Cast<AAP_RTSPlayerController>(LogicalController);
+	auto ThisUnit = Cast<AAP_RTSPlayerController>(GetController());
 	if (Me && ThisUnit)
 	{
 		return Me->GetAttituteTowardPlayer(ThisUnit) == ETeamAttitude::Type::Friendly;
@@ -107,7 +146,7 @@ bool UTeamAgent::IsAlly()
 bool UTeamAgent::IsHostile()
 {
 	auto Me = Cast<AAP_RTSPlayerController>(GetWorld()->GetFirstPlayerController());
-	auto ThisUnit = Cast<AAP_RTSPlayerController>(LogicalController);
+	auto ThisUnit = Cast<AAP_RTSPlayerController>(GetController());
 	if (Me && ThisUnit)
 	{
 		return Me->GetAttituteTowardPlayer(ThisUnit) == ETeamAttitude::Type::Hostile;
@@ -126,75 +165,11 @@ bool UTeamAgent::IsVisible()
 
 bool UTeamAgent::IsUnderControlOf(AController* OtherController)
 {
-	return OtherController == LogicalController;
+	return OtherController == GetController();
 }
 
 bool UTeamAgent::IsUnderMyControl()
 {
 	auto Me = GetWorld()->GetFirstPlayerController();
 	return IsUnderControlOf(Me);
-}
-
-void UTeamAgent::GetAllUnitInRange(TArray<AActor*>& Result, float Radius)
-{
-	const static ECollisionChannel Channel = ECollisionChannel::ECC_GameTraceChannel11;
-	FCollisionQueryParams Params(SCENE_QUERY_STAT(GetAllUnitInRange), false);
-	TArray<FOverlapResult> Overlaps;
-	FCollisionShape Shape = FCollisionShape::MakeSphere(Radius);
-	GetWorld()->OverlapMultiByChannel(Overlaps, GetOwner()->GetActorLocation(), FQuat::Identity, Channel, Shape, Params);
-#if ENABLE_DRAW_DEBUG
-	DrawDebugSphere(GetWorld(), GetOwner()->GetActorLocation(), Radius, 10, FColor::Green, false, 1.5f);
-#endif
-	for (auto Overlap : Overlaps)
-	{
-		if (!Overlap.bBlockingHit)
-		{
-			continue;
-		}
-		auto Unit = Cast<IGenericTeamAgentInterface>(Overlap.Actor);
-		if (!Unit)
-		{
-			continue;
-		}
-		Result.AddUnique(Overlap.Actor.Get());
-	}
-	UE_LOG_FAST(TEXT("AAP_Hero::GetAllUnitInRange, at %s,  got %d"), *GetOwner()->GetActorLocation().ToString(), Result.Num());
-}
-
-void UTeamAgent::GetAllEnemyInRange(TArray<AActor*>& Result, float Radius)
-{
-	auto owner = Cast<IGenericTeamAgentInterface>(GetOwner());
-	if (!owner)
-	{
-		return;
-	}
-	GetAllUnitInRange(Result, Radius);
-	for (int i = Result.Num() - 1; i >= 0; i--)
-	{
-		auto Unit = Result[i];
-		if (owner->GetTeamAttitudeTowards(*Unit) == ETeamAttitude::Hostile)
-		{
-			continue;
-		}
-		Result.RemoveAt(i);
-	}
-}
-
-void UTeamAgent::GetAllAllyInRange(TArray<AActor*>& Result, float Radius)
-{
-	auto owner = Cast<IGenericTeamAgentInterface>(GetOwner());
-	if (!owner)
-	{
-		return;
-	}
-	GetAllUnitInRange(Result, Radius);
-	for (int i = Result.Num() - 1; i >= 0; i--)
-	{
-		auto Unit = Result[i];
-		if (owner->GetTeamAttitudeTowards(*Unit) == ETeamAttitude::Friendly)
-		{
-			continue;
-		}
-		Result.RemoveAt(i);
-	}
 }

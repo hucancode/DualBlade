@@ -8,6 +8,7 @@
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
 #include "AP_AttributeChangeData.h"
+#include "Kismet/GameplayStatics.h"
 
 #define ABILITY_MAX_LEVEL 4
 
@@ -241,7 +242,7 @@ void AAP_FightUnit::HandleCloakFinished(ECloakingLevel Level)
 void AAP_FightUnit::GrantBountyExp()
 {
 	TArray<AActor*> Enemies;
-	TeamAgent->GetAllEnemyInRange(Enemies, EXP_AQUIRING_RANGE);
+	GetAllEnemyInRange(Enemies, EXP_AQUIRING_RANGE);
 	UE_LOG_FAST(TEXT("AAP_Hero::GrantBountyExp got %d enemies"), Enemies.Num());
 	if (!Enemies.Num())
 	{
@@ -326,58 +327,164 @@ void AAP_FightUnit::HandleLevelUp()
 {
 }
 
-
-bool AAP_FightUnit::LineTraceUnit(int AbilitySlot, FVector Start, FVector Direction, AActor*& OutActor)
+bool AAP_FightUnit::LineTraceEnemy(FVector Start, FVector Direction, AActor*& OutActor)
 {
-	auto Ability = AbilityUser->GetAbility(AbilitySlot);
-	if (!Ability)
+	FHitResult hit_result;
+	FVector start = Start;
+	FVector end = Start + Direction * RAY_LENGTH;
+	auto game = GetWorld()->GetAuthGameMode<AAP_GameMode>();
+	if (!game)
 	{
 		return false;
 	}
-	if (Ability->TargetingPolicy < ETargetingPolicy::UnitAll)
+	ECollisionChannel channel = game->GetTraceChannelEnemy(TeamAgent->GetTeam());
+	FCollisionQueryParams params = FCollisionQueryParams::DefaultQueryParam;
+	bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, start, end, channel, params);
+	OutActor = hit_result.GetActor();
+	UE_LOG(LogTemp, Warning, TEXT("UAP_AbilityBase::LineTraceUnit Start (%s) End (%s) channel %d, hit %d"), *Start.ToString(), *end.ToString(), channel, hit);
+	if (!hit && channel != game->UnitCollisionChannel)
 	{
-		return false;
+		channel = game->GetTraceChannelNeutral();
+		hit = GetWorld()->LineTraceSingleByChannel(hit_result, start, end, channel, params);
+		OutActor = hit_result.GetActor();
+		UE_LOG(LogTemp, Warning, TEXT("UAP_AbilityBase::LineTraceUnit failed to hit enemy, now tracing neutral, channel %d, hit %d"), *Start.ToString(), *end.ToString(), channel, hit);
 	}
-	FHitResult HitResult;
-	FVector End = Start + Direction * RAY_LENGTH;
-	ECollisionChannel Channel = Ability->GetTraceChannel();
-	FCollisionQueryParams Params = FCollisionQueryParams::DefaultQueryParam;
-	if (Ability->TargetingPolicy == ETargetingPolicy::UnitAllyExcludeSelf)
-	{
-		Params.AddIgnoredActor(this);
-	}
-	TArray<FHitResult> HitResults;
-	bool hit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, Channel, Params);
-	OutActor = HitResult.GetActor();
-	UE_LOG(LogTemp, Warning, TEXT("UAP_AbilityBase::LineTraceUnit Start (%s) End (%s) Channel %d, hit %d"), *Start.ToString(), *End.ToString(), Channel, hit);
 #ifdef ENABLE_DRAW_DEBUG
-	FVector EndPoint = HitResult.Actor.IsValid() ? HitResult.ImpactPoint : HitResult.TraceEnd;
-	DrawDebugSphere(GetWorld(), EndPoint, 16, 10, FColor::Green, false);
+	FVector end_point = hit_result.Actor.IsValid() ? hit_result.ImpactPoint : hit_result.TraceEnd;
+	DrawDebugSphere(GetWorld(), end_point, 16, 10, FColor::Green, false);
 #endif // ENABLE_DRAW_DEBUG
 	return hit;
 }
 
-bool AAP_FightUnit::LineTraceGround(int AbilitySlot, FVector Start, FVector Direction, FVector& OutLocation)
+bool AAP_FightUnit::LineTraceAlly(FVector Start, FVector Direction, AActor*& OutActor, bool IgnoreMe)
 {
-	auto Ability = AbilityUser->GetAbility(AbilitySlot);
-	if (!Ability)
+	FHitResult hit_result;
+	FVector start = Start;
+	FVector end = Start + Direction * RAY_LENGTH;
+	auto game = GetWorld()->GetAuthGameMode<AAP_GameMode>();
+	if (!game)
 	{
 		return false;
 	}
-	if (Ability->TargetingPolicy != ETargetingPolicy::Ground)
+	ECollisionChannel channel = game->GetTraceChannelAlly(TeamAgent->GetTeam());
+	FCollisionQueryParams params = FCollisionQueryParams::DefaultQueryParam;
+	if (IgnoreMe)
+	{
+		params.AddIgnoredActor(this);
+	}
+	bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, start, end, channel, params);
+	OutActor = hit_result.GetActor();
+	UE_LOG(LogTemp, Warning, TEXT("UAP_AbilityBase::LineTraceUnit Start (%s) End (%s) Channel %d, hit %d"), *Start.ToString(), *end.ToString(), channel, hit);
+#ifdef ENABLE_DRAW_DEBUG
+	FVector end_point = hit_result.Actor.IsValid() ? hit_result.ImpactPoint : hit_result.TraceEnd;
+	DrawDebugSphere(GetWorld(), end_point, 16, 10, FColor::Green, false);
+#endif // ENABLE_DRAW_DEBUG
+	return hit;
+}
+
+
+bool AAP_FightUnit::LineTraceUnit(FVector Start, FVector Direction, AActor*& OutActor, bool IgnoreMe)
+{
+	auto game = GetWorld()->GetAuthGameMode<AAP_GameMode>();
+	if (!game)
 	{
 		return false;
 	}
-	FHitResult HitResult;
-	FVector End = Start + Direction * RAY_LENGTH;
-	ECollisionChannel Channel = Ability->GetTraceChannel();
-	bool hit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, Channel);
-	OutLocation = HitResult.Location;
+	FHitResult hit_result;
+	FVector start = Start;
+	FVector end = Start + Direction * RAY_LENGTH;
+	ECollisionChannel Channel = game->UnitCollisionChannel;
+	FCollisionQueryParams Params = FCollisionQueryParams::DefaultQueryParam;
+	if (IgnoreMe)
+	{
+		Params.AddIgnoredActor(this);
+	}
+	bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, start, end, Channel, Params);
+	OutActor = hit_result.GetActor();
+	UE_LOG(LogTemp, Warning, TEXT("UAP_AbilityBase::LineTraceUnit Start (%s) End (%s) Channel %d, hit %d"), *Start.ToString(), *end.ToString(), Channel, hit);
+#ifdef ENABLE_DRAW_DEBUG
+	FVector end_point = hit_result.Actor.IsValid() ? hit_result.ImpactPoint : hit_result.TraceEnd;
+	DrawDebugSphere(GetWorld(), end_point, 16, 10, FColor::Green, false);
+#endif // ENABLE_DRAW_DEBUG
+	return hit;
+}
+
+bool AAP_FightUnit::LineTraceGround(FVector Start, FVector Direction, FVector& OutLocation)
+{
+	auto game = GetWorld()->GetAuthGameMode<AAP_GameMode>();
+	if (!game)
+	{
+		return false;
+	}
+	ECollisionChannel channel = game->GroundCollisionChannel;
+	FHitResult hit_result;
+	FVector start = Start;
+	FVector end = Start + Direction * RAY_LENGTH;
+	bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, start, end, channel);
+	OutLocation = hit_result.Location;
 #ifdef ENABLE_DRAW_DEBUG
 	DrawDebugSphere(GetWorld(), OutLocation, 16, 10, FColor::Green, false);
 #endif // ENABLE_DRAW_DEBUG
 	return hit;
 }
+void AAP_FightUnit::GetAllUnitInRange(TArray<AActor*>& Result, float Radius, bool IgnoreMe)
+{
+	const static ECollisionChannel Channel = ECollisionChannel::ECC_GameTraceChannel11;
+	FCollisionQueryParams Params = FCollisionQueryParams::DefaultQueryParam;
+	if (IgnoreMe)
+	{
+		Params.AddIgnoredActor(this);
+	}
+	TArray<FOverlapResult> Overlaps;
+	FCollisionShape Shape = FCollisionShape::MakeSphere(Radius);
+	GetWorld()->OverlapMultiByChannel(Overlaps, GetActorLocation(), FQuat::Identity, Channel, Shape, Params);
+#if ENABLE_DRAW_DEBUG
+	DrawDebugSphere(GetWorld(), GetActorLocation(), Radius, 10, FColor::Green, false, 1.5f);
+#endif
+	for (auto Overlap : Overlaps)
+	{
+		if (!Overlap.bBlockingHit)
+		{
+			continue;
+		}
+		auto Unit = Cast<IGenericTeamAgentInterface>(Overlap.Actor);
+		if (!Unit)
+		{
+			continue;
+		}
+		Result.AddUnique(Overlap.Actor.Get());
+	}
+	UE_LOG_FAST(TEXT("AAP_Hero::GetAllUnitInRange, at %s,  got %d"), *GetActorLocation().ToString(), Result.Num());
+}
+
+void AAP_FightUnit::GetAllEnemyInRange(TArray<AActor*>& Result, float Radius)
+{
+	GetAllUnitInRange(Result, Radius);
+	for (int i = Result.Num() - 1; i >= 0; i--)
+	{
+		auto Unit = Result[i];
+		if (GetTeamAttitudeTowards(*Unit) == ETeamAttitude::Hostile)
+		{
+			continue;
+		}
+		Result.RemoveAt(i);
+	}
+}
+
+void AAP_FightUnit::GetAllAllyInRange(TArray<AActor*>& Result, float Radius)
+{
+	GetAllUnitInRange(Result, Radius);
+	for (int i = Result.Num() - 1; i >= 0; i--)
+	{
+		auto Unit = Result[i];
+		if (GetTeamAttitudeTowards(*Unit) == ETeamAttitude::Friendly)
+		{
+			continue;
+		}
+		Result.RemoveAt(i);
+	}
+}
+
 
 void AAP_FightUnit::UseNewFighStyle(EFightStyle NewStyle)
 {

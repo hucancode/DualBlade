@@ -1,1 +1,1 @@
-D:/Factory/Programs/UE_4.23/Engine/Binaries/DotNET/UnrealBuildTool.exe  -ModuleWithSuffix=LinhiBlade,9713 Win64 Development -TargetType=Editor -Project="D:/Factory/Hello World/DualBlade_2019/DualBlade.uproject" "D:/Factory/Hello World/DualBlade_2019/DualBlade.uproject"  -IgnoreJunk
+D:/Factory/Programs/UE_4.24/Engine/Binaries/DotNET/UnrealBuildTool.exe  -ModuleWithSuffix=LinhiBlade,9610 Win64 Development -TargetType=Editor -Project="D:/Factory/Hello World/DualBlade_2019/DualBlade.uproject" "D:/Factory/Hello World/DualBlade_2019/DualBlade.uproject"  -IgnoreJunk
