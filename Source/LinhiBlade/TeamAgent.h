@@ -50,10 +50,6 @@ public:
 		void SetLogicalController(AController* NewController);
 	UFUNCTION(BlueprintPure)
 		AController* GetController();
-	UFUNCTION(BlueprintPure)
-		ECollisionChannel GetTraceChannelEnemy();
-	UFUNCTION(BlueprintPure)
-		ECollisionChannel GetTraceChannelAlly();
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
 		void EnterCloak(ECloakingLevel Level);

@@ -76,18 +76,6 @@ AController* UTeamAgent::GetController()
 	return LogicalController;
 }
 
-ECollisionChannel UTeamAgent::GetTraceChannelEnemy()
-{
-	ECollisionChannel::ECC_GameTraceChannel8; //Unit_Team1
-	ECollisionChannel::ECC_GameTraceChannel9; //Unit_Team2
-	return ECollisionChannel::ECC_GameTraceChannel11; //Unit_All
-}
-
-ECollisionChannel UTeamAgent::GetTraceChannelAlly()
-{
-	return ECollisionChannel::ECC_GameTraceChannel11; //Unit_All
-}
-
 void UTeamAgent::EnterCloak_Implementation(ECloakingLevel Level)
 {
 	// invisible to AI and visual render, character still physically on the map
