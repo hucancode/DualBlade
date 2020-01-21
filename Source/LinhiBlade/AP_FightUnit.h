@@ -104,6 +104,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void						Respawn();
 	UFUNCTION(BlueprintCallable)
+	bool						LineTraceUnitAuto(ETargetingPolicy Targeting, FVector Start, FVector Direction, AActor*& OutActor);
+	UFUNCTION(BlueprintCallable)
 	bool						LineTraceAlly(FVector Start, FVector Direction, AActor*& OutActor, bool IgnoreMe);
 	UFUNCTION(BlueprintCallable)
 	bool						LineTraceEnemy(FVector Start, FVector Direction, AActor*& OutActor);

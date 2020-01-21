@@ -13,9 +13,10 @@ enum class ETargetingPolicy :uint8
 	None = 0,
 	Ground = 1,
 	UnitAll = 2,
-	UnitAlly = 3,
-	UnitAllyExcludeSelf = 4,
-	UnitEnemy = 5
+	UnitExcludeSelf = 3,
+	UnitAlly = 4,
+	UnitAllyExcludeSelf = 5,
+	UnitEnemy = 6
 };
 
 UENUM(BlueprintType)

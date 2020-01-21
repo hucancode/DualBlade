@@ -382,6 +382,25 @@ bool AAP_FightUnit::LineTraceAlly(FVector Start, FVector Direction, AActor*& Out
 	return hit;
 }
 
+bool AAP_FightUnit::LineTraceUnitAuto(ETargetingPolicy Targeting, FVector Start, FVector Direction, AActor*& OutActor)
+{
+	switch (Targeting)
+	{
+	case ETargetingPolicy::UnitAll:
+		return LineTraceUnit(Start, Direction, OutActor, false);
+	case ETargetingPolicy::UnitExcludeSelf:
+		return LineTraceUnit(Start, Direction, OutActor, true);
+	case ETargetingPolicy::UnitAlly:
+		return LineTraceAlly(Start, Direction, OutActor, false);
+	case ETargetingPolicy::UnitAllyExcludeSelf:
+		return LineTraceAlly(Start, Direction, OutActor, true);
+	case ETargetingPolicy::UnitEnemy:
+		return LineTraceEnemy(Start, Direction, OutActor);
+	default:
+		break;
+	}
+	return false;
+}
 
 bool AAP_FightUnit::LineTraceUnit(FVector Start, FVector Direction, AActor*& OutActor, bool IgnoreMe)
 {
