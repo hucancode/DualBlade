@@ -26,7 +26,8 @@ enum class EActivatingPolicy :uint8
 	PassiveOnEvent = 1,
 	Toggle = 2,
 	Active = 3,
-	ActiveAutocast = 4
+	ActiveAutocast = 4,
+	ActiveCombo = 5
 };
 
 /**
