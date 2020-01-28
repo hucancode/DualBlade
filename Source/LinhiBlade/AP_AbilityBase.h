@@ -6,7 +6,6 @@
 #include "Abilities/GameplayAbility.h"
 #include "AP_AbilityBase.generated.h"
 
-#define RAY_LENGTH 999999.0f
 UENUM(BlueprintType)
 enum class ETargetingPolicy :uint8
 {

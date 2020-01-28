@@ -11,6 +11,9 @@
 #include "Kismet/GameplayStatics.h"
 
 #define ABILITY_MAX_LEVEL 4
+#ifndef RAY_LENGTH
+#define RAY_LENGTH 999999.0f
+#endif
 
 // Sets default values
 AAP_FightUnit::AAP_FightUnit()

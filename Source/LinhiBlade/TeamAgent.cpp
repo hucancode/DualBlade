@@ -2,7 +2,7 @@
 
 
 #include "TeamAgent.h"
-#include "AP_RTSPlayerController.h"
+#include "AP_RPGPlayerController.h"
 #include "DrawDebugHelpers.h"
 
 #ifndef UE_LOG_FAST
@@ -42,7 +42,7 @@ void UTeamAgent::SetOverriddenController(AController* NewController)
 {
 	if (NewController)
 	{
-		auto RTSController = Cast<AAP_RTSPlayerController>(NewController);
+		auto RTSController = Cast<AAP_RPGPlayerController>(NewController);
 		if (!RTSController->IsValidLowLevel())
 		{
 			return;
@@ -58,7 +58,7 @@ void UTeamAgent::SetOverriddenController(AController* NewController)
 
 void UTeamAgent::SetLogicalController(AController* NewController)
 {
-	auto RTSController = Cast<AAP_RTSPlayerController>(NewController);
+	auto RTSController = Cast<AAP_RPGPlayerController>(NewController);
 	if (!RTSController->IsValidLowLevel())
 	{
 		return;
@@ -122,8 +122,8 @@ EGameTeam UTeamAgent::GetTeam()
 
 bool UTeamAgent::IsAlly()
 {
-	auto Me = Cast<AAP_RTSPlayerController>(GetWorld()->GetFirstPlayerController());
-	auto ThisUnit = Cast<AAP_RTSPlayerController>(GetController());
+	auto Me = Cast<AAP_RPGPlayerController>(GetWorld()->GetFirstPlayerController());
+	auto ThisUnit = Cast<AAP_RPGPlayerController>(GetController());
 	if (Me && ThisUnit)
 	{
 		return Me->GetAttituteTowardPlayer(ThisUnit) == ETeamAttitude::Type::Friendly;
@@ -133,8 +133,8 @@ bool UTeamAgent::IsAlly()
 
 bool UTeamAgent::IsHostile()
 {
-	auto Me = Cast<AAP_RTSPlayerController>(GetWorld()->GetFirstPlayerController());
-	auto ThisUnit = Cast<AAP_RTSPlayerController>(GetController());
+	auto Me = Cast<AAP_RPGPlayerController>(GetWorld()->GetFirstPlayerController());
+	auto ThisUnit = Cast<AAP_RPGPlayerController>(GetController());
 	if (Me && ThisUnit)
 	{
 		return Me->GetAttituteTowardPlayer(ThisUnit) == ETeamAttitude::Type::Hostile;
