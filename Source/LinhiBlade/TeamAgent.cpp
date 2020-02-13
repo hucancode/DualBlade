@@ -78,6 +78,14 @@ AController* UTeamAgent::GetController()
 
 void UTeamAgent::EnterCloak_Implementation(ECloakingLevel Level)
 {
+	if (CloakStatus != Level && CloakStatus != ECloakingLevel::None)
+	{
+		QuitCloak();
+	}
+	if (Level == ECloakingLevel::None)
+	{
+		return;
+	}
 	// invisible to AI and visual render, character still physically on the map
 	switch (Level)
 	{

@@ -37,7 +37,7 @@ public:
 		FCloakEventDelegate OnCloakStarted;
 	UPROPERTY(BlueprintAssignable)
 		FCloakEventDelegate OnCloakFinished;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		ECloakingLevel CloakStatus;
 	UPROPERTY()
 		EGameTeam CurrentTeam;

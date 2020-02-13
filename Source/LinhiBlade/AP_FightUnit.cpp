@@ -236,10 +236,38 @@ void AAP_FightUnit::HandleTeamChanged(EGameTeam Team)
 
 void AAP_FightUnit::HandleCloakStarted(ECloakingLevel Level)
 {
+	switch (Level)
+	{
+	case ECloakingLevel::Cloaked:
+		break;
+	case ECloakingLevel::Invisible:
+		break;
+	case ECloakingLevel::Vanished:
+		GetController()->SetIgnoreMoveInput(true);
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetMesh()->SetVisibility(false);
+		break;
+	default:
+		break;
+	}
 }
 
 void AAP_FightUnit::HandleCloakFinished(ECloakingLevel Level)
 {
+	switch (Level)
+	{
+	case ECloakingLevel::Cloaked:
+		break;
+	case ECloakingLevel::Invisible:
+		break;
+	case ECloakingLevel::Vanished:
+		GetController()->SetIgnoreMoveInput(false);
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetMesh()->SetVisibility(true);
+		break;
+	default:
+		break;
+	}
 }
 
 void AAP_FightUnit::GrantBountyExp()
