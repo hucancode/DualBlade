@@ -11,28 +11,10 @@
 #include "TimerManager.h"
 #include "GameplayAbility.h"
 #include "GenericTeamAgentInterface.h"
-#include "AP_GameplayItem.h"
+#include <AP_GameplayAbilitySet.h>
 #include "AP_Hero.generated.h"
 
 #define UE_LOG_FAST(Format, ...) UE_LOG(LogTemp, Display, Format, ##__VA_ARGS__)
-
-UENUM(BlueprintType)
-enum class EWeaponCategory :uint8
-{
-	Axe					UMETA(DisplayName = "Axe"),
-	AxeInWorld			UMETA(DisplayName = "Axe (Axe In World)"),
-	BareHand			UMETA(DisplayName = "Bare Hand"),
-	Bow					UMETA(DisplayName = "Bow"),
-	Dagger				UMETA(DisplayName = "Dagger"),
-	DualSword			UMETA(DisplayName = "Dual Sword"),
-	Katana1				UMETA(DisplayName = "Katana (Mode 1)"),
-	Katana2				UMETA(DisplayName = "Katana (Mode 2)"),
-	Katana3				UMETA(DisplayName = "Katana (Mode 3)"),
-	MagicStaff			UMETA(DisplayName = "Magic Staff"),
-	SwordAndShield		UMETA(DisplayName = "Sword (With Shield)"),
-	SwordNoShield		UMETA(DisplayName = "Sword (No Shield)"),
-	SwordTravelMode		UMETA(DisplayName = "Sword (Travel Mode)")
-};
 
 UENUM(BlueprintType)
 enum class EAbilityState : uint8
@@ -43,6 +25,15 @@ enum class EAbilityState : uint8
 	Disabled	UMETA(DisplayName = "Disabled")
 };
 
+UENUM(BlueprintType)
+enum class EJob : uint8
+{
+	Job1 		UMETA(DisplayName = "Warrior"),
+	Job2 		UMETA(DisplayName = "Summonner"),
+	Job3		UMETA(DisplayName = "Fighter"),
+	Job4		UMETA(DisplayName = "Mechanic"),
+	Job5		UMETA(DisplayName = "Assasin"),
+};
 UENUM(BlueprintType)
 enum class ECloakingLevel : uint8
 {
@@ -111,8 +102,10 @@ public:
 
 protected:
 	void SetupStats();
-	void GiveAbility(TSubclassOf<UGameplayAbility> Ability);
-	void RemoveAbility(TSubclassOf<UGameplayAbility> Ability);
+	void GiveAbility(const int32& Level, TSubclassOf<UGameplayAbility> Ability);
+	/** Apply the startup gameplay abilities and effects */
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void SetupAbilities();
 	/** Apply the startup gameplay abilities and effects */
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		bool IsBuffPresent(const TSubclassOf<UGameplayEffect> Effect);
@@ -193,15 +186,6 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "AI")
 		void OnTeamUpdated(const FGenericTeamId& NewTeam);
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
-		void OnWeaponChanged(EWeaponCategory OldWeapon, EWeaponCategory NewWeapon);
-	
-	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
-		void OnEquipmentChanged();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
-		void OnSkillChanged();
-
 	/** Called when a game effect applied to self
 	 *
 	 * @param Source who are giving the effect
@@ -256,7 +240,7 @@ protected:
 	void HandleExpChanged(float NewValue);
 	void HandleMoveSpeedChanged(float NewValue);
 	void HandleTurnRateChanged(float NewValue);
-	void HandleItemChanged();
+
 	// Friended to allow access to handle functions above
 	friend UAP_AttributeSet;
 
@@ -303,8 +287,13 @@ protected:
 
 	/** List of attributes modified by the ability system */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Abilities)
-		UAP_AttributeSet* AllStats_;
+		UAP_AttributeSet* AllStats;
 
+	/** Abilities to grant to this character on creation. These will be activated by tag or event and are not bound to specific inputs */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Abilities)
+		UAP_GameplayAbilitySet* AbilitySet;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Abilities)
+		EJob Job;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Abilities)
 		UDataTable* StartingStats;
 
@@ -312,6 +301,9 @@ protected:
 		TArray<FGameplayAbilitySpecHandle> AbilityHandles;
 	UPROPERTY()
 		int ChannelEffectCount;
+	/** If true we have initialized our abilities */
+	UPROPERTY()
+		int32 bAbilitiesInitialized;
 	UPROPERTY()
 		int32 bStatsInitialized;
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Gameplay Tags")
@@ -321,19 +313,12 @@ protected:
 		AController* LogicalController;
 	UPROPERTY()
 		ECloakingLevel CloakStatus;
-	UPROPERTY()
-		TArray<UAP_GameplayItem*> StashItems;
-	UPROPERTY()
-		TArray<UAP_GameplayItem*> EquipedItems;
-	UPROPERTY()
-		EWeaponCategory CurrentWeapon_;
 public:
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
 		void EnterCloak(ECloakingLevel Level);
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
 		void QuitCloak();
-
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		bool IsVisibleToTeam(FGameplayTag TeamTag);
 
@@ -342,24 +327,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = Abilities)
 		void Respawn();
-
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
-		void GiveItem(TSubclassOf<UAP_GameplayItem> Item);
-
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
-		void EquipItem(int Slot);
-
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
-		void GiveEquipItem(TSubclassOf<UAP_GameplayItem> Item);
-
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
-		void UnequipItem(int Slot);
-
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
-		void RemoveItem(int Slot);
-
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Abilities")
-		void UnequipRemoveItem(int Slot);
 
 	UFUNCTION(BlueprintCallable, Category = GameplayTags)
 		bool RemoveGameplayTag(FGameplayTag Tag);
@@ -391,4 +358,6 @@ public:
 		bool IsHostile();
 	UFUNCTION(BlueprintCallable)
 		bool IsDead() const;
+	UFUNCTION(BlueprintCallable)
+		void SetJob(EJob NewJob);
 };

@@ -63,12 +63,13 @@ AAP_Hero::AAP_Hero()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
-	AllStats_ = CreateDefaultSubobject<UAP_AttributeSet>(TEXT("AllStats_"));
-	UE_LOG_FAST(TEXT("AAP_Hero::AAP_Hero(), AllStats_=%x"), AllStats_);
+	AllStats = CreateDefaultSubobject<UAP_AttributeSet>(TEXT("AllStats"));;
+	UE_LOG_FAST(TEXT("AAP_Hero::AAP_Hero(), AllStats=%x"), AllStats);
 
+	AbilitySet = 0;
 	bStatsInitialized = false;
+	bAbilitiesInitialized = false;
 	ChannelEffectCount = 0;
-	CurrentWeapon_ = EWeaponCategory::BareHand;
 	SetReplicates(true);
 }
 
@@ -76,7 +77,8 @@ AAP_Hero::AAP_Hero()
 void AAP_Hero::BeginPlay()
 {
 	Super::BeginPlay();
-	UE_LOG_FAST(TEXT("AAP_Hero::BeginPlay(), AllStats_=%x"), AllStats_);
+	UE_LOG_FAST(TEXT("AAP_Hero::BeginPlay(), AllStats=%x"), AllStats);
+	SetupAbilities();
 	SetupStats();
 	AbilitySystem->AbilityCommittedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityCommitted);
 	AbilitySystem->AbilityEndedCallbacks.AddUObject(this, &AAP_Hero::OnAbilityEnded);
@@ -89,6 +91,38 @@ void AAP_Hero::BeginPlay()
 	{
 		SetGenericTeamId((uint8)EGameTeam::Neutral);
 	}
+}
+
+void AAP_Hero::SetupAbilities()
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+	if (bAbilitiesInitialized)
+	{
+		return;
+	}
+	if (!AbilitySet)
+	{
+		return;
+	}
+	const int32 Level = 0;
+	GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability1));
+	GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability2));
+	GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability3));
+	GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability4));
+	GiveAbility(Level, AbilitySet->Find(
+		Job == EJob::Job1 ? EAbilitySlot::Ability5 :
+		Job == EJob::Job2 ? EAbilitySlot::Ability6 :
+		Job == EJob::Job3 ? EAbilitySlot::Ability7 :
+		Job == EJob::Job4 ? EAbilitySlot::Ability8 :
+		Job == EJob::Job5 ? EAbilitySlot::Ability9 : 
+		EAbilitySlot::Ability5));
+	GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability10));
+	GiveAbility(Level, AbilitySet->Find(EAbilitySlot::Ability11));
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
+	bAbilitiesInitialized = true;
 }
 
 bool AAP_Hero::IsBuffPresent(const TSubclassOf<UGameplayEffect> Effect)
@@ -106,7 +140,7 @@ int AAP_Hero::GetBuffStack(const TSubclassOf<UGameplayEffect> Effect)
 void AAP_Hero::GiveExp(float Amount)
 {
 	UE_LOG_FAST(TEXT("AAP_Hero::GiveExp %f"), Amount);
-	AllStats_->SetExperience(AllStats_->GetExperience() + Amount);
+	AllStats->SetExperience(AllStats->GetExperience() + Amount);
 }
 
 void AAP_Hero::SetupStats()
@@ -128,49 +162,21 @@ void AAP_Hero::SetupStats()
 		return;
 	}
 	UE_LOG_FAST(TEXT("setup stats, starting..."));
-	AllStats_->InitFromMetaDataTable(StartingStats);
+	AllStats->InitFromMetaDataTable(StartingStats);
 	bStatsInitialized = true;
 }
 
-void AAP_Hero::GiveAbility(TSubclassOf<UGameplayAbility> Ability)
+void AAP_Hero::GiveAbility(const int32& Level, TSubclassOf<UGameplayAbility> Ability)
 {
 	if (!Ability->IsValidLowLevel())
 	{
 		UE_LOG_FAST(TEXT("AAP_Hero::GiveAbility failed"));
 		return;
 	}
-	FGameplayAbilitySpec* spec;
-	FGameplayAbilitySpecHandle handle;
-	spec = AbilitySystem->FindAbilitySpecFromClass(Ability);
-	if (!spec)
-	{
-		spec = new FGameplayAbilitySpec(Ability, 0, INDEX_NONE, this);
-		handle = AbilitySystem->GiveAbility(*spec);
-	}
-	else
-	{
-		handle = spec->Handle;
-	}
-	if (AbilityHandles.Find(handle) != INDEX_NONE)
-	{
-		return;
-	}
+	FGameplayAbilitySpecHandle handle = AbilitySystem->GiveAbility(
+		FGameplayAbilitySpec(Ability, Level, INDEX_NONE, this));
 	AbilityHandles.Add(handle);
 	AbilityStates.AddDefaulted();
-	OnSkillChanged();
-}
-
-void AAP_Hero::RemoveAbility(TSubclassOf<UGameplayAbility> Ability)
-{
-	auto spec = AbilitySystem->FindAbilitySpecFromClass(Ability);
-	int index = AbilityHandles.Find(spec->Handle);
-	if (index == INDEX_NONE)
-	{
-		return;
-	}
-	AbilityHandles.RemoveAt(index);
-	AbilityStates.RemoveAt(index);
-	OnSkillChanged();
 }
 
 void AAP_Hero::RemoveAllAbilities()
@@ -187,18 +193,18 @@ void AAP_Hero::RemoveAllAbilities()
 	const auto AllAbility = AbilitySystem->GetActivatableAbilities();
 	for (auto Ability : AllAbility)
 	{
-		AllStats_->SetAbilityPoint(AllStats_->GetAbilityPoint() + Ability.Level);
-		Ability.Level = 0;// not sure if this works
+		AllStats->SetAbilityPoint(AllStats->GetAbilityPoint() + Ability.Level);
 	}
-	// potential crash here (known bug, but still have't found any good fix)
+	// potential crash here (known bug, but still have't found any effective fix)
 	// basically you need to make sure no skill are in the middle of activation before remove them
-	//AbilitySystem->ClearAllAbilities();
+	AbilitySystem->ClearAllAbilities();
+	bAbilitiesInitialized = false;
 }
 
 int AAP_Hero::GetAbilityLevel(int AbilitySlot)
 {
 	bool valid = AbilityHandles.IsValidIndex(AbilitySlot);
-	if (valid && AbilitySystem)
+	if (valid && AbilitySystem && bAbilitiesInitialized)
 	{
 		auto Ability = AbilitySystem->FindAbilitySpecFromHandle(AbilityHandles[AbilitySlot]);
 		if (Ability)
@@ -213,7 +219,7 @@ void AAP_Hero::SetAbilityLevel(int AbilitySlot, int Level)
 {
 	bool valid = AbilityHandles.IsValidIndex(AbilitySlot);
 	UE_LOG_FAST(TEXT("about to set ability level %d, valid=%d"), AbilitySlot, valid);
-	if (!valid || !AbilitySystem)
+	if (!valid || !AbilitySystem || !bAbilitiesInitialized)
 	{
 		return;
 	}
@@ -230,7 +236,7 @@ void AAP_Hero::ActivateAbility(int AbilitySlot)
 {
 	bool valid = AbilityHandles.IsValidIndex(AbilitySlot);
 	UE_LOG_FAST(TEXT("about to activate ability %d, valid=%d"), AbilitySlot, valid);
-	if (!valid || !AbilitySystem)
+	if (!valid || !AbilitySystem || !bAbilitiesInitialized)
 	{
 		return;
 	}
@@ -492,8 +498,6 @@ void AAP_Hero::OnAbilityCommitted(UGameplayAbility* Ability)
 	if (!Handles.Num())
 	{
 		UE_LOG_FAST(TEXT("can't find cooldown effect, setup unsuccessful"));
-		AbilityStates[Index] = EAbilityState::Ready;
-		AbilityChangedDelegate.Broadcast(EAbilityState::Ready, Index);
 		return;
 	}
 	FActiveGameplayEffectHandle CooldownEffect = Handles.Last();
@@ -532,27 +536,14 @@ void AAP_Hero::OnAbilityOffCooldown(const FGameplayEffectRemovalInfo& InGameplay
 	// this is not the actual ability we are concerning, just a default ability instance
 	// weird but i don't know why
 	const UGameplayAbility* AbilityInfo = InGameplayEffectRemovalInfo.EffectContext.GetAbility();
-	int slot = -1;
-	for (auto handle: AbilityHandles)
-	{
-		auto spec = AbilitySystem->FindAbilitySpecFromHandle(handle);
-		if (!spec)
-		{
-			continue;
-		}
-		if (spec->Ability->GetClass() == AbilityInfo->GetClass())
-		{
-			slot = AbilityHandles.IndexOfByKey(handle);
-			break;
-		}
-	}
-	if (slot == -1)
+	EAbilitySlot Slot = AbilitySet->Find(AbilityInfo);
+	if (Slot == EAbilitySlot::Ability_Invalid)
 	{
 		UE_LOG_FAST(TEXT("an ability just gone off cooldown, but it seems doesn't belong to this actor %s/%s"), *GetFName().ToString(), *AbilityInfo->GetFName().ToString());
 		return;
 	}
-	AbilityStates[slot] = EAbilityState::Ready;
-	AbilityChangedDelegate.Broadcast(EAbilityState::Ready, slot);
+	AbilityStates[(int)Slot] = EAbilityState::Ready;
+	AbilityChangedDelegate.Broadcast(EAbilityState::Ready, (int)Slot);
 }
 
 void AAP_Hero::GetAllUnitInRange(TArray<AAP_Hero*>& Result, float Radius)
@@ -619,7 +610,7 @@ void AAP_Hero::GrantBountyExp()
 		return;
 	}
 	// exp given per unit gets smaller as enemy count grows, but not linearly
-	float ExpPerUnit = AllStats_->GetBountyExp() / FMath::Sqrt(Enemies.Num());
+	float ExpPerUnit = AllStats->GetBountyExp() / FMath::Sqrt(Enemies.Num());
 	for (int i = Enemies.Num() - 1; i >= 0; i--)
 	{
 		auto Enemy = Enemies[i];
@@ -629,7 +620,7 @@ void AAP_Hero::GrantBountyExp()
 
 void AAP_Hero::OnStatsChanged(const FGameplayAttribute& Attribute, float NewValue)
 {
-	// at this moment, AllStats_->Get<attribute name here>() still return the old value, use with caution
+	// at this moment, AllStats->Get<attribute name here>() still return the old value, use with caution
 	if (Attribute == UAP_AttributeSet::GetHealthAttribute())
 	{
 		return HandleHealthChanged(NewValue);
@@ -668,7 +659,7 @@ void AAP_Hero::HandleHealthChanged(float NewValue)
 	{
 		return;
 	}
-	float m = AllStats_->GetMaxHealth();
+	float m = AllStats->GetMaxHealth();
 	OnHealthChanged(NewValue, NewValue / (m > 0.0f ? m : 1.0f));
 	if (!HasAuthority())
 	{
@@ -688,7 +679,7 @@ void AAP_Hero::HandleManaChanged(float NewValue)
 	{
 		return;
 	}
-	float m = AllStats_->GetMaxMana();
+	float m = AllStats->GetMaxMana();
 	OnManaChanged(NewValue, NewValue / (m > 0.0f ? m : 1.0f));
 }
 void AAP_Hero::HandleLevelChanged(float NewValue)
@@ -705,7 +696,7 @@ void AAP_Hero::HandleExpChanged(float NewValue)
 	{
 		return;
 	}
-	UE_LOG_FAST(TEXT("exp changed, exp now is %f/%f"), NewValue, AllStats_->GetRequiredExp());
+	UE_LOG_FAST(TEXT("exp changed, exp now is %f/%f"), NewValue, AllStats->GetRequiredExp());
 	OnExpChanged(NewValue, GetExpPercent());
 }
 
@@ -729,32 +720,6 @@ void AAP_Hero::HandleTurnRateChanged(float NewValue)
 	GetCharacterMovement()->RotationRate.Yaw = NewValue;
 }
 
-void AAP_Hero::HandleItemChanged()
-{
-	EWeaponCategory new_weapon = EWeaponCategory::BareHand;
-	for(auto item : EquipedItems)
-	{
-		auto c = item->Category;
-		new_weapon = c == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
-			c == EItemCategory::WeaponBow ? EWeaponCategory::Bow :
-			c == EItemCategory::WeaponDagger ? EWeaponCategory::Dagger :
-			c == EItemCategory::WeaponDualSword ? EWeaponCategory::DualSword :
-			c == EItemCategory::WeaponKatana ? EWeaponCategory::Katana1 :
-			c == EItemCategory::WeaponMagicStaff ? EWeaponCategory::MagicStaff :
-			c == EItemCategory::WeaponSwordAndShield ? EWeaponCategory::SwordAndShield :
-			new_weapon;
-		if (new_weapon != EWeaponCategory::BareHand)
-		{
-			break;
-		}
-	}
-	if (new_weapon != CurrentWeapon_)
-	{
-		OnWeaponChanged(CurrentWeapon_, new_weapon);
-	}
-	OnEquipmentChanged();
-}
-
 void AAP_Hero::SelectHero(bool selected)
 {
 	IsSelected = selected;
@@ -763,34 +728,34 @@ void AAP_Hero::SelectHero(bool selected)
 
 float AAP_Hero::GetHealthPercent() const
 {
-	if (!AllStats_->IsValidLowLevel())
+	if (!AllStats->IsValidLowLevel())
 	{
 		return 0.0f;
 	}
-	const float v = AllStats_->GetHealth();
-	const float m = FMath::Max(1.0f, AllStats_->GetMaxHealth());
+	const float v = AllStats->GetHealth();
+	const float m = FMath::Max(1.0f, AllStats->GetMaxHealth());
 	return v / m;
 }
 
 float AAP_Hero::GetManaPercent() const
 {
-	if (!AllStats_->IsValidLowLevel())
+	if (!AllStats->IsValidLowLevel())
 	{
 		return 0.0f;
 	}
-	const float v = AllStats_->GetMana();
-	const float m = FMath::Max(1.0f, AllStats_->GetMaxMana());
+	const float v = AllStats->GetMana();
+	const float m = FMath::Max(1.0f, AllStats->GetMaxMana());
 	return v / m;
 }
 
 float AAP_Hero::GetExpPercent() const
 {
-	if (!AllStats_->IsValidLowLevel())
+	if (!AllStats->IsValidLowLevel())
 	{
 		return 0.0f;
 	}
-	const float v = AllStats_->GetExperience();
-	const float m = FMath::Max(1.0f, AllStats_->GetRequiredExp());
+	const float v = AllStats->GetExperience();
+	const float m = FMath::Max(1.0f, AllStats->GetRequiredExp());
 	return v / m;
 }
 
@@ -839,12 +804,12 @@ bool AAP_Hero::LevelUpAbility(int AbilitySlot)
 		return false;
 	}
 	FGameplayAbilitySpec& Ability = AbilitySystem->GetActivatableAbilities()[AbilitySlot];
-	float Potential = AllStats_->GetAbilityPoint();
+	float Potential = AllStats->GetAbilityPoint();
 	if (Potential < 1.0f)
 	{
 		return false;
 	}
-	AllStats_->SetAbilityPoint(Potential - 1.0f);
+	AllStats->SetAbilityPoint(Potential - 1.0f);
 	Ability.Level += 1;
 	return true;
 }
@@ -880,8 +845,8 @@ void AAP_Hero::QuitCloak_Implementation()
 
 void AAP_Hero::Respawn_Implementation()
 {
-	AllStats_->SetHealth(AllStats_->GetMaxHealth());
-	AllStats_->SetMana(AllStats_->GetMaxMana());
+	AllStats->SetHealth(AllStats->GetMaxHealth());
+	AllStats->SetMana(AllStats->GetMaxMana());
 	SpawnDefaultController();
 	OnRespawn();
 }
@@ -891,7 +856,7 @@ void AAP_Hero::EnterDeath_Implementation()
 	AbilitySystem->CancelAllAbilities();
 	// TODO: remove all timed buff
 	GetCharacterMovement()->StopMovementImmediately();
-	float DeathTime = AllStats_->GetDeathTime();
+	float DeathTime = AllStats->GetDeathTime();
 	if (GetController() && GetController()->IsValidLowLevel())
 	{
 		auto AIController = Cast<AAIController>(GetController());
@@ -907,110 +872,8 @@ void AAP_Hero::EnterDeath_Implementation()
 	GetWorldTimerManager().SetTimer(DeathTimerHandle,
 		this, &AAP_Hero::Respawn, DeathTime, false, -1.0f);
 	SelectHero(false);
-}
-
-void AAP_Hero::GiveItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
-{
-	if (!HasAuthority())
-	{
-		return;
-	}
-	UAP_GameplayItem* item = Item.GetDefaultObject();
-	StashItems.Add(item);
-}
-
-void AAP_Hero::EquipItem_Implementation(int Slot)
-{
-	if (!HasAuthority())
-	{
-		return;
-	}
-	if (!StashItems.IsValidIndex(Slot))
-	{
-		return;
-	}
-	UAP_GameplayItem* item = StashItems[Slot];
-	if (EquipedItems.Num() > 6)
-	{
-		return;
-	}
-	EquipedItems.Add(item);
-	for (auto Ability : item->GrantedAbilities)
-	{
-		GiveAbility(Ability);
-	}
-	HandleItemChanged();
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
-}
-
-void AAP_Hero::GiveEquipItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
-{
-	if (!HasAuthority())
-	{
-		return;
-	}
-	if (EquipedItems.Num() > 6)
-	{
-		return;
-	}
-	EquipedItems.Add(Item);
-	for (auto Ability : Item->GrantedAbilities)
-	{
-		GiveAbility(Ability);
-	}
-	HandleItemChanged();
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag("Event.TriggerPassiveAttach"), FGameplayEventData());
-}
-
-void AAP_Hero::UnequipItem_Implementation(int Slot)
-{
-	if (!HasAuthority())
-	{
-		return;
-	}
-	if (!EquipedItems.IsValidIndex(Slot))
-	{
-		return;
-	}
-	if (StashItems.Num() > 8)
-	{
-		return;
-	}
-	auto item = EquipedItems[Slot];
-	StashItems.Add(item);
-	for (auto Ability : item.GrantedAbilities)
-	{
-		RemoveAbility(Ability);
-	}
-	EquipedItems.RemoveAt(Slot);
-	HandleItemChanged();
-}
-
-void AAP_Hero::RemoveItem_Implementation(int Slot)
-{
-	if (!HasAuthority())
-	{
-		return;
-	}
-	if (!StashItems.IsValidIndex(Slot))
-	{
-		return;
-	}
-	StashItems.RemoveAt(Slot);
-}
-
-void AAP_Hero::UnequipRemoveItem_Implementation(int Slot)
-{
-	if (!HasAuthority())
-	{
-		return;
-	}
-	if (!EquipedItems.IsValidIndex(Slot))
-	{
-		return;
-	}
-	EquipedItems.RemoveAt(Slot);
-	HandleItemChanged();
+	
+	
 }
 
 bool AAP_Hero::IsVisibleToTeam(FGameplayTag TeamTag)
@@ -1102,5 +965,25 @@ bool AAP_Hero::IsHostile()
 
 bool AAP_Hero::IsDead() const
 {
-	return AllStats_->GetHealth() <= 0.0f;
+	return AllStats->GetHealth() <= 0.0f;
+}
+
+void AAP_Hero::SetJob(EJob NewJob)
+{
+	// TODO: implement a job changing mechanic
+	/*const int32 Level = 0;
+	GiveAbility(Level, AbilitySet->Find(
+		Job == EJob::Job1 ? EAbilitySlot::Ability5 :
+		Job == EJob::Job2 ? EAbilitySlot::Ability6 :
+		Job == EJob::Job3 ? EAbilitySlot::Ability7 :
+		Job == EJob::Job4 ? EAbilitySlot::Ability8 :
+		Job == EJob::Job5 ? EAbilitySlot::Ability9 :
+		EAbilitySlot::Ability5));
+	const auto AllAbility = AbilitySystem->GetActivatableAbilities();
+	for (auto Ability : AllAbility)
+	{
+		AllStats->AbilityPoint.SetBaseValue(
+			AllStats->AbilityPoint.GetBaseValue()
+			+ Ability.Level);
+	}*/
 }
