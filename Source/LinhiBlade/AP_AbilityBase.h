@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Abilities/GameplayAbilityTargetDataFilter.h"
+#include "TeamAgent.h"
 #include "AP_AbilityBase.generated.h"
 
 UENUM(BlueprintType)
@@ -51,6 +53,33 @@ public:
 		UTexture2D* Icon;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float Range;
+public:
+	UFUNCTION(BlueprintPure, Category = Ability)
+		FVector FrontOfOwner(float Distance);
+	UFUNCTION(BlueprintPure, Category = Ability)
+		FVector FrontOfOwnerTilted(float Distance, float Angle);
+	UFUNCTION(BlueprintPure, Category = Ability)
+		FGameplayTargetDataFilterHandle FilterSelfOut();
+	UFUNCTION(BlueprintPure, Category = Ability)
+		ECollisionChannel GetEnemyCollisionChannel();
+	UFUNCTION(BlueprintCallable, Category = Ability)
+		void SetOwnerMovementMode(EMovementMode NewMode);
+	UFUNCTION(BlueprintCallable, Category = Ability)
+		void SetOwnerMovementWalk();
+	UFUNCTION(BlueprintCallable, Category = Ability)
+		void SetOwnerMovementFly();
+	UFUNCTION(BlueprintPure, Category = Ability)
+		bool IsOwnerMovingFoward(float AngleThreshold = 15.0f);
+	UFUNCTION(BlueprintPure, Category = Ability)
+		bool IsOwnerInAir();
+	UFUNCTION(BlueprintPure, Category = Ability)
+		bool IsBuffApplied(TSubclassOf<UGameplayEffect> BuffClass);
+	UFUNCTION(BlueprintCallable, Category = Ability)
+		void ClearBuff(TSubclassOf<UGameplayEffect> BuffClass);
+	UFUNCTION(BlueprintCallable, Category = Ability)
+		void EnterCloak(ECloakingLevel Level);
+	UFUNCTION(BlueprintCallable, Category = Ability)
+		void QuitCloak();
 public:
 	UFUNCTION(BlueprintImplementableEvent, Category = Ability)
 		void OnOwnerMoved(float Magnitude);

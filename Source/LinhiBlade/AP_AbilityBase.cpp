@@ -5,6 +5,9 @@
 #include "AP_AttributeSet.h"
 #include "AbilitySystemInterface.h"
 #include "AP_AttributeChangeData.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "AP_FightUnit.h"
 
 #ifndef UE_LOG_FAST
 #define UE_LOG_FAST(Format, ...) UE_LOG(LogTemp, Display, Format, ##__VA_ARGS__)
@@ -172,5 +175,129 @@ void UAP_AbilityBase::ActivateAbility(FGameplayAbilitySpecHandle Handle, const F
 			}
 		}
 	}
+}
+
+FVector UAP_AbilityBase::FrontOfOwner(float Distance)
+{
+	auto actor = GetOwningActorFromActorInfo();
+	return actor->GetActorLocation() + actor->GetActorForwardVector() * Distance;
+}
+
+FVector UAP_AbilityBase::FrontOfOwnerTilted(float Distance, float Angle)
+{
+	auto actor = GetOwningActorFromActorInfo();
+	return actor->GetActorLocation() + actor->GetActorForwardVector().RotateAngleAxis(Angle, FVector::UpVector) * Distance;
+}
+
+FGameplayTargetDataFilterHandle UAP_AbilityBase::FilterSelfOut()
+{
+	auto handle = FGameplayTargetDataFilterHandle();
+	handle.Filter = MakeShared<FGameplayTargetDataFilter>();
+	handle.Filter->SelfFilter = ETargetDataFilterSelf::TDFS_NoSelf;
+	handle.Filter->SelfActor = GetOwningActorFromActorInfo();
+	return handle;
+}
+
+ECollisionChannel UAP_AbilityBase::GetEnemyCollisionChannel()
+{
+	return ECollisionChannel();
+}
+
+void UAP_AbilityBase::SetOwnerMovementMode(EMovementMode NewMode)
+{
+	auto character = Cast<ACharacter>(GetOwningActorFromActorInfo());
+	if (!character)
+	{
+		return;
+	}
+	auto movement = Cast<UCharacterMovementComponent>(character->GetMovementComponent());
+	if (!movement)
+	{
+		return;
+	}
+	movement->SetMovementMode(NewMode);
+}
+
+void UAP_AbilityBase::SetOwnerMovementWalk()
+{
+	SetOwnerMovementMode(EMovementMode::MOVE_Walking);
+}
+
+void UAP_AbilityBase::SetOwnerMovementFly()
+{
+	SetOwnerMovementMode(EMovementMode::MOVE_Flying);
+}
+
+bool UAP_AbilityBase::IsOwnerMovingFoward(float AngleThreshold)
+{
+	auto pawn = Cast<APawn>(GetOwningActorFromActorInfo());
+	if (!pawn)
+	{
+		return false;
+	}
+	if (pawn->GetLastMovementInputVector().IsZero())
+	{
+		return false;
+	}
+	float angle = FMath::Acos(FVector::DotProduct(pawn->GetLastMovementInputVector(), pawn->GetActorForwardVector()));
+	return angle <= AngleThreshold;
+}
+
+bool UAP_AbilityBase::IsOwnerInAir()
+{
+	auto character = Cast<ACharacter>(GetOwningActorFromActorInfo());
+	if (!character)
+	{
+		return false;
+	}
+	return character->GetCharacterMovement()->IsFalling();
+}
+
+bool UAP_AbilityBase::IsBuffApplied(TSubclassOf<UGameplayEffect> BuffClass)
+{
+	auto asc = GetAbilitySystemComponentFromActorInfo();
+	if (!asc)
+	{
+		return false;
+	}
+	return asc->GetGameplayEffectCount(BuffClass, nullptr) > 0;
+}
+
+void UAP_AbilityBase::ClearBuff(TSubclassOf<UGameplayEffect> BuffClass)
+{
+	auto asc = GetAbilitySystemComponentFromActorInfo();
+	if (!asc)
+	{
+		return;
+	}
+	asc->RemoveActiveGameplayEffectBySourceEffect(BuffClass, nullptr);
+}
+
+void UAP_AbilityBase::EnterCloak(ECloakingLevel Level)
+{
+	auto unit = Cast<AAP_FightUnit>(GetOwningActorFromActorInfo());
+	if (!unit)
+	{
+		return;
+	}
+	if (!unit->TeamAgent)
+	{
+		return;
+	}
+	unit->TeamAgent->EnterCloak(Level);
+}
+
+void UAP_AbilityBase::QuitCloak()
+{
+	auto unit = Cast<AAP_FightUnit>(GetOwningActorFromActorInfo());
+	if (!unit)
+	{
+		return;
+	}
+	if (!unit->TeamAgent)
+	{
+		return;
+	}
+	unit->TeamAgent->QuitCloak();
 }
 
