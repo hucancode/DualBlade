@@ -43,17 +43,18 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 protected:
-	UPROPERTY()
+	UPROPERTY(ReplicatedUsing = OnRep_AbilityStates)
 		TArray <EAbilityState> AbilityStates;
-	UPROPERTY()
+	UPROPERTY(ReplicatedUsing = OnRep_AbilityBehaviors)
 		TArray <EAbilityBehavior> AbilityBehaviors;
-	UPROPERTY()
+	UPROPERTY(ReplicatedUsing = OnRep_AbilityHandles)
 		TArray<FGameplayAbilitySpecHandle> AbilityHandles;
 	UPROPERTY()
 		UAbilitySystemComponent* AbilitySystem;
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 public:
 	UPROPERTY(BlueprintAssignable)
 		FAbilityEventDelegate OnAbilityStateChanged;
@@ -108,4 +109,11 @@ public:
 		int GetAbilityLevel(int AbilitySlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void ActivateAbility(int AbilitySlot);
+protected:
+	UFUNCTION()
+		virtual void OnRep_AbilityStates();
+	UFUNCTION()
+		virtual void OnRep_AbilityBehaviors();
+	UFUNCTION()
+		virtual void OnRep_AbilityHandles();
 };

@@ -3,6 +3,7 @@
 
 #include "AbilityUser.h"
 #include "AP_FightUnit.h"
+#include "Net/UnrealNetwork.h"
 #include "AbilitySystemBlueprintLibrary.h"
 
 #ifndef UE_LOG_FAST
@@ -51,8 +52,21 @@ void UAbilityUser::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 	// ...
 }
 
+void UAbilityUser::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UAbilityUser, AbilityStates);
+	DOREPLIFETIME(UAbilityUser, AbilityBehaviors);
+	DOREPLIFETIME(UAbilityUser, AbilityHandles);
+}
+
 void UAbilityUser::GiveAbility(TSubclassOf<UAP_AbilityBase> Ability)
 {
+	if (!GetOwner()->HasAuthority())
+	{
+		return;
+	}
 	FGameplayAbilitySpec* spec;
 	FGameplayAbilitySpecHandle handle;
 	spec = AbilitySystem->FindAbilitySpecFromClass(Ability);
@@ -71,12 +85,15 @@ void UAbilityUser::GiveAbility(TSubclassOf<UAP_AbilityBase> Ability)
 	}
 	AbilityHandles.Add(handle);
 	AbilityStates.AddDefaulted();
-	OnAbilitySlotChanged.Broadcast(AbilityHandles.Num());
 	UE_LOG_FAST(TEXT("give ability %d"), AbilityHandles.Num());
 }
 
 void UAbilityUser::RemoveAbility(TSubclassOf<UAP_AbilityBase> Ability)
 {
+	if (!GetOwner()->HasAuthority())
+	{
+		return;
+	}
 	auto spec = AbilitySystem->FindAbilitySpecFromClass(Ability);
 	int index = AbilityHandles.Find(spec->Handle);
 	if (index == INDEX_NONE)
@@ -85,7 +102,6 @@ void UAbilityUser::RemoveAbility(TSubclassOf<UAP_AbilityBase> Ability)
 	}
 	AbilityHandles.RemoveAt(index);
 	AbilityStates.RemoveAt(index);
-	OnAbilitySlotChanged.Broadcast(AbilityHandles.Num());
 }
 
 void UAbilityUser::HandleEffectApplied(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle)
@@ -385,7 +401,7 @@ void UAbilityUser::RemoveAllAbilities()
 {
 	if (!GetOwner()->HasAuthority())
 	{
-		return;
+		//return;
 	}
 	AbilityHandles.Empty();
 	AbilityStates.Empty();
@@ -441,4 +457,19 @@ void UAbilityUser::ActivateAbility(int AbilitySlot)
 		OnAbilityStateChanged.Broadcast(AbilitySlot);
 	}
 	UE_LOG_FAST(TEXT("activate ability, ret = %d"), ret);
+}
+
+void UAbilityUser::OnRep_AbilityStates()
+{
+
+}
+
+void UAbilityUser::OnRep_AbilityBehaviors()
+{
+
+}
+
+void UAbilityUser::OnRep_AbilityHandles()
+{
+	OnAbilitySlotChanged.Broadcast(AbilityHandles.Num());
 }

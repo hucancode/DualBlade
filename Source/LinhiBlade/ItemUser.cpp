@@ -1,8 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
+#include "Net/UnrealNetwork.h"
 #include "ItemUser.h"
 #include "ItemSeller.h"
+
 
 #ifndef UE_LOG_FAST
 #define UE_LOG_FAST(Format, ...) UE_LOG(LogTemp, Display, Format, ##__VA_ARGS__)
@@ -35,25 +36,37 @@ void UItemUser::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UItemUser::BuyItem_Implementation(UItemSeller* Seller, int Slot)
+void UItemUser::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UItemUser, Gold);
+	DOREPLIFETIME(UItemUser, StashItems);
+	DOREPLIFETIME(UItemUser, EquipedItems);
+}
+
+void UItemUser::BuyItem(UItemSeller* Seller, int Slot)
+{
+	if (!GetOwner()->IsValidLowLevel())
+	{
+		return;
+	}
+	if (!GetOwner()->HasAuthority())
+	{
+		return;
+	}
 	auto my_location = GetOwner()->GetActorLocation();
 	auto shop_location = Seller->GetOwner()->GetActorLocation();
 	if (FVector::Dist(my_location, shop_location) > BuyRange)
 	{
 		return;
 	}
-	BuyItemUncheck(Seller, Slot);
-}
-
-void UItemUser::BuyItemUncheck(UItemSeller* Seller, int Slot)
-{
 	TSubclassOf<UAP_GameplayItem> item;
 	if (StashItems.Num() >= STASH_SLOT_COUNT)
 	{
 		return;
 	}
-	if(!Seller->SellItem(Slot, this, item))
+	if (!Seller->SellItem(Slot, this, item))
 	{
 		return;
 	}
@@ -81,17 +94,22 @@ AActor* UItemUser::FindShop()
 	float d, dmin = 9999999.0f;
 	for (auto Overlap : Overlaps)
 	{
+		if (!Overlap.Actor.IsValid())
+		{
+			continue;
+		}
 		d = FVector::Dist(GetOwner()->GetActorLocation(), Overlap.Actor->GetActorLocation());
 		if (d > dmin)
 		{
 			continue;
 		}
-		if (!Overlap.Actor->GetComponentByClass(UItemSeller::StaticClass()))
+		auto shop_component = Overlap.Actor->GetComponentByClass(UItemSeller::StaticClass());
+		if (!shop_component)
 		{
 			continue;
 		}
-		dmin = d;
 		shop = Overlap.Actor.Get();
+		dmin = d;
 	}
 	LastSeenShop = shop;
 	return shop;
@@ -102,14 +120,22 @@ int UItemUser::GetGold()
 	return Gold;
 }
 
-void UItemUser::GiveGold_Implementation(int Amount)
+void UItemUser::GiveGold(int Amount)
 {
+	if (!GetOwner()->IsValidLowLevel())
+	{
+		return;
+	}
+	if (!GetOwner()->HasAuthority())
+	{
+		return;
+	}
 	Gold += Amount;
 	Gold = FMath::Max(0, Gold);
-	OnGoldChanged.Broadcast(Gold);
+	RecheckGold();
 }
 
-void UItemUser::UnequipRemoveItem_Implementation(int Slot)
+void UItemUser::UnequipRemoveItem(int Slot)
 {
 	if (!GetOwner()->IsValidLowLevel())
 	{
@@ -125,11 +151,10 @@ void UItemUser::UnequipRemoveItem_Implementation(int Slot)
 	}
 	auto item = EquipedItems[Slot];
 	EquipedItems.RemoveAt(Slot);
-	OnItemUnequipped.Broadcast(item);
-	UpdateWeapon();
+	RecheckEquipment();
 }
 
-void UItemUser::RemoveItem_Implementation(int Slot)
+void UItemUser::RemoveItem(int Slot)
 {
 	if (!GetOwner()->IsValidLowLevel())
 	{
@@ -145,10 +170,10 @@ void UItemUser::RemoveItem_Implementation(int Slot)
 	}
 	auto item = StashItems[Slot];
 	StashItems.RemoveAt(Slot);
-	OnItemRemoved.Broadcast(item);
+	RecheckStash();
 }
 
-void UItemUser::UnequipItem_Implementation(int Slot)
+void UItemUser::UnequipItem(int Slot)
 {
 	if (!GetOwner()->IsValidLowLevel())
 	{
@@ -169,11 +194,11 @@ void UItemUser::UnequipItem_Implementation(int Slot)
 	auto item = EquipedItems[Slot];
 	StashItems.Add(item);
 	EquipedItems.RemoveAt(Slot);
-	OnItemUnequipped.Broadcast(item);
-	UpdateWeapon();
+	RecheckStash();
+	RecheckEquipment();
 }
 
-void UItemUser::GiveItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
+void UItemUser::GiveItem(TSubclassOf<UAP_GameplayItem> Item)
 {
 	if (!GetOwner()->IsValidLowLevel())
 	{
@@ -187,15 +212,12 @@ void UItemUser::GiveItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
 	{
 		return;
 	}
-	UAP_GameplayItem* item = Item.GetDefaultObject();
-	UAP_GameplayItem* ret = NewObject<UAP_GameplayItem>(GetOwner(), item->Name, RF_NoFlags, item);
-	ret->CurrentStack = 1;
-	StashItems.Add(ret);
+	StashItems.Add(Item);
+	RecheckStash();
 	UE_LOG_FAST(TEXT("give item success, now we have %d items"), StashItems.Num());
-	OnItemGiven.Broadcast(ret);
 }
 
-void UItemUser::EquipItem_Implementation(int Slot)
+void UItemUser::EquipItem(int Slot)
 {
 	if (!GetOwner()->IsValidLowLevel())
 	{
@@ -209,18 +231,18 @@ void UItemUser::EquipItem_Implementation(int Slot)
 	{
 		return;
 	}
-	UAP_GameplayItem* item = StashItems[Slot];
+	auto item = StashItems[Slot];
 	if (EquipedItems.Num() >= EQUIPMENT_SLOT_COUNT)
 	{
 		return;
 	}
 	StashItems.RemoveAt(Slot);
 	EquipedItems.Add(item);
-	OnItemEquipped.Broadcast(item);
-	UpdateWeapon();
+	RecheckStash();
+	RecheckEquipment();
 }
 
-void UItemUser::GiveEquipItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
+void UItemUser::GiveEquipItem(TSubclassOf<UAP_GameplayItem> Item)
 {
 	if (!GetOwner()->IsValidLowLevel())
 	{
@@ -230,19 +252,21 @@ void UItemUser::GiveEquipItem_Implementation(TSubclassOf<UAP_GameplayItem> Item)
 	{
 		return;
 	}
-	UAP_GameplayItem* item = Item.GetDefaultObject();
-	UAP_GameplayItem* ret = NewObject<UAP_GameplayItem>(GetOwner(), item->Name, RF_NoFlags, item);
-	EquipedItems.Add(ret);
-	OnItemEquipped.Broadcast(ret);
-	UpdateWeapon();
+	EquipedItems.Add(Item);
+	RecheckEquipment();
 }
 
 void UItemUser::UpdateWeapon()
 {
 	auto new_weapon = EWeaponCategory::None;
 	UAP_GameplayItem* new_weapon_object = nullptr;
-	for (auto item : EquipedItems)
+	for (auto item_class : EquipedItems)
 	{
+		auto item = item_class.GetDefaultObject();
+		if (!item)
+		{
+			continue;
+		}
 		new_weapon = item->Category == EItemCategory::WeaponAxe ? EWeaponCategory::Axe :
 			item->Category == EItemCategory::WeaponBow ? EWeaponCategory::Bow :
 			item->Category == EItemCategory::WeaponDagger ? EWeaponCategory::Dagger :
@@ -270,8 +294,43 @@ void UItemUser::UpdateWeapon()
 	}
 }
 
-void UItemUser::GiveWeaponAbility_Implementation(UAP_GameplayItem* Item)
+void UItemUser::OnRep_Gold()
 {
+	RecheckGold();
+}
+
+void UItemUser::RecheckGold()
+{
+	OnGoldChanged.Broadcast();
+}
+
+void UItemUser::OnRep_StashItems()
+{
+	RecheckStash();
+}
+
+void UItemUser::RecheckStash()
+{
+	OnStashChanged.Broadcast();
+}
+
+void UItemUser::OnRep_EquipedItems()
+{
+	RecheckEquipment();
+}
+
+void UItemUser::RecheckEquipment()
+{
+	OnEquipmentChanged.Broadcast();
+	UpdateWeapon();
+}
+
+void UItemUser::GiveWeaponAbility(UAP_GameplayItem* Item)
+{
+	if (!GetOwner()->IsValidLowLevel())
+	{
+		return;
+	}
 	if (!Item)
 	{
 		for (auto Ability : BareHandAbilities)
@@ -288,8 +347,12 @@ void UItemUser::GiveWeaponAbility_Implementation(UAP_GameplayItem* Item)
 	}
 }
 
-void UItemUser::RemoveWeaponAbility_Implementation(UAP_GameplayItem* Item)
+void UItemUser::RemoveWeaponAbility(UAP_GameplayItem* Item)
 {
+	if (!GetOwner()->IsValidLowLevel())
+	{
+		return;
+	}
 	if (!Item)
 	{
 		for (auto Ability : BareHandAbilities)

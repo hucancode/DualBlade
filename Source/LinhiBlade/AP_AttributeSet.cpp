@@ -228,6 +228,7 @@ void UAP_AttributeSet::InitFromMetaDataTable(const UDataTable* DataTable)
 
 void UAP_AttributeSet::PrintDebug()
 {
+	return;
 	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PrintDebug ..."));
 	for (TFieldIterator<UProperty> It(GetClass(), EFieldIteratorFlags::IncludeSuper); It; ++It)
 	{
@@ -246,7 +247,7 @@ void UAP_AttributeSet::PrintDebug()
 void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	Super::PreAttributeChange(Attribute, NewValue);
-	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange %s %f"), *Attribute.GetName(), NewValue);
+	//UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeChange %s %f"), *Attribute.GetName(), NewValue);
 	AdjustAttribute(Attribute, NewValue);
 	OnAttributeChanged.Broadcast(Attribute, NewValue);
 }
@@ -254,7 +255,7 @@ void UAP_AttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 void UAP_AttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
 {
 	Super::PreAttributeBaseChange(Attribute, NewValue);
-	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeBaseChange %s %f"), *Attribute.GetName(), NewValue);
+	//UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::PreAttributeBaseChange %s %f"), *Attribute.GetName(), NewValue);
 	//AdjustAttribute(Attribute, NewValue);
 	//OnAttributeChanged.Broadcast(Attribute, NewValue);
 }
@@ -262,7 +263,7 @@ void UAP_AttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribut
 void UAP_AttributeSet::OnAttributeAggregatorCreated(const FGameplayAttribute& Attribute, FAggregator* NewAggregator) const
 {
 	Super::OnAttributeAggregatorCreated(Attribute, NewAggregator);
-	UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::OnAttributeAggregatorCreated %s"), *Attribute.GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("UAP_AttributeSet::OnAttributeAggregatorCreated %s"), *Attribute.GetName());
 }
 
 void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, float& NewValue)

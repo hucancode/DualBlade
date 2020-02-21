@@ -243,7 +243,10 @@ void AAP_FightUnit::HandleCloakStarted(ECloakingLevel Level)
 	case ECloakingLevel::Invisible:
 		break;
 	case ECloakingLevel::Vanished:
-		GetController()->SetIgnoreMoveInput(true);
+		if (GetController())
+		{
+			GetController()->SetIgnoreMoveInput(true);
+		}
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		GetMesh()->SetVisibility(false);
 		break;
@@ -261,7 +264,10 @@ void AAP_FightUnit::HandleCloakFinished(ECloakingLevel Level)
 	case ECloakingLevel::Invisible:
 		break;
 	case ECloakingLevel::Vanished:
-		GetController()->SetIgnoreMoveInput(false);
+		if (GetController())
+		{
+			GetController()->SetIgnoreMoveInput(false);
+		}
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		GetMesh()->SetVisibility(true);
 		break;
@@ -326,15 +332,9 @@ void AAP_FightUnit::HandleDeath()
 	GetMesh()->SetVisibility(false);
 	GetMesh()->Deactivate();
 	float DeathTime = Stats->GetDeathTime();
-	auto AIController = Cast<AAIController>(GetController());
-	if (AIController)
+	if (GetController())
 	{
-		AIController->UnPossess();
-		AIController->Destroy();
-	}
-	else
-	{
-		UE_LOG_FAST(TEXT("found no controller, weird"));
+		GetController()->SetIgnoreMoveInput(true);
 	}
 	GrantBountyExp();
 	OnDeath.Broadcast(DeathTime);
@@ -348,7 +348,10 @@ void AAP_FightUnit::Respawn()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetMesh()->SetVisibility(true);
 	GetMesh()->Activate();
-	SpawnDefaultController();
+	if (GetController())
+	{
+		GetController()->SetIgnoreMoveInput(false);
+	}
 	Stats->SetHealth(Stats->GetMaxHealth());
 	Stats->SetMana(Stats->GetMaxMana());
 	OnRespawn.Broadcast();
@@ -534,7 +537,6 @@ void AAP_FightUnit::GetAllAllyInRange(TArray<AActor*>& Result, float Radius)
 		Result.RemoveAt(i);
 	}
 }
-
 
 void AAP_FightUnit::UseNewFighStyle(EFightStyle NewStyle)
 {

@@ -29,9 +29,7 @@ class LINHIBLADE_API UItemUser : public UActorComponent
 	GENERATED_BODY()
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FItemAbilityEventDelegate, TSubclassOf<UAP_AbilityBase>, Ability);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FItemEventDelegate, UAP_GameplayItem*, Item);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGoldEventDelegate, int, Gold);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FWeaponEventDelegate);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGenericEventDelegate);
 public:	
 	// Sets default values for this component's properties
 	UItemUser();
@@ -43,17 +41,18 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing = OnRep_Gold)
 		int Gold;
 	UPROPERTY()
 		AActor* LastSeenShop;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float BuyRange;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		TArray<UAP_GameplayItem*> StashItems;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		TArray<UAP_GameplayItem*> EquipedItems;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_StashItems)
+		TArray<TSubclassOf<UAP_GameplayItem>> StashItems;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_EquipedItems)
+		TArray<TSubclassOf<UAP_GameplayItem>> EquipedItems;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		EWeaponCategory CurrentWeapon;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -66,23 +65,16 @@ public:
 	UPROPERTY(BlueprintAssignable)
 		FItemAbilityEventDelegate OnAbilityRemoved;
 	UPROPERTY(BlueprintAssignable)
-		FItemEventDelegate OnItemEquipped;
+		FGenericEventDelegate OnEquipmentChanged;
 	UPROPERTY(BlueprintAssignable)
-		FItemEventDelegate OnItemUnequipped;
+		FGenericEventDelegate OnStashChanged;
 	UPROPERTY(BlueprintAssignable)
-		FItemEventDelegate OnItemGiven;
+		FGenericEventDelegate OnGoldChanged;
 	UPROPERTY(BlueprintAssignable)
-		FItemEventDelegate OnItemRemoved;
-	UPROPERTY(BlueprintAssignable)
-		FGoldEventDelegate OnGoldChanged;
-	UPROPERTY(BlueprintAssignable)
-		FWeaponEventDelegate OnWeaponChanged;
+		FGenericEventDelegate OnWeaponChanged;
 	
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+	UFUNCTION(BlueprintCallable, Category = "Item")
 		void BuyItem(class UItemSeller* Seller, int Slot);
-
-	UFUNCTION()
-		void BuyItemUncheck(UItemSeller* Seller, int Slot);
 
 	UFUNCTION(BlueprintPure)
 		AActor* FindShop();
@@ -90,28 +82,38 @@ public:
 	UFUNCTION(BlueprintPure)
 		int GetGold();
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+	UFUNCTION(BlueprintCallable, Category = "Item")
 		void GiveGold(int Amount);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+	UFUNCTION(BlueprintCallable, Category = "Item")
 		void GiveItem(TSubclassOf<UAP_GameplayItem> Item);
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+	UFUNCTION(BlueprintCallable, Category = "Item")
 		void GiveWeaponAbility(UAP_GameplayItem* Item);
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+	UFUNCTION(BlueprintCallable, Category = "Item")
 		void RemoveWeaponAbility(UAP_GameplayItem* Item);
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+	UFUNCTION(BlueprintCallable, Category = "Item")
 		void EquipItem(int Slot);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+	UFUNCTION(BlueprintCallable, Category = "Item")
 		void GiveEquipItem(TSubclassOf<UAP_GameplayItem> Item);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+	UFUNCTION(BlueprintCallable, Category = "Item")
 		void UnequipItem(int Slot);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+	UFUNCTION(BlueprintCallable, Category = "Item")
 		void RemoveItem(int Slot);
 
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable, Category = "Item")
+	UFUNCTION(BlueprintCallable, Category = "Item")
 		void UnequipRemoveItem(int Slot);
 	void UpdateWeapon();
+protected:
+	UFUNCTION()
+		virtual void OnRep_Gold();
+	void RecheckGold();
+	UFUNCTION()
+		virtual void OnRep_StashItems();
+	void RecheckStash();
+	UFUNCTION()
+		virtual void OnRep_EquipedItems();
+	void RecheckEquipment();
 };
