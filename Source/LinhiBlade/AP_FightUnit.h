@@ -68,9 +68,9 @@ public:
 	virtual bool				HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
 public:
 	UFUNCTION()
-	void						HandleAbilityStateChanged(int AbilitySlot);
+	void						HandleAbilityStateChanged();
 	UFUNCTION()
-	void						HandleAbilitySlotChanged(int AbilitySlot);
+	void						HandleAbilitySlotChanged();
 	
 	UFUNCTION()
 	void						HandleEffectApplied(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle);

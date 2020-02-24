@@ -34,6 +34,7 @@ class LINHIBLADE_API UAbilityUser : public UActorComponent
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityEventDelegate, int, AbilitySlot);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FEffectAppliedDelegate, UAbilitySystemComponent*, Source, const FGameplayEffectSpec&, Spec, FActiveGameplayEffectHandle, Handle);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEffectRemovedDelegate, const FGameplayEffectRemovalInfo&, Info);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGenericEventDelegate);
 
 public:	
 	// Sets default values for this component's properties
@@ -49,6 +50,8 @@ protected:
 		TArray <EAbilityBehavior> AbilityBehaviors;
 	UPROPERTY(ReplicatedUsing = OnRep_AbilityHandles)
 		TArray<FGameplayAbilitySpecHandle> AbilityHandles;
+	UPROPERTY(ReplicatedUsing = OnRep_AbilityLevels)
+		TArray<int32> AbilityLevels;
 	UPROPERTY()
 		UAbilitySystemComponent* AbilitySystem;
 public:	
@@ -57,9 +60,9 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 public:
 	UPROPERTY(BlueprintAssignable)
-		FAbilityEventDelegate OnAbilityStateChanged;
+		FGenericEventDelegate OnAbilityStateChanged;
 	UPROPERTY(BlueprintAssignable)
-		FAbilityEventDelegate OnAbilitySlotChanged;
+		FGenericEventDelegate OnAbilitySlotChanged;
 	UPROPERTY(BlueprintAssignable)
 		FAbilityEventDelegate OnAbilityLevelChanged;
 	UPROPERTY(BlueprintAssignable)
@@ -109,11 +112,18 @@ public:
 		int GetAbilityLevel(int AbilitySlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		void ActivateAbility(int AbilitySlot);
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		bool ActivateAbilityWithPayload(int AbilitySlot, FGameplayTag EventTag, FGameplayEventData Payload);
 protected:
 	UFUNCTION()
 		virtual void OnRep_AbilityStates();
+	void RecheckAbilityState();
 	UFUNCTION()
 		virtual void OnRep_AbilityBehaviors();
 	UFUNCTION()
 		virtual void OnRep_AbilityHandles();
+	void RecheckAbilitySlot();
+	UFUNCTION()
+		virtual void OnRep_AbilityLevels();
+	void RecheckAbilityLevel(int AbilitySlot = -1);
 };

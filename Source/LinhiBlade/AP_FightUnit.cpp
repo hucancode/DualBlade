@@ -152,11 +152,11 @@ bool AAP_FightUnit::HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagC
 	return GameplayTags.HasAny(TagContainer);
 }
 
-void AAP_FightUnit::HandleAbilityStateChanged(int AbilitySlot)
+void AAP_FightUnit::HandleAbilityStateChanged()
 {
 }
 
-void AAP_FightUnit::HandleAbilitySlotChanged(int AbilitySlot)
+void AAP_FightUnit::HandleAbilitySlotChanged()
 {
 }
 

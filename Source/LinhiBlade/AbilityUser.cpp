@@ -59,6 +59,7 @@ void UAbilityUser::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(UAbilityUser, AbilityStates);
 	DOREPLIFETIME(UAbilityUser, AbilityBehaviors);
 	DOREPLIFETIME(UAbilityUser, AbilityHandles);
+	DOREPLIFETIME(UAbilityUser, AbilityLevels);
 }
 
 void UAbilityUser::GiveAbility(TSubclassOf<UAP_AbilityBase> Ability)
@@ -73,6 +74,7 @@ void UAbilityUser::GiveAbility(TSubclassOf<UAP_AbilityBase> Ability)
 	if (!spec)
 	{
 		handle = AbilitySystem->GiveAbility(FGameplayAbilitySpec(Ability, 0, INDEX_NONE, this));
+		spec = AbilitySystem->FindAbilitySpecFromHandle(handle);
 	}
 	else
 	{
@@ -83,9 +85,13 @@ void UAbilityUser::GiveAbility(TSubclassOf<UAP_AbilityBase> Ability)
 		UE_LOG_FAST(TEXT("give ability fail, already have this ability"));
 		return;
 	}
+	
 	AbilityHandles.Add(handle);
 	AbilityStates.AddDefaulted();
+	AbilityLevels.Add(spec->Level);//crash
 	UE_LOG_FAST(TEXT("give ability %d"), AbilityHandles.Num());
+	RecheckAbilitySlot();
+	RecheckAbilityState();
 }
 
 void UAbilityUser::RemoveAbility(TSubclassOf<UAP_AbilityBase> Ability)
@@ -102,6 +108,9 @@ void UAbilityUser::RemoveAbility(TSubclassOf<UAP_AbilityBase> Ability)
 	}
 	AbilityHandles.RemoveAt(index);
 	AbilityStates.RemoveAt(index);
+	AbilityLevels.RemoveAt(index);
+	RecheckAbilitySlot();
+	RecheckAbilityState();
 }
 
 void UAbilityUser::HandleEffectApplied(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle)
@@ -130,7 +139,7 @@ void UAbilityUser::HandleAbilityActivated(UGameplayAbility* Ability)
 		return;
 	}
 	AbilityStates[Index] = EAbilityState::Casting;
-	OnAbilityStateChanged.Broadcast(Index);
+	RecheckAbilityState();
 }
 
 void UAbilityUser::HandleAbilityCommitted(UGameplayAbility* Ability)
@@ -146,8 +155,6 @@ void UAbilityUser::HandleAbilityCommitted(UGameplayAbility* Ability)
 	{
 		return;
 	}
-	AbilityStates[Index] = EAbilityState::OnCooldown;
-	OnAbilityStateChanged.Broadcast(Index);
 	FGameplayEffectQuery query;
 	query.EffectDefinition = Ability->GetCooldownGameplayEffect()->GetClass();
 	TArray<FActiveGameplayEffectHandle> Handles = AbilitySystem->GetActiveEffects(query);
@@ -156,9 +163,11 @@ void UAbilityUser::HandleAbilityCommitted(UGameplayAbility* Ability)
 	{
 		UE_LOG_FAST(TEXT("can't find cooldown effect, setup unsuccessful"));
 		AbilityStates[Index] = EAbilityState::Ready;
-		OnAbilityStateChanged.Broadcast(Index);
+		RecheckAbilityState();
 		return;
 	}
+	AbilityStates[Index] = EAbilityState::OnCooldown;
+	RecheckAbilityState();
 	FActiveGameplayEffectHandle CooldownEffect = Handles.Last();
 	FOnActiveGameplayEffectRemoved_Info* Delegate = AbilitySystem->OnGameplayEffectRemoved_InfoDelegate(CooldownEffect);
 	if (!Delegate)
@@ -187,7 +196,7 @@ void UAbilityUser::HandleAbilityEnded(UGameplayAbility* Ability)
 	if (AbilityStates[index] == EAbilityState::Casting)
 	{
 		AbilityStates[index] = EAbilityState::Ready;
-		OnAbilityStateChanged.Broadcast(index);
+		RecheckAbilityState();
 	}
 }
 
@@ -203,7 +212,7 @@ void UAbilityUser::HandleAbilityOffCooldown(const FGameplayEffectRemovalInfo& In
 		return;
 	}
 	AbilityStates[index] = EAbilityState::Ready;
-	OnAbilityStateChanged.Broadcast(index);
+	RecheckAbilityState();
 }
 
 int UAbilityUser::GetAbilityCount() const
@@ -249,7 +258,7 @@ bool UAbilityUser::CanActivateAbility(int AbilitySlot) const
 	}
 	if (spec->Level <= 0)
 	{
-		return false;
+		//return false;
 	}
 	FGameplayTagContainer source_tag;
 	AbilitySystem->GetOwnedGameplayTags(source_tag);
@@ -267,6 +276,10 @@ bool UAbilityUser::CanActivateAbility(int AbilitySlot) const
 
 bool UAbilityUser::LevelUpAbility(int AbilitySlot)
 {
+	if (!GetOwner()->HasAuthority())
+	{
+		return false;
+	}
 	bool valid = AbilitySystem && AbilityHandles.IsValidIndex(AbilitySlot);
 	if (!valid)
 	{
@@ -278,8 +291,12 @@ bool UAbilityUser::LevelUpAbility(int AbilitySlot)
 	{
 		return false;
 	}
-	spec->Level += 1;
-	OnAbilityLevelChanged.Broadcast(AbilitySlot);
+	if (!AbilityLevels.IsValidIndex(AbilitySlot))
+	{
+		return false;
+	}
+	AbilityLevels[AbilitySlot] += 1;
+	RecheckAbilityLevel();
 	return true;
 }
 
@@ -401,7 +418,7 @@ void UAbilityUser::RemoveAllAbilities()
 {
 	if (!GetOwner()->HasAuthority())
 	{
-		//return;
+		return;
 	}
 	AbilityHandles.Empty();
 	AbilityStates.Empty();
@@ -413,6 +430,9 @@ void UAbilityUser::RemoveAllAbilities()
 	{
 		Ability.Level = 0;// not sure if this works
 	}
+	RecheckAbilitySlot();
+	RecheckAbilityState();
+	RecheckAbilityLevel();
 }
 
 int UAbilityUser::GetAbilityLevel(int AbilitySlot)
@@ -420,15 +440,19 @@ int UAbilityUser::GetAbilityLevel(int AbilitySlot)
 	bool valid = AbilitySystem && AbilityHandles.IsValidIndex(AbilitySlot);
 	if (!valid)
 	{
-		return 0;
+		return -1;
 	}
 	auto handle = AbilityHandles[AbilitySlot];
 	auto spec = AbilitySystem->FindAbilitySpecFromHandle(handle);
 	if (!spec)
 	{
-		return 0;
+		return -1;
 	}
-	return spec->Level;
+	if (!AbilityLevels.IsValidIndex(AbilitySlot))
+	{
+		return -1;
+	}
+	return AbilityLevels[AbilitySlot];
 }
 
 void UAbilityUser::ActivateAbility(int AbilitySlot)
@@ -445,23 +469,37 @@ void UAbilityUser::ActivateAbility(int AbilitySlot)
 	{
 		return;
 	}
-	if (spec->Level <= 0)
+	if (GetAbilityLevel(AbilitySlot) <= 0)
 	{
 		return;
 	}
-	// If bAllowRemoteActivation is true, it will remotely activate local / server abilities, if false it will only try to locally activate the ability
-	bool ret = AbilitySystem->TryActivateAbility(handle, true);
-	if (ret)
+	AbilitySystem->TryActivateAbility(handle);
+}
+
+bool UAbilityUser::ActivateAbilityWithPayload(int AbilitySlot, FGameplayTag EventTag, FGameplayEventData Payload)
+{
+	bool valid = AbilitySystem && AbilityHandles.IsValidIndex(AbilitySlot);
+	if (!valid)
 	{
-		AbilityStates[AbilitySlot] = EAbilityState::Casting;
-		OnAbilityStateChanged.Broadcast(AbilitySlot);
+		return false;
 	}
-	UE_LOG_FAST(TEXT("activate ability, ret = %d"), ret);
+	auto handle = AbilityHandles[AbilitySlot];
+	bool ret = AbilitySystem->TriggerAbilityFromGameplayEvent(
+		handle, 
+		AbilitySystem->AbilityActorInfo.Get(), 
+		EventTag, &Payload, 
+		*AbilitySystem);
+	return ret;
 }
 
 void UAbilityUser::OnRep_AbilityStates()
 {
+	RecheckAbilityState();
+}
 
+void UAbilityUser::RecheckAbilityState()
+{
+	OnAbilityStateChanged.Broadcast();
 }
 
 void UAbilityUser::OnRep_AbilityBehaviors()
@@ -471,5 +509,44 @@ void UAbilityUser::OnRep_AbilityBehaviors()
 
 void UAbilityUser::OnRep_AbilityHandles()
 {
-	OnAbilitySlotChanged.Broadcast(AbilityHandles.Num());
+	RecheckAbilitySlot();
+}
+
+void UAbilityUser::RecheckAbilitySlot()
+{
+	OnAbilitySlotChanged.Broadcast();
+}
+void UAbilityUser::OnRep_AbilityLevels()
+{
+	RecheckAbilityLevel();
+}
+
+void UAbilityUser::RecheckAbilityLevel(int AbilitySlot)
+{
+	if (AbilitySlot != -1)
+	{
+		bool valid = AbilitySystem && AbilityHandles.IsValidIndex(AbilitySlot);
+		if (!valid)
+		{
+			return;
+		}
+		auto handle = AbilityHandles[AbilitySlot];
+		auto spec = AbilitySystem->FindAbilitySpecFromHandle(handle);
+		if (!spec)
+		{
+			return;
+		}
+		if (AbilityLevels[AbilitySlot] != spec->Level)
+		{
+			spec->Level = AbilityLevels[AbilitySlot];
+			OnAbilityLevelChanged.Broadcast(AbilitySlot);
+		}
+	}
+	else
+	{
+		for (int i = 0; i< AbilityHandles.Num();i++)
+		{
+			RecheckAbilityLevel(i);
+		}
+	}
 }

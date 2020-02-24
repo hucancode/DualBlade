@@ -43,6 +43,7 @@ public:
 	void AdjustAttribute(const FGameplayAttribute& Attribute, float& NewValue);
 	// set health directly without notifying ability system nor clamp, use with caution
 	void SetHealthUnsafe(float NewHealth);
+	void RecheckHealth(float NewHealth, float NewMaxHealth);
 	// set mana directly without notifying ability system nor clamp, use with caution
 	void SetManaUnsafe(float NewMana);
 public:

@@ -87,16 +87,19 @@ void UAP_AttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 void UAP_AttributeSet::OnRep_Health()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Health);
+	RecheckHealth(GetHealth(), GetMaxHealth());
 }
 
 void UAP_AttributeSet::OnRep_HealthRegen()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, HealthRegen);
+	// client don't need to mind this
 }
 
 void UAP_AttributeSet::OnRep_MaxHealth()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, MaxHealth);
+	RecheckHealth(GetHealth(), GetMaxHealth());
 }
 
 void UAP_AttributeSet::OnRep_MagicalPower()
@@ -181,6 +184,8 @@ void UAP_AttributeSet::OnRep_BountyExp()
 void UAP_AttributeSet::OnRep_AbilityPoint()
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, AbilityPoint);
+	OnAttributeChanged.Broadcast(GetAbilityPointAttribute(), AbilityPoint.GetCurrentValue());
+	OnAbilityPointChanged.Broadcast(AbilityPoint.GetCurrentValue());
 }
 
 void UAP_AttributeSet::OnRep_StatPoint()
@@ -272,21 +277,14 @@ void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, floa
 	{
 		float Delta = GetMaxHealth() - GetHealth();
 		float NewHealth = FMath::Clamp(NewValue - Delta, 1.0f, NewValue);
-		float new_percent = NewValue > 0.0f ? (NewHealth / NewValue) : 0.0f;
 		SetHealthUnsafe(NewHealth);
-		OnHealthPercentChanged.Broadcast(new_percent);
+		RecheckHealth(NewHealth, NewValue);
 		return;
 	}
 	if (Attribute == GetHealthAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth());
-		if (NewValue <= 0.0f)
-		{
-			OnDeath.Broadcast();
-		}
-		float max_health = GetMaxHealth();
-		float new_percent = max_health > 0.0f ? (NewValue/max_health) : 0.0f;
-		OnHealthPercentChanged.Broadcast(new_percent);
+		RecheckHealth(NewValue, GetMaxHealth());
 		return;
 	}
 	if (Attribute == GetMaxManaAttribute())
@@ -366,14 +364,21 @@ void UAP_AttributeSet::AdjustAttribute(const FGameplayAttribute& Attribute, floa
 
 void UAP_AttributeSet::SetHealthUnsafe(float NewHealth)
 {
+	Health.SetBaseValue(NewHealth);
+	Health.SetCurrentValue(NewHealth);
+	
+}
+
+void UAP_AttributeSet::RecheckHealth(float NewHealth, float NewMaxHealth)
+{
+	// this function called *before* health change on server
+	// but called *after* health change on client, due to replication mechanic
+	// keep that in mind to avoid messing up the logic, write code that works in both condition
+	float new_percent = NewMaxHealth > 0.0f ? (NewHealth / NewMaxHealth) : 0.0f;
 	if (NewHealth <= 0.0f)
 	{
 		OnDeath.Broadcast();
 	}
-	Health.SetBaseValue(NewHealth);
-	Health.SetCurrentValue(NewHealth);
-	float max_health = GetMaxHealth();
-	float new_percent = max_health > 0.0f ? (NewHealth / max_health) : 0.0f;
 	OnHealthPercentChanged.Broadcast(new_percent);
 }
 

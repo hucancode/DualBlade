@@ -27,6 +27,7 @@ void UItemUser::BeginPlay()
 	Gold = 0;
 	LastSeenShop = nullptr;
 	CurrentWeapon = EWeaponCategory::None;
+	BuyRange = 1000.0f;
 }
 
 

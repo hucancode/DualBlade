@@ -1,28 +1,37 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AP_TargetActor_BoxAOE.h"
-#include "Runtime/Engine/Classes/Kismet/KismetMathLibrary.h"
+#include "Abilities/GameplayAbility.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
 
 void AAP_TargetActor_BoxAOE::BeginPlay()
 {
 	Super::BeginPlay();
+	PrimaryActorTick.TickGroup = TG_PrePhysics;
 	bDestroyOnConfirmation = true;
+	ShouldProduceTargetDataOnServer = true;
 }
 void AAP_TargetActor_BoxAOE::StartTargeting(UGameplayAbility* Ability)
 {
 	Super::StartTargeting(Ability);
+	SourceActor = Ability->GetCurrentActorInfo()->AvatarActor.Get();
 	UE_LOG(LogTemp, Warning, TEXT("AAP_TargetActor_BoxAOE::StartTargeting()"));
-	TArray <TWeakObjectPtr<AActor>> HitActors = PerformTrace();
+	/*TArray <TWeakObjectPtr<AActor>> HitActors = PerformTrace();
 	FGameplayAbilityTargetDataHandle Handle = StartLocation.MakeTargetDataHandleFromActors(HitActors);
-	TargetDataReadyDelegate.Broadcast(Handle);
-	Destroy();
+	TargetDataReadyDelegate.Broadcast(Handle);*/
+	//Destroy();
 }
 
-bool AAP_TargetActor_BoxAOE::ShouldProduceTargetData() const
+void AAP_TargetActor_BoxAOE::ConfirmTargetingAndContinue()
 {
-	bool LocallyOwned = true;// TODO: make this true only for local player
-	return LocallyOwned || ShouldProduceTargetDataOnServer;
+	check(ShouldProduceTargetData());
+	if (SourceActor)
+	{
+		TArray <TWeakObjectPtr<AActor>> HitActors = PerformTrace();
+		FGameplayAbilityTargetDataHandle Handle = StartLocation.MakeTargetDataHandleFromActors(HitActors);
+		TargetDataReadyDelegate.Broadcast(Handle);
+	}
 }
 
 TArray<TWeakObjectPtr<AActor>> AAP_TargetActor_BoxAOE::PerformTrace()

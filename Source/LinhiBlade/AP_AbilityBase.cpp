@@ -180,12 +180,20 @@ void UAP_AbilityBase::ActivateAbility(FGameplayAbilitySpecHandle Handle, const F
 FVector UAP_AbilityBase::FrontOfOwner(float Distance)
 {
 	auto actor = GetOwningActorFromActorInfo();
+	if (!actor)
+	{
+		return FVector::ZeroVector;
+	}
 	return actor->GetActorLocation() + actor->GetActorForwardVector() * Distance;
 }
 
 FVector UAP_AbilityBase::FrontOfOwnerTilted(float Distance, float Angle)
 {
 	auto actor = GetOwningActorFromActorInfo();
+	if (!actor)
+	{
+		return FVector::ZeroVector;
+	}
 	return actor->GetActorLocation() + actor->GetActorForwardVector().RotateAngleAxis(Angle, FVector::UpVector) * Distance;
 }
 
@@ -205,6 +213,15 @@ ECollisionChannel UAP_AbilityBase::GetEnemyCollisionChannel()
 
 void UAP_AbilityBase::SetOwnerMovementMode(EMovementMode NewMode)
 {
+	auto actor = GetOwningActorFromActorInfo();
+	if (!actor)
+	{
+		return;
+	}
+	if (!actor->HasAuthority())
+	{
+		return;
+	}
 	auto character = Cast<ACharacter>(GetOwningActorFromActorInfo());
 	if (!character)
 	{

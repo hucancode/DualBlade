@@ -1,28 +1,36 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AP_TargetActor_SphereAOE.h"
+#include "Abilities/GameplayAbility.h"
 #include "DrawDebugHelpers.h"
 
 void AAP_TargetActor_SphereAOE::BeginPlay()
 {
 	Super::BeginPlay();
+	PrimaryActorTick.TickGroup = TG_PrePhysics;
 	bDestroyOnConfirmation = true;
+	ShouldProduceTargetDataOnServer = true;
 }
 
 void AAP_TargetActor_SphereAOE::StartTargeting(UGameplayAbility* Ability)
 {
 	Super::StartTargeting(Ability);
+	SourceActor = Ability->GetCurrentActorInfo()->AvatarActor.Get();
 	UE_LOG(LogTemp, Warning, TEXT("AAP_TargetActor_BoxAOE::StartTargeting()"));
-	TArray <TWeakObjectPtr<AActor>> HitActors = PerformTrace();
+	/*TArray <TWeakObjectPtr<AActor>> HitActors = PerformTrace();
 	FGameplayAbilityTargetDataHandle Handle = StartLocation.MakeTargetDataHandleFromActors(HitActors);
-	TargetDataReadyDelegate.Broadcast(Handle);
-	Destroy();
+	TargetDataReadyDelegate.Broadcast(Handle);*/
+	//Destroy();
 }
-
-bool AAP_TargetActor_SphereAOE::ShouldProduceTargetData() const
+void AAP_TargetActor_SphereAOE::ConfirmTargetingAndContinue()
 {
-	bool LocallyOwned = true;// TODO: make this true only for local player
-	return LocallyOwned || ShouldProduceTargetDataOnServer;
+	check(ShouldProduceTargetData());
+	if (SourceActor)
+	{
+		TArray <TWeakObjectPtr<AActor>> HitActors = PerformTrace();
+		FGameplayAbilityTargetDataHandle Handle = StartLocation.MakeTargetDataHandleFromActors(HitActors);
+		TargetDataReadyDelegate.Broadcast(Handle);
+	}
 }
 
 TArray<TWeakObjectPtr<AActor>> AAP_TargetActor_SphereAOE::PerformTrace()
@@ -34,7 +42,7 @@ TArray<TWeakObjectPtr<AActor>> AAP_TargetActor_SphereAOE::PerformTrace()
 	TArray<FOverlapResult> Overlaps;
 	TArray<TWeakObjectPtr<AActor>>	HitActors;
 	FCollisionShape Shape = FCollisionShape::MakeSphere(Radius);
-	GetWorld()->OverlapMultiByObjectType(Overlaps, Location, FQuat::Identity, ObjectToScan, Shape, Params);
+	SourceActor->GetWorld()->OverlapMultiByObjectType(Overlaps, Location, FQuat::Identity, ObjectToScan, Shape, Params);
 #if ENABLE_DRAW_DEBUG
 	if (bDebug)
 	{
