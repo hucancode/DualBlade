@@ -9,7 +9,7 @@
 /**
  * given a location and a sphere, query all target that hit the sphere
  */
-UCLASS()
+UCLASS(Blueprintable, notplaceable)
 class LINHIBLADE_API AAP_TargetActor_SphereAOE : public AGameplayAbilityTargetActor
 {
 	GENERATED_BODY()

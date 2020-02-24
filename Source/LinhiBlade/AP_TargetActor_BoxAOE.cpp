@@ -17,10 +17,6 @@ void AAP_TargetActor_BoxAOE::StartTargeting(UGameplayAbility* Ability)
 	Super::StartTargeting(Ability);
 	SourceActor = Ability->GetCurrentActorInfo()->AvatarActor.Get();
 	UE_LOG(LogTemp, Warning, TEXT("AAP_TargetActor_BoxAOE::StartTargeting()"));
-	/*TArray <TWeakObjectPtr<AActor>> HitActors = PerformTrace();
-	FGameplayAbilityTargetDataHandle Handle = StartLocation.MakeTargetDataHandleFromActors(HitActors);
-	TargetDataReadyDelegate.Broadcast(Handle);*/
-	//Destroy();
 }
 
 void AAP_TargetActor_BoxAOE::ConfirmTargetingAndContinue()

@@ -16,11 +16,7 @@ void AAP_TargetActor_SphereAOE::StartTargeting(UGameplayAbility* Ability)
 {
 	Super::StartTargeting(Ability);
 	SourceActor = Ability->GetCurrentActorInfo()->AvatarActor.Get();
-	UE_LOG(LogTemp, Warning, TEXT("AAP_TargetActor_BoxAOE::StartTargeting()"));
-	/*TArray <TWeakObjectPtr<AActor>> HitActors = PerformTrace();
-	FGameplayAbilityTargetDataHandle Handle = StartLocation.MakeTargetDataHandleFromActors(HitActors);
-	TargetDataReadyDelegate.Broadcast(Handle);*/
-	//Destroy();
+	UE_LOG(LogTemp, Warning, TEXT("AAP_TargetActor_SphereAOE::StartTargeting()"));
 }
 void AAP_TargetActor_SphereAOE::ConfirmTargetingAndContinue()
 {
@@ -58,6 +54,6 @@ TArray<TWeakObjectPtr<AActor>> AAP_TargetActor_SphereAOE::PerformTrace()
 			HitActors.Add(PawnActor);
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("AAP_TargetActor_BoxAOE::PerformTrace() trace finished, hit %d targets"), HitActors.Num());
+	UE_LOG(LogTemp, Warning, TEXT("AAP_TargetActor_SphereAOE::PerformTrace() trace finished, hit %d targets"), HitActors.Num());
 	return HitActors;
 }

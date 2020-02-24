@@ -9,7 +9,7 @@
 /**
  * given a location and a box, query all target that hit the box
  */
-UCLASS()
+UCLASS(Blueprintable, notplaceable)
 class LINHIBLADE_API AAP_TargetActor_BoxAOE : public AGameplayAbilityTargetActor
 {
 	GENERATED_BODY()

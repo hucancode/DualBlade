@@ -9,7 +9,7 @@
 /**
  * given a location and a capsule, query all target that hit the capsule
  */
-UCLASS()
+UCLASS(Blueprintable, notplaceable)
 class LINHIBLADE_API AAP_TargetActor_CapsuleAOE : public AGameplayAbilityTargetActor
 {
 	GENERATED_BODY()
@@ -17,7 +17,7 @@ class LINHIBLADE_API AAP_TargetActor_CapsuleAOE : public AGameplayAbilityTargetA
 public:
 	virtual void BeginPlay() override;
 	virtual void StartTargeting(UGameplayAbility* Ability) override;
-	virtual bool ShouldProduceTargetData() const override;
+	virtual void ConfirmTargetingAndContinue() override;
 
 	/** Radius of target acquisition around the ability's start location. */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (ExposeOnSpawn = true), Category = AOE)
