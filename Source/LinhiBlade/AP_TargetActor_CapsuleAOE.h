@@ -6,6 +6,7 @@
 #include "Abilities/GameplayAbilityTargetActor.h"
 #include "AP_TargetActor_CapsuleAOE.generated.h"
 
+#define TARGET_CAPSULE_AOE_HALF_HEIGHT 300.0f
 /**
  * given a location and a capsule, query all target that hit the capsule
  */
@@ -19,9 +20,6 @@ public:
 	virtual void StartTargeting(UGameplayAbility* Ability) override;
 	virtual void ConfirmTargetingAndContinue() override;
 
-	/** Radius of target acquisition around the ability's start location. */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (ExposeOnSpawn = true), Category = AOE)
-		FVector Location;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (ExposeOnSpawn = true), Category = AOE)
 		float Radius;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (ExposeOnSpawn = true), Category = AOE)

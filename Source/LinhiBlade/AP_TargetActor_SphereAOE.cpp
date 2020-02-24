@@ -23,37 +23,38 @@ void AAP_TargetActor_SphereAOE::ConfirmTargetingAndContinue()
 	check(ShouldProduceTargetData());
 	if (SourceActor)
 	{
-		TArray <TWeakObjectPtr<AActor>> HitActors = PerformTrace();
-		FGameplayAbilityTargetDataHandle Handle = StartLocation.MakeTargetDataHandleFromActors(HitActors);
+		auto hit_actors = PerformTrace();
+		FGameplayAbilityTargetDataHandle Handle = StartLocation.MakeTargetDataHandleFromActors(hit_actors);
 		TargetDataReadyDelegate.Broadcast(Handle);
 	}
 }
 
 TArray<TWeakObjectPtr<AActor>> AAP_TargetActor_SphereAOE::PerformTrace()
 {
-	FCollisionObjectQueryParams ObjectToScan = FCollisionObjectQueryParams(Channel);
-	FCollisionQueryParams Params(SCENE_QUERY_STAT(SphereTargetingOverlap), false);
-	Params.bReturnPhysicalMaterial = false;
-	//Params.bTraceAsyncScene = false;
-	TArray<FOverlapResult> Overlaps;
-	TArray<TWeakObjectPtr<AActor>>	HitActors;
-	FCollisionShape Shape = FCollisionShape::MakeSphere(Radius);
-	SourceActor->GetWorld()->OverlapMultiByObjectType(Overlaps, Location, FQuat::Identity, ObjectToScan, Shape, Params);
+	auto ObjectToScan = FCollisionObjectQueryParams(Channel);
+	auto params = FCollisionQueryParams(SCENE_QUERY_STAT(SphereTargetingOverlap), false);
+	params.bReturnPhysicalMaterial = false;
+	//params.bTraceAsyncScene = false;
+	auto location = StartLocation.GetTargetingTransform().GetLocation();
+	TArray<FOverlapResult> overlaps;
+	TArray<TWeakObjectPtr<AActor>>	hit_actors;
+	auto shape = FCollisionShape::MakeSphere(Radius);
+	SourceActor->GetWorld()->OverlapMultiByObjectType(overlaps, location, FQuat::Identity, ObjectToScan, shape, params);
 #if ENABLE_DRAW_DEBUG
 	if (bDebug)
 	{
-		DrawDebugSphere(GetWorld(), Location, Radius, 10.0f, FColor::Green, false, 1.5f);
+		DrawDebugSphere(GetWorld(), location, Radius, 10.0f, FColor::Green, false, 1.5f);
 	}
 #endif
-	for (int32 i = 0; i < Overlaps.Num(); ++i)
+	for (int32 i = 0; i < overlaps.Num(); ++i)
 	{
 		//Should this check to see if these pawns are in the AimTarget list?
-		APawn* PawnActor = Cast<APawn>(Overlaps[i].GetActor());
-		if (PawnActor && !HitActors.Contains(PawnActor) && Filter.FilterPassesForActor(PawnActor))
+		auto pawn = Cast<APawn>(overlaps[i].GetActor());
+		if (pawn && !hit_actors.Contains(pawn) && Filter.FilterPassesForActor(pawn))
 		{
-			HitActors.Add(PawnActor);
+			hit_actors.Add(pawn);
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("AAP_TargetActor_SphereAOE::PerformTrace() trace finished, hit %d targets"), HitActors.Num());
-	return HitActors;
+	UE_LOG(LogTemp, Warning, TEXT("AAP_TargetActor_SphereAOE::PerformTrace() trace finished, hit %d targets"), hit_actors.Num());
+	return hit_actors;
 }

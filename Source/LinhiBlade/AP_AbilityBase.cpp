@@ -7,6 +7,7 @@
 #include "AP_AttributeChangeData.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "AP_FightUnit.h"
 
 #ifndef UE_LOG_FAST
@@ -177,24 +178,49 @@ void UAP_AbilityBase::ActivateAbility(FGameplayAbilitySpecHandle Handle, const F
 	}
 }
 
-FVector UAP_AbilityBase::FrontOfOwner(float Distance)
+FGameplayAbilityTargetingLocationInfo UAP_AbilityBase::FrontOfOwner(float Distance)
 {
 	auto actor = GetOwningActorFromActorInfo();
+	FGameplayAbilityTargetingLocationInfo ret;
 	if (!actor)
 	{
-		return FVector::ZeroVector;
+		return ret;
 	}
-	return actor->GetActorLocation() + actor->GetActorForwardVector() * Distance;
+	ret.SourceAbility = this;
+	ret.LocationType = EGameplayAbilityTargetingLocationType::LiteralTransform;
+	ret.LiteralTransform = actor->GetActorTransform();
+	ret.LiteralTransform.SetLocation(actor->GetActorLocation() + 
+		actor->GetActorForwardVector() * 
+		Distance);
+	return ret;
 }
 
-FVector UAP_AbilityBase::FrontOfOwnerTilted(float Distance, float Angle)
+float UAP_AbilityBase::OwnerRotationZ()
 {
 	auto actor = GetOwningActorFromActorInfo();
 	if (!actor)
 	{
-		return FVector::ZeroVector;
+		return 0.0f;
 	}
-	return actor->GetActorLocation() + actor->GetActorForwardVector().RotateAngleAxis(Angle, FVector::UpVector) * Distance;
+	return actor->GetActorRotation().Yaw;
+}
+FGameplayAbilityTargetingLocationInfo UAP_AbilityBase::FrontOfOwnerTilted(float Distance, float Angle)
+{
+	auto actor = GetOwningActorFromActorInfo();
+	FGameplayAbilityTargetingLocationInfo ret;
+	if (!actor)
+	{
+		return ret;
+	}
+	ret.SourceAbility = this;
+	ret.LocationType = EGameplayAbilityTargetingLocationType::LiteralTransform;
+	ret.LiteralTransform = actor->GetActorTransform();
+	ret.LiteralTransform.SetRotation(FQuat(actor->GetActorRotation())*FQuat(FRotator(0.0f, Angle, 0.0f)));
+	ret.LiteralTransform.SetLocation(actor->GetActorLocation() + 
+		actor->GetActorForwardVector() * 
+		Distance);
+	
+	return ret;
 }
 
 FGameplayTargetDataFilterHandle UAP_AbilityBase::FilterSelfOut()

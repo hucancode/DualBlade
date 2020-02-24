@@ -19,9 +19,6 @@ public:
 	virtual void StartTargeting(UGameplayAbility* Ability) override;
 	virtual void ConfirmTargetingAndContinue() override;
 
-	/** Radius of target acquisition around the ability's start location. */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (ExposeOnSpawn = true), Category = AOE)
-		FVector Location;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (ExposeOnSpawn = true), Category = AOE)
 		float Radius;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (ExposeOnSpawn = true), Category = AOE)

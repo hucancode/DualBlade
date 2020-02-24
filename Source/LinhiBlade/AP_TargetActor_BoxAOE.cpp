@@ -24,46 +24,38 @@ void AAP_TargetActor_BoxAOE::ConfirmTargetingAndContinue()
 	check(ShouldProduceTargetData());
 	if (SourceActor)
 	{
-		TArray <TWeakObjectPtr<AActor>> HitActors = PerformTrace();
-		FGameplayAbilityTargetDataHandle Handle = StartLocation.MakeTargetDataHandleFromActors(HitActors);
+		auto hit_actors = PerformTrace();
+		FGameplayAbilityTargetDataHandle Handle = StartLocation.MakeTargetDataHandleFromActors(hit_actors);
 		TargetDataReadyDelegate.Broadcast(Handle);
 	}
 }
 
 TArray<TWeakObjectPtr<AActor>> AAP_TargetActor_BoxAOE::PerformTrace()
 {
-	FCollisionObjectQueryParams ObjectToScan = FCollisionObjectQueryParams(Channel);
-	FCollisionQueryParams Params(SCENE_QUERY_STAT(BoxTargetingOverlap), false);
-	Params.bReturnPhysicalMaterial = false;
-	//Params.bTraceAsyncScene = false;
-	FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(
-		StartLocation.GetTargetingTransform().GetTranslation(), 
-		Location);
-	Rotation.Pitch = 0.0f;
-	Rotation.Roll = 0.0f;
-	TArray<FOverlapResult> Overlaps;
-	TArray<TWeakObjectPtr<AActor>>	HitActors;
-	FCollisionShape Shape = FCollisionShape::MakeBox(Size);
+	auto object_to_scan = FCollisionObjectQueryParams(Channel);
+	auto params = FCollisionQueryParams(SCENE_QUERY_STAT(BoxTargetingOverlap), false);
+	params.bReturnPhysicalMaterial = false;
+	//params.bTraceAsyncScene = false;
+	auto location = StartLocation.GetTargetingTransform().GetLocation();
+	auto rotation = FRotator(0.0f, BoxRotation, 0.0f);
+	TArray<FOverlapResult> overlaps;
+	TArray<TWeakObjectPtr<AActor>>	hit_actors;
+	auto shape = FCollisionShape::MakeBox(Size);
 #if ENABLE_DRAW_DEBUG
 	if (bDebug)
 	{
-		DrawDebugBox(GetWorld(), Location, Size, Rotation.Quaternion(), FColor::Green, false, 1.5f);
+		DrawDebugBox(SourceActor->GetWorld(), location, Size, rotation.Quaternion(), FColor::Green, false, 1.5f);
 	}
 #endif
-	bool ret = GetWorld()->OverlapMultiByObjectType(Overlaps, Location, Rotation.Quaternion(), ObjectToScan, Shape, Params);
-	if (!ret)
+	SourceActor->GetWorld()->OverlapMultiByObjectType(overlaps, location, rotation.Quaternion(), object_to_scan, shape, params);
+	for (int32 i = 0; i < overlaps.Num(); ++i)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AAP_TargetActor_BoxAOE::PerformTrace() hit nothing"));
-		return HitActors;
-	}
-	for (int32 i = 0; i < Overlaps.Num(); ++i)
-	{
-		APawn* PawnActor = Cast<APawn>(Overlaps[i].GetActor());
-		if (PawnActor && !HitActors.Contains(PawnActor) && Filter.FilterPassesForActor(PawnActor))
+		auto pawn = Cast<APawn>(overlaps[i].GetActor());
+		if (pawn && !hit_actors.Contains(pawn) && Filter.FilterPassesForActor(pawn))
 		{
-			HitActors.Add(PawnActor);
+			hit_actors.Add(pawn);
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("AAP_TargetActor_BoxAOE::PerformTrace() trace finished, hit %d targets"), HitActors.Num());
-	return HitActors;
+	UE_LOG(LogTemp, Warning, TEXT("AAP_TargetActor_BoxAOE::PerformTrace() trace finished, hit %d targets"), hit_actors.Num());
+	return hit_actors;
 }

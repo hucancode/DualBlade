@@ -55,9 +55,11 @@ public:
 		float Range;
 public:
 	UFUNCTION(BlueprintPure, Category = Ability)
-		FVector FrontOfOwner(float Distance);
+		FGameplayAbilityTargetingLocationInfo FrontOfOwner(float Distance);
 	UFUNCTION(BlueprintPure, Category = Ability)
-		FVector FrontOfOwnerTilted(float Distance, float Angle);
+		float OwnerRotationZ();
+	UFUNCTION(BlueprintPure, Category = Ability)
+		FGameplayAbilityTargetingLocationInfo FrontOfOwnerTilted(float Distance, float Angle);
 	UFUNCTION(BlueprintPure, Category = Ability)
 		FGameplayTargetDataFilterHandle FilterSelfOut();
 	UFUNCTION(BlueprintPure, Category = Ability)
