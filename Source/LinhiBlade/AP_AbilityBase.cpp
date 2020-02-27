@@ -16,6 +16,8 @@
 
 UAP_AbilityBase::UAP_AbilityBase()
 {
+	// this could lead to countless strange behaviors, only turn this on if you really need to
+	bServerRespectsRemoteAbilityCancellation = false;
 	{
 		FAbilityTriggerData data;
 		data.TriggerTag = FGameplayTag::RequestGameplayTag("Combat.Trigger_Ability_By_Controller");
