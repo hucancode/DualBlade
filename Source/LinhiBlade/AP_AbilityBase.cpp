@@ -16,7 +16,8 @@
 
 UAP_AbilityBase::UAP_AbilityBase()
 {
-	// this could lead to countless strange behaviors, only turn this on if you really need to
+	// this option should be false by default.
+	// turning this on could lead to countless strange behaviors, only turn this on if you really need to
 	bServerRespectsRemoteAbilityCancellation = false;
 	{
 		FAbilityTriggerData data;
