@@ -4,14 +4,29 @@
 #include "AP_RPGPlayerController.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "AbilitySystemGlobals.h"
 
 #ifndef RAY_LENGTH
 #define RAY_LENGTH 999999.0f
+#endif
+
+#ifndef UE_LOG_FAST
+#define UE_LOG_FAST(Format, ...) UE_LOG(LogTemp, Display, Format, ##__VA_ARGS__)
 #endif
 AAP_RPGPlayerController::AAP_RPGPlayerController()
 {
 	Team = EGameTeam::Neutral;
 	TeamTag = FGameplayTag::RequestGameplayTag("Combat.Team_Neutral");
+}
+void AAP_RPGPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+	UE_LOG_FAST(TEXT("AAP_RPGPlayerController::BeginPlay(), I am %s my netmode is %d"), *GetName(), GetNetMode());
+	//TODO: find a better place to init global data
+	if (!UAbilitySystemGlobals::Get().IsAbilitySystemGlobalsInitialized())
+	{
+		UAbilitySystemGlobals::Get().InitGlobalData();
+	}
 }
 ETeamAttitude::Type AAP_RPGPlayerController::GetAttituteTowardPlayer(AAP_RPGPlayerController* Other)
 {
@@ -28,16 +43,10 @@ void AAP_RPGPlayerController::SetTeam(EGameTeam NewTeam)
 
 bool AAP_RPGPlayerController::LineTraceGround(FVector Start, FVector Direction, FVector& OutLocation)
 {
-	auto game = GetWorld()->GetAuthGameMode<AAP_GameMode>();
-	if (!game)
-	{
-		return false;
-	}
-	ECollisionChannel channel = game->GroundCollisionChannel;
 	FHitResult hit_result;
 	FVector start = Start;
 	FVector end = Start + Direction * RAY_LENGTH;
-	bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, start, end, channel);
+	bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, start, end, GroundChannel);
 	OutLocation = hit_result.Location;
 #ifdef ENABLE_DRAW_DEBUG
 	//DrawDebugSphere(GetWorld(), OutLocation, 16, 10, FColor::Green, false);

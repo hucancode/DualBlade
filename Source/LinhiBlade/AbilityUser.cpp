@@ -4,6 +4,7 @@
 #include "AbilityUser.h"
 #include "AP_FightUnit.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystemGlobals.h"
 #include "AbilitySystemBlueprintLibrary.h"
 
 #ifndef UE_LOG_FAST
@@ -472,6 +473,10 @@ void UAbilityUser::ActivateAbility(int AbilitySlot)
 	if (GetAbilityLevel(AbilitySlot) <= 0)
 	{
 		return;
+	}
+	{
+		int n = UAbilitySystemGlobals::Get().TargetDataStructCache.ScriptStructs.Num();
+		UE_LOG_FAST(TEXT("check targetdata script struct, got %d ready"), n);
 	}
 	AbilitySystem->TryActivateAbility(handle);
 }

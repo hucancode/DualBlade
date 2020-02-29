@@ -9,6 +9,7 @@
 #include "DrawDebugHelpers.h"
 #include "AP_AttributeChangeData.h"
 #include "Kismet/GameplayStatics.h"
+#include "AP_RPGPlayerController.h"
 
 #define ABILITY_MAX_LEVEL 4
 #ifndef RAY_LENGTH
@@ -363,26 +364,16 @@ void AAP_FightUnit::HandleLevelUp()
 
 bool AAP_FightUnit::LineTraceEnemy(FVector Start, FVector Direction, AActor*& OutActor)
 {
+	auto controller = Cast<AAP_RPGPlayerController>(GetController());
+	check(controller);
+	ECollisionChannel channel = controller->EnemyChannel;
 	FHitResult hit_result;
 	FVector start = Start;
 	FVector end = Start + Direction * RAY_LENGTH;
-	auto game = GetWorld()->GetAuthGameMode<AAP_GameMode>();
-	if (!game)
-	{
-		return false;
-	}
-	ECollisionChannel channel = game->GetTraceChannelEnemy(TeamAgent->GetTeam());
 	FCollisionQueryParams params = FCollisionQueryParams::DefaultQueryParam;
 	bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, start, end, channel, params);
 	OutActor = hit_result.GetActor();
 	UE_LOG(LogTemp, Warning, TEXT("UAP_AbilityBase::LineTraceUnit Start (%s) End (%s) channel %d, hit %d"), *Start.ToString(), *end.ToString(), channel, hit);
-	if (!hit && channel != game->UnitCollisionChannel)
-	{
-		channel = game->GetTraceChannelNeutral();
-		hit = GetWorld()->LineTraceSingleByChannel(hit_result, start, end, channel, params);
-		OutActor = hit_result.GetActor();
-		UE_LOG(LogTemp, Warning, TEXT("UAP_AbilityBase::LineTraceUnit failed to hit enemy, now tracing neutral, channel %d, hit %d"), *Start.ToString(), *end.ToString(), channel, hit);
-	}
 #ifdef ENABLE_DRAW_DEBUG
 	FVector end_point = hit_result.Actor.IsValid() ? hit_result.ImpactPoint : hit_result.TraceEnd;
 	DrawDebugSphere(GetWorld(), end_point, 16, 10, FColor::Green, false);
@@ -392,15 +383,12 @@ bool AAP_FightUnit::LineTraceEnemy(FVector Start, FVector Direction, AActor*& Ou
 
 bool AAP_FightUnit::LineTraceAlly(FVector Start, FVector Direction, AActor*& OutActor, bool IgnoreMe)
 {
+	auto controller = Cast<AAP_RPGPlayerController>(GetController());
+	check(controller);
+	ECollisionChannel channel = controller->AllyChannel;
 	FHitResult hit_result;
 	FVector start = Start;
 	FVector end = Start + Direction * RAY_LENGTH;
-	auto game = GetWorld()->GetAuthGameMode<AAP_GameMode>();
-	if (!game)
-	{
-		return false;
-	}
-	ECollisionChannel channel = game->GetTraceChannelAlly(TeamAgent->GetTeam());
 	FCollisionQueryParams params = FCollisionQueryParams::DefaultQueryParam;
 	if (IgnoreMe)
 	{
@@ -438,51 +426,64 @@ bool AAP_FightUnit::LineTraceUnitAuto(ETargetingPolicy Targeting, FVector Start,
 
 bool AAP_FightUnit::LineTraceUnit(FVector Start, FVector Direction, AActor*& OutActor, bool IgnoreMe)
 {
-	auto game = GetWorld()->GetAuthGameMode<AAP_GameMode>();
-	if (!game)
-	{
-		return false;
-	}
+	auto controller = Cast<AAP_RPGPlayerController>(GetController());
+	check(controller);
+	ECollisionChannel channel = controller->AllUnitChannel;
 	FHitResult hit_result;
 	FVector start = Start;
 	FVector end = Start + Direction * RAY_LENGTH;
-	ECollisionChannel Channel = game->UnitCollisionChannel;
-	FCollisionQueryParams Params = FCollisionQueryParams::DefaultQueryParam;
+	FCollisionQueryParams params = FCollisionQueryParams::DefaultQueryParam;
 	if (IgnoreMe)
 	{
-		Params.AddIgnoredActor(this);
+		params.AddIgnoredActor(this);
 	}
-	bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, start, end, Channel, Params);
+	bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, start, end, channel, params);
 	OutActor = hit_result.GetActor();
-	UE_LOG(LogTemp, Warning, TEXT("UAP_AbilityBase::LineTraceUnit Start (%s) End (%s) Channel %d, hit %d"), *Start.ToString(), *end.ToString(), Channel, hit);
+	UE_LOG(LogTemp, Warning, TEXT("UAP_AbilityBase::LineTraceUnit Start (%s) End (%s) Channel %d, hit %d"), *Start.ToString(), *end.ToString(), channel, hit);
 #ifdef ENABLE_DRAW_DEBUG
 	FVector end_point = hit_result.Actor.IsValid() ? hit_result.ImpactPoint : hit_result.TraceEnd;
-	DrawDebugSphere(GetWorld(), end_point, 16, 10, FColor::Green, false);
+	if (HasAuthority())
+	{
+		DrawDebugSphere(GetWorld(), end_point, 16, 10, FColor::Green, false);
+	}
+	else
+	{
+		DrawDebugSphere(GetWorld(), end_point, 16, 10, FColor::Blue, false);
+	}
 #endif // ENABLE_DRAW_DEBUG
 	return hit;
 }
 
 bool AAP_FightUnit::LineTraceGround(FVector Start, FVector Direction, FVector& OutLocation)
 {
-	auto game = GetWorld()->GetAuthGameMode<AAP_GameMode>();
-	if (!game)
-	{
-		return false;
-	}
-	ECollisionChannel channel = game->GroundCollisionChannel;
+	auto controller = Cast<AAP_RPGPlayerController>(GetController());
+	check(controller);
+	ECollisionChannel channel = controller->GroundChannel;
 	FHitResult hit_result;
 	FVector start = Start;
 	FVector end = Start + Direction * RAY_LENGTH;
 	bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, start, end, channel);
 	OutLocation = hit_result.Location;
 #ifdef ENABLE_DRAW_DEBUG
-	DrawDebugSphere(GetWorld(), OutLocation, 16, 10, FColor::Green, false);
+	if (HasAuthority())
+	{
+		DrawDebugSphere(GetWorld(), OutLocation, 16, 10, FColor::Green, false);
+	}
+	else
+	{
+		DrawDebugSphere(GetWorld(), OutLocation, 16, 10, FColor::Blue, false);
+	}
 #endif // ENABLE_DRAW_DEBUG
 	return hit;
 }
 void AAP_FightUnit::GetAllUnitInRange(TArray<AActor*>& Result, float Radius, bool IgnoreMe)
 {
-	const static ECollisionChannel Channel = ECollisionChannel::ECC_GameTraceChannel11;
+	auto controller = Cast<AAP_RPGPlayerController>(GetController());
+	if (!controller)
+	{
+		return;
+	}
+	ECollisionChannel channel = controller->AllUnitChannel;
 	FCollisionQueryParams Params = FCollisionQueryParams::DefaultQueryParam;
 	if (IgnoreMe)
 	{
@@ -490,7 +491,7 @@ void AAP_FightUnit::GetAllUnitInRange(TArray<AActor*>& Result, float Radius, boo
 	}
 	TArray<FOverlapResult> Overlaps;
 	FCollisionShape Shape = FCollisionShape::MakeSphere(Radius);
-	GetWorld()->OverlapMultiByChannel(Overlaps, GetActorLocation(), FQuat::Identity, Channel, Shape, Params);
+	GetWorld()->OverlapMultiByChannel(Overlaps, GetActorLocation(), FQuat::Identity, channel, Shape, Params);
 #if ENABLE_DRAW_DEBUG
 	DrawDebugSphere(GetWorld(), GetActorLocation(), Radius, 10, FColor::Green, false, 1.5f);
 #endif

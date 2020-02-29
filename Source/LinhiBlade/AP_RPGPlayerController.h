@@ -17,10 +17,22 @@ class LINHIBLADE_API AAP_RPGPlayerController : public APlayerController
 	GENERATED_BODY()
 public:
 	AAP_RPGPlayerController();
+	virtual void BeginPlay() override;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = RTS)
 		EGameTeam Team;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = RTS)
 		FGameplayTag TeamTag;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = RTS)
+		TEnumAsByte<ECollisionChannel> GroundChannel;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = RTS)
+		TEnumAsByte<ECollisionChannel> AllyChannel;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = RTS)
+		TEnumAsByte<ECollisionChannel> EnemyChannel;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = RTS)
+		TEnumAsByte<ECollisionChannel> NeutralChannel;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = RTS)
+		TEnumAsByte<ECollisionChannel> AllUnitChannel;
 	UFUNCTION(BlueprintCallable, Category = RPG)
 		ETeamAttitude::Type GetAttituteTowardPlayer(AAP_RPGPlayerController* Other);
 	UFUNCTION(BlueprintCallable, Category = RPG)
