@@ -41,7 +41,6 @@ void UAbilityUser::BeginPlay()
 	AbilitySystem->AbilityEndedCallbacks.AddUObject(this, &UAbilityUser::HandleAbilityEnded);
 	AbilitySystem->AbilityActivatedCallbacks.AddUObject(this, &UAbilityUser::HandleAbilityActivated);
 	AbilitySystem->OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UAbilityUser::HandleEffectApplied);
-
 }
 
 
@@ -89,7 +88,7 @@ void UAbilityUser::GiveAbility(TSubclassOf<UAP_AbilityBase> Ability)
 	
 	AbilityHandles.Add(handle);
 	AbilityStates.AddDefaulted();
-	AbilityLevels.Add(spec->Level);//crash
+	AbilityLevels.Add(spec->Level);
 	UE_LOG_FAST(TEXT("give ability %d"), AbilityHandles.Num());
 	RecheckAbilitySlot();
 	RecheckAbilityState();
@@ -296,8 +295,9 @@ bool UAbilityUser::LevelUpAbility(int AbilitySlot)
 	{
 		return false;
 	}
+	spec->Level += 1;
 	AbilityLevels[AbilitySlot] += 1;
-	RecheckAbilityLevel();
+	RecheckAbilityLevel(AbilitySlot);
 	return true;
 }
 
@@ -316,7 +316,8 @@ int UAbilityUser::ResetAbilityLevel(int AbilitySlot)
 	}
 	int ret = spec->Level;
 	spec->Level = 0;
-	OnAbilityLevelChanged.Broadcast(AbilitySlot);
+	AbilityLevels[AbilitySlot] = 0;
+	RecheckAbilityLevel(AbilitySlot);
 	return ret;
 }
 
@@ -449,11 +450,7 @@ int UAbilityUser::GetAbilityLevel(int AbilitySlot)
 	{
 		return -1;
 	}
-	if (!AbilityLevels.IsValidIndex(AbilitySlot))
-	{
-		return -1;
-	}
-	return AbilityLevels[AbilitySlot];
+	return spec->Level;
 }
 
 void UAbilityUser::ActivateAbility(int AbilitySlot)
@@ -530,28 +527,13 @@ void UAbilityUser::RecheckAbilityLevel(int AbilitySlot)
 {
 	if (AbilitySlot != -1)
 	{
-		bool valid = AbilitySystem && AbilityHandles.IsValidIndex(AbilitySlot);
-		if (!valid)
-		{
-			return;
-		}
-		auto handle = AbilityHandles[AbilitySlot];
-		auto spec = AbilitySystem->FindAbilitySpecFromHandle(handle);
-		if (!spec)
-		{
-			return;
-		}
-		if (AbilityLevels[AbilitySlot] != spec->Level)
-		{
-			spec->Level = AbilityLevels[AbilitySlot];
-			OnAbilityLevelChanged.Broadcast(AbilitySlot);
-		}
+		OnAbilityLevelChanged.Broadcast(AbilitySlot);
 	}
 	else
 	{
 		for (int i = 0; i< AbilityHandles.Num();i++)
 		{
-			RecheckAbilityLevel(i);
+			OnAbilityLevelChanged.Broadcast(i);
 		}
 	}
 }

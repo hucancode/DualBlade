@@ -51,6 +51,8 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_AbilityHandles)
 		TArray<FGameplayAbilitySpecHandle> AbilityHandles;
 	UPROPERTY(ReplicatedUsing = OnRep_AbilityLevels)
+		// AbilitySpec already implement Level and is replicated, we should use spec->Level for logic
+		// but we can't hook in Level changed event, so I do a workaround
 		TArray<int32> AbilityLevels;
 	UPROPERTY()
 		UAbilitySystemComponent* AbilitySystem;
