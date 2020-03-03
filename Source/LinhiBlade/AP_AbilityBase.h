@@ -55,6 +55,8 @@ public:
 		float Range;
 public:
 	UFUNCTION(BlueprintPure, Category = Ability)
+		class AAP_FightUnit* OwnerAsFightUnit();
+	UFUNCTION(BlueprintPure, Category = Ability)
 		FGameplayAbilityTargetingLocationInfo FrontOfOwner(float Distance);
 	UFUNCTION(BlueprintPure, Category = Ability)
 		float OwnerRotationZ();

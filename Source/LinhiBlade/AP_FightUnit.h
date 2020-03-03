@@ -21,7 +21,7 @@
 #define EXP_AQUIRING_RANGE 800.0f
 
 UENUM(BlueprintType)
-enum class EFightStyle :uint8
+enum class EFightStyle : uint8
 {
 	BareHand = 0,
 	Axe = 1,
@@ -36,6 +36,13 @@ enum class EFightStyle :uint8
 	SwordAndShield = 10,
 	SwordNoShield = 11,
 	SwordMelee = 12
+};
+
+UENUM(BlueprintType)
+enum class EBodyType : uint8
+{
+	Male = 0,
+	Female = 1
 };
 
 UCLASS()
@@ -120,7 +127,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void						GetAllAllyInRange(TArray<AActor*>& Result, float Radius);
 	UFUNCTION(BlueprintCallable)
-	void						UseNewFighStyle(EFightStyle NewStyle);
+	void						UseNewFightStyle(EFightStyle NewStyle);
 public:
 	UPROPERTY(BlueprintAssignable)
 		FDeathEventDelegate			OnDeath;
@@ -141,6 +148,8 @@ public:
 		UAP_AttributeSet*			Stats;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = FightUnit)
 		EFightStyle					FightStyle;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = FightUnit)
+		EBodyType					BodyType;
 protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = Abilities)
 		FGameplayTagContainer		GameplayTags;

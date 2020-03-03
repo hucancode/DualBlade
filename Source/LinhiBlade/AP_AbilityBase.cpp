@@ -54,6 +54,11 @@ bool UAP_AbilityBase::ShouldAbilityRespondToEvent(const FGameplayAbilityActorInf
 	return true;
 }
 
+AAP_FightUnit* UAP_AbilityBase::OwnerAsFightUnit()
+{
+	return Cast<AAP_FightUnit>(GetOwningActorFromActorInfo());
+}
+
 FGameplayAbilityTargetingLocationInfo UAP_AbilityBase::FrontOfOwner(float Distance)
 {
 	auto actor = GetOwningActorFromActorInfo();

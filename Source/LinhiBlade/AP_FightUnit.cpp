@@ -539,7 +539,7 @@ void AAP_FightUnit::GetAllAllyInRange(TArray<AActor*>& Result, float Radius)
 	}
 }
 
-void AAP_FightUnit::UseNewFighStyle(EFightStyle NewStyle)
+void AAP_FightUnit::UseNewFightStyle(EFightStyle NewStyle)
 {
 	if (FightStyle == NewStyle)
 	{
