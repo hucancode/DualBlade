@@ -148,7 +148,7 @@ public:
 		UAP_AttributeSet*			Stats;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = FightUnit)
 		EFightStyle					FightStyle;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = FightUnit)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = FightUnit)
 		EBodyType					BodyType;
 protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = Abilities)
