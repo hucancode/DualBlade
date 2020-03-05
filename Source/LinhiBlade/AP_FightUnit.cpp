@@ -54,11 +54,6 @@ AAP_FightUnit::AAP_FightUnit()
 void AAP_FightUnit::BeginPlay()
 {
 	Super::BeginPlay();
-	Stats->InitFromMetaDataTable(StartingStats);
-	if (!GetController()->IsValidLowLevel())
-	{
-		SpawnDefaultController();
-	}
 	if (GetGenericTeamId() == FGenericTeamId::NoTeam)
 	{
 		SetGenericTeamId((uint8)EGameTeam::Neutral);
@@ -77,7 +72,11 @@ void AAP_FightUnit::BeginPlay()
 	TeamAgent->OnTeamChanged.AddDynamic(this, &AAP_FightUnit::HandleTeamChanged);
 	TeamAgent->OnCloakStarted.AddDynamic(this, &AAP_FightUnit::HandleCloakStarted);
 	TeamAgent->OnCloakFinished.AddDynamic(this, &AAP_FightUnit::HandleCloakFinished);
-	ItemUser->GiveWeaponAbility(nullptr);
+	if (HasAuthority())
+	{
+		Stats->InitFromMetaDataTable(StartingStats);
+		ItemUser->GiveWeaponAbility(nullptr);
+	}
 }
 
 // Called every frame

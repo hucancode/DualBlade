@@ -12,11 +12,10 @@
 // Sets default values for this component's properties
 UItemUser::UItemUser()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
+	PrimaryComponentTick.bCanEverTick = false;
+	BuyRange = 1000.0f;
+	Gold = 0;
+	LastSeenShop = nullptr;
 }
 
 
@@ -24,10 +23,7 @@ UItemUser::UItemUser()
 void UItemUser::BeginPlay()
 {
 	Super::BeginPlay();
-	Gold = 0;
-	LastSeenShop = nullptr;
 	CurrentWeapon = EWeaponCategory::None;
-	BuyRange = 1000.0f;
 }
 
 

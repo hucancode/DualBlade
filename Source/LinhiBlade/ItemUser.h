@@ -47,17 +47,17 @@ public:
 		int Gold;
 	UPROPERTY()
 		AActor* LastSeenShop;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		float BuyRange;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_StashItems)
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_StashItems)
 		TArray<TSubclassOf<UAP_GameplayItem>> StashItems;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_EquipedItems)
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_EquipedItems)
 		TArray<TSubclassOf<UAP_GameplayItem>> EquipedItems;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		EWeaponCategory CurrentWeapon;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly)
 		UAP_GameplayItem* CurrentWeaponObject;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<TSubclassOf<UAP_AbilityBase> > BareHandAbilities;
 
 	UPROPERTY(BlueprintAssignable)

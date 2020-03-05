@@ -148,12 +148,12 @@ public:
 		UAP_AttributeSet*			Stats;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = FightUnit)
 		EFightStyle					FightStyle;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = FightUnit)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = FightUnit)
 		EBodyType					BodyType;
 protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = Abilities)
 		FGameplayTagContainer		GameplayTags;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Abilities)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Abilities)
 		UDataTable*					StartingStats;
 	FTimerHandle					DeathTimerHandle;
 };
