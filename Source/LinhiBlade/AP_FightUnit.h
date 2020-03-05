@@ -12,6 +12,7 @@
 #include "ItemUser.h"
 #include "AbilityUser.h"
 #include "AP_AttributeSet.h"
+#include "AP_FightDefination.h"
 #include "AP_FightUnit.generated.h"
 
 #ifndef UE_LOG_FAST
@@ -19,31 +20,6 @@
 #endif
 
 #define EXP_AQUIRING_RANGE 800.0f
-
-UENUM(BlueprintType)
-enum class EFightStyle : uint8
-{
-	BareHand = 0,
-	Axe = 1,
-	AxeMelee = 2,
-	Bow = 3,
-	Dagger = 4,
-	DualSword = 5,
-	Katana1 = 6,
-	Katana2 = 7,
-	Katana3 = 8,
-	MagicStaff = 9,
-	SwordAndShield = 10,
-	SwordNoShield = 11,
-	SwordMelee = 12
-};
-
-UENUM(BlueprintType)
-enum class EBodyType : uint8
-{
-	Male = 0,
-	Female = 1
-};
 
 UCLASS()
 class LINHIBLADE_API AAP_FightUnit : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface, public IGenericTeamAgentInterface
@@ -150,6 +126,8 @@ public:
 		EFightStyle					FightStyle;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = FightUnit)
 		EBodyType					BodyType;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = FightUnit)
+		ERace						Race;
 protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = Abilities)
 		FGameplayTagContainer		GameplayTags;
