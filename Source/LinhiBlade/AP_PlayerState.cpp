@@ -11,6 +11,6 @@ void AAP_PlayerState::SeamlessTravelTo(APlayerState* NewPlayerState)
 	{
 		return;
 	}
-	this->BodyType = state->BodyType;
-	this->Race = state->Race;
+	state->BodyType = this->BodyType;
+	state->Race = this->Race;
 }

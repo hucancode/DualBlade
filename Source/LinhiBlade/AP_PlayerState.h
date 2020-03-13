@@ -15,7 +15,9 @@ class LINHIBLADE_API AAP_PlayerState : public APlayerState
 
 public:
     virtual void SeamlessTravelTo(class APlayerState* NewPlayerState) override;
-	EBodyType BodyType;
-	ERace Race;
-
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+		EBodyType BodyType;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+		ERace Race;
 };
