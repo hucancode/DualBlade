@@ -58,7 +58,6 @@ void UAbilityUser::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(UAbilityUser, AbilityStates);
 	DOREPLIFETIME(UAbilityUser, AbilityBehaviors);
 	DOREPLIFETIME(UAbilityUser, AbilityHandles);
-	DOREPLIFETIME(UAbilityUser, AbilityLevels);
 }
 
 void UAbilityUser::GiveAbility(TSubclassOf<UAP_AbilityBase> Ability)
@@ -87,7 +86,6 @@ void UAbilityUser::GiveAbility(TSubclassOf<UAP_AbilityBase> Ability)
 	
 	AbilityHandles.Add(handle);
 	AbilityStates.AddDefaulted();
-	AbilityLevels.Add(spec->Level);
 	UE_LOG_FAST(TEXT("give ability %d"), AbilityHandles.Num());
 	RecheckAbilitySlot();
 	RecheckAbilityState();
@@ -107,7 +105,6 @@ void UAbilityUser::RemoveAbility(TSubclassOf<UAP_AbilityBase> Ability)
 	}
 	AbilityHandles.RemoveAt(index);
 	AbilityStates.RemoveAt(index);
-	AbilityLevels.RemoveAt(index);
 	RecheckAbilitySlot();
 	RecheckAbilityState();
 }
@@ -290,12 +287,8 @@ bool UAbilityUser::LevelUpAbility(int AbilitySlot)
 	{
 		return false;
 	}
-	if (!AbilityLevels.IsValidIndex(AbilitySlot))
-	{
-		return false;
-	}
 	spec->Level += 1;
-	AbilityLevels[AbilitySlot] += 1;
+	AbilitySystem->MarkAbilitySpecDirty(*spec);
 	RecheckAbilityLevel(AbilitySlot);
 	return true;
 }
@@ -315,7 +308,6 @@ int UAbilityUser::ResetAbilityLevel(int AbilitySlot)
 	}
 	int ret = spec->Level;
 	spec->Level = 0;
-	AbilityLevels[AbilitySlot] = 0;
 	RecheckAbilityLevel(AbilitySlot);
 	return ret;
 }
@@ -516,10 +508,6 @@ void UAbilityUser::OnRep_AbilityHandles()
 void UAbilityUser::RecheckAbilitySlot()
 {
 	OnAbilitySlotChanged.Broadcast();
-}
-void UAbilityUser::OnRep_AbilityLevels()
-{
-	RecheckAbilityLevel();
 }
 
 void UAbilityUser::RecheckAbilityLevel(int AbilitySlot)

@@ -51,10 +51,6 @@ protected:
 		TArray <EAbilityBehavior> AbilityBehaviors;
 	UPROPERTY(ReplicatedUsing = OnRep_AbilityHandles)
 		TArray<FGameplayAbilitySpecHandle> AbilityHandles;
-	UPROPERTY(ReplicatedUsing = OnRep_AbilityLevels)
-		// AbilitySpec already implement Level and is replicated, we should use spec->Level for logic
-		// but we can't hook in Level changed event, so I do a workaround
-		TArray<int32> AbilityLevels;
 	UPROPERTY()
 		UAbilitySystemComponent* AbilitySystem;
 public:	
@@ -117,6 +113,10 @@ public:
 		void ActivateAbility(int AbilitySlot);
 	UFUNCTION(BlueprintCallable, Category = "Abilities")
 		bool ActivateAbilityWithPayload(int AbilitySlot, FGameplayTag EventTag, FGameplayEventData Payload);
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void RecheckAbilitySlot();
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+		void RecheckAbilityLevel(int AbilitySlot = -1);
 protected:
 	UFUNCTION()
 		virtual void OnRep_AbilityStates();
@@ -125,8 +125,4 @@ protected:
 		virtual void OnRep_AbilityBehaviors();
 	UFUNCTION()
 		virtual void OnRep_AbilityHandles();
-	void RecheckAbilitySlot();
-	UFUNCTION()
-		virtual void OnRep_AbilityLevels();
-	void RecheckAbilityLevel(int AbilitySlot = -1);
 };
