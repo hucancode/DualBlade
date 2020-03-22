@@ -17,30 +17,29 @@ UAbilityUser::UAbilityUser()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-
+	bWantsInitializeComponent = true;
+	AbilitySystem = nullptr;
 	// ...
 }
-
+void UAbilityUser::InitializeComponent()
+{
+	Super::InitializeComponent();
+	auto owner = Cast<IAbilitySystemInterface>(GetOwner());
+	check(owner);
+	AbilitySystem = owner->GetAbilitySystemComponent();
+	check(AbilitySystem);
+	AbilitySystem->AbilityCommittedCallbacks.AddUObject(this, &UAbilityUser::HandleAbilityCommitted);
+	AbilitySystem->AbilityEndedCallbacks.AddUObject(this, &UAbilityUser::HandleAbilityEnded);
+	AbilitySystem->AbilityActivatedCallbacks.AddUObject(this, &UAbilityUser::HandleAbilityActivated);
+	AbilitySystem->OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UAbilityUser::HandleEffectApplied);
+}
 
 // Called when the game starts
 void UAbilityUser::BeginPlay()
 {
 	Super::BeginPlay();
-	AbilitySystem = nullptr;
-	auto owner = Cast<IAbilitySystemInterface>(GetOwner());
-	if (!owner)
-	{
-		return;
-	}
-	AbilitySystem = owner->GetAbilitySystemComponent();
-	if (!AbilitySystem)
-	{
-		return;
-	}
-	AbilitySystem->AbilityCommittedCallbacks.AddUObject(this, &UAbilityUser::HandleAbilityCommitted);
-	AbilitySystem->AbilityEndedCallbacks.AddUObject(this, &UAbilityUser::HandleAbilityEnded);
-	AbilitySystem->AbilityActivatedCallbacks.AddUObject(this, &UAbilityUser::HandleAbilityActivated);
-	AbilitySystem->OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UAbilityUser::HandleEffectApplied);
+	RecheckAbilitySlot();
+	RecheckAbilityState();
 }
 
 
@@ -217,7 +216,7 @@ void UAbilityUser::HandleAbilityOffCooldown(const FGameplayEffectRemovalInfo& In
 
 int UAbilityUser::GetAbilityCount() const
 {
-	return AbilityStates.Num();
+	return AbilityHandles.Num();
 }
 
 UAP_AbilityBase* UAbilityUser::GetAbility(int AbilitySlot) const

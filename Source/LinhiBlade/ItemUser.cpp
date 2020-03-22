@@ -16,14 +16,19 @@ UItemUser::UItemUser()
 	BuyRange = 1000.0f;
 	Gold = 0;
 	LastSeenShop = nullptr;
+	CurrentWeapon = EWeaponCategory::None;
+	bWantsInitializeComponent = true;
 }
 
-
+void UItemUser::InitializeComponent()
+{
+	Super::InitializeComponent();
+}
 // Called when the game starts
 void UItemUser::BeginPlay()
 {
 	Super::BeginPlay();
-	CurrentWeapon = EWeaponCategory::None;
+	
 }
 
 

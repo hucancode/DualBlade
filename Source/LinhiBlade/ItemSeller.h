@@ -15,11 +15,13 @@ class LINHIBLADE_API UItemSeller : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
+	// Sets default values, assume nothing, any pointer could be null
 	UItemSeller();
 
 protected:
-	// Called when the game starts
+	// Setup connection/chain-reaction between components, pointers not supposed to be null here
+	virtual void InitializeComponent() override;
+	// Setup game logic here, game functionality supposed to work fine here
 	virtual void BeginPlay() override;
 
 public:	

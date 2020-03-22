@@ -25,10 +25,12 @@ class LINHIBLADE_API UTeamAgent : public UActorComponent
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTeamEventDelegate, EGameTeam, Team);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCloakEventDelegate, ECloakingLevel, Level);
 public:	
-	// Sets default values for this component's properties
+	// Sets default values, assume nothing, any pointer could be null
 	UTeamAgent();
 protected:
-	// Called when the game starts
+	// Setup connection/chain-reaction between components, pointers not supposed to be null here
+	virtual void InitializeComponent() override;
+	// Setup game logic here, game functionality supposed to work fine here
 	virtual void BeginPlay() override;
 public:
 	UPROPERTY(BlueprintAssignable)

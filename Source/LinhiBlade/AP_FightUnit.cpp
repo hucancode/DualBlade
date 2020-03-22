@@ -49,11 +49,9 @@ AAP_FightUnit::AAP_FightUnit()
 	bUseControllerRotationYaw = 0;
 	bUseControllerRotationRoll = 0;
 }
-
-// Called when the game starts or when spawned
-void AAP_FightUnit::BeginPlay()
+void AAP_FightUnit::PostInitializeComponents()
 {
-	Super::BeginPlay();
+	Super::PostInitializeComponents();
 	if (GetGenericTeamId() == FGenericTeamId::NoTeam)
 	{
 		SetGenericTeamId((uint8)EGameTeam::Neutral);
@@ -72,6 +70,11 @@ void AAP_FightUnit::BeginPlay()
 	TeamAgent->OnTeamChanged.AddDynamic(this, &AAP_FightUnit::HandleTeamChanged);
 	TeamAgent->OnCloakStarted.AddDynamic(this, &AAP_FightUnit::HandleCloakStarted);
 	TeamAgent->OnCloakFinished.AddDynamic(this, &AAP_FightUnit::HandleCloakFinished);
+}
+// Called when the game starts or when spawned
+void AAP_FightUnit::BeginPlay()
+{
+	Super::BeginPlay();
 	if (HasAuthority())
 	{
 		Stats->InitFromMetaDataTable(StartingStats);

@@ -29,13 +29,14 @@ class LINHIBLADE_API AAP_FightUnit : public ACharacter, public IAbilitySystemInt
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDeathEventDelegate, const float, DeathTime);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGeneralEventDelegate);
 public:
-	// Sets default values for this character's properties
+	// Sets default values, assume nothing, any pointer could be null
 	AAP_FightUnit();
 
 protected:
-	// Called when the game starts or when spawned
+	// Setup connection/chain-reaction between components, pointers not supposed to be null here
+	virtual void				PostInitializeComponents() override;
+	// Setup game logic here, game functionality supposed to work fine here
 	virtual void				BeginPlay() override;
-
 public:	
 	virtual void				Tick(float DeltaTime) override;
 	virtual void				SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

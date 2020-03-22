@@ -31,13 +31,13 @@ class LINHIBLADE_API UItemUser : public UActorComponent
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FItemAbilityEventDelegate, TSubclassOf<UAP_AbilityBase>, Ability);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGenericEventDelegate);
 public:	
-	// Sets default values for this component's properties
+	// Sets default values, assume nothing, any pointer could be null
 	UItemUser();
-
 protected:
-	// Called when the game starts
+	// Setup connection/chain-reaction between components, pointers not supposed to be null here
+	virtual void InitializeComponent() override;
+	// Setup game logic here, game functionality supposed to work fine here
 	virtual void BeginPlay() override;
-
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
