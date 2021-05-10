@@ -84,127 +84,127 @@ void UAP_AttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UAP_AttributeSet, Armor);
 }
 
-void UAP_AttributeSet::OnRep_Health()
+void UAP_AttributeSet::OnRep_Health(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Health);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Health, OldValue);
 	RecheckHealth(GetHealth(), GetMaxHealth());
 }
 
-void UAP_AttributeSet::OnRep_HealthRegen()
+void UAP_AttributeSet::OnRep_HealthRegen(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, HealthRegen);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, HealthRegen, OldValue);
 	// client don't need to mind this
 }
 
-void UAP_AttributeSet::OnRep_MaxHealth()
+void UAP_AttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, MaxHealth);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, MaxHealth, OldValue);
 	RecheckHealth(GetHealth(), GetMaxHealth());
 }
 
-void UAP_AttributeSet::OnRep_MagicalPower()
+void UAP_AttributeSet::OnRep_MagicalPower(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, MagicalPower);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, MagicalPower, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_Mana()
+void UAP_AttributeSet::OnRep_Mana(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Mana);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Mana, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_ManaRegen()
+void UAP_AttributeSet::OnRep_ManaRegen(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, ManaRegen);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, ManaRegen, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_MaxMana()
+void UAP_AttributeSet::OnRep_MaxMana(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, MaxMana);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, MaxMana, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_Armor()
+void UAP_AttributeSet::OnRep_Armor(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Armor);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Armor, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_Evasion()
+void UAP_AttributeSet::OnRep_Evasion(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Evasion);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Evasion, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_MoveSpeed()
+void UAP_AttributeSet::OnRep_MoveSpeed(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, MoveSpeed);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, MoveSpeed, OldValue);
 }
-void UAP_AttributeSet::OnRep_TurnRate()
+void UAP_AttributeSet::OnRep_TurnRate(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, MoveSpeed);
-}
-
-void UAP_AttributeSet::OnRep_Strength()
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Strength);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, TurnRate, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_Agility()
+void UAP_AttributeSet::OnRep_Strength(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Agility);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Strength, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_Vitality()
+void UAP_AttributeSet::OnRep_Agility(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Vitality);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Agility, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_Energy()
+void UAP_AttributeSet::OnRep_Vitality(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Energy);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Vitality, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_Level()
+void UAP_AttributeSet::OnRep_Energy(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Level);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Energy, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_Experience()
+void UAP_AttributeSet::OnRep_Level(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Experience);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Level, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_RequiredExp()
+void UAP_AttributeSet::OnRep_Experience(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, RequiredExp);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, Experience, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_BountyExp()
+void UAP_AttributeSet::OnRep_RequiredExp(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, BountyExp);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, RequiredExp, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_AbilityPoint()
+void UAP_AttributeSet::OnRep_BountyExp(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, AbilityPoint);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, BountyExp, OldValue);
+}
+
+void UAP_AttributeSet::OnRep_AbilityPoint(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, AbilityPoint, OldValue);
 	OnAttributeChanged.Broadcast(GetAbilityPointAttribute(), AbilityPoint.GetCurrentValue());
 	OnAbilityPointChanged.Broadcast(AbilityPoint.GetCurrentValue());
 }
 
-void UAP_AttributeSet::OnRep_StatPoint()
+void UAP_AttributeSet::OnRep_StatPoint(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, StatPoint);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, StatPoint, OldValue);
 }
-void UAP_AttributeSet::OnRep_DeathTime()
+void UAP_AttributeSet::OnRep_DeathTime(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, DeathTime);
-}
-
-void UAP_AttributeSet::OnRep_PhysicalPower()
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, PhysicalPower);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, DeathTime, OldValue);
 }
 
-void UAP_AttributeSet::OnRep_AttackSpeed()
+void UAP_AttributeSet::OnRep_PhysicalPower(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, AttackSpeed);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, PhysicalPower, OldValue);
+}
+
+void UAP_AttributeSet::OnRep_AttackSpeed(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UAP_AttributeSet, AttackSpeed, OldValue);
 }
 
 float UAP_AttributeSet::GetHealthPercent()

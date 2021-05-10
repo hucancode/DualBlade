@@ -211,58 +211,58 @@ public:
 protected:
 	// These OnRep functions exist to make sure that the ability system internal representations are synchronized properly during replication
 	UFUNCTION()
-		virtual void OnRep_Strength();
+		virtual void OnRep_Strength(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_Agility();
+		virtual void OnRep_Agility(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_Vitality();
+		virtual void OnRep_Vitality(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_Energy();
+		virtual void OnRep_Energy(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-		virtual void OnRep_Level();
+		virtual void OnRep_Level(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_Experience();
+		virtual void OnRep_Experience(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_RequiredExp();
+		virtual void OnRep_RequiredExp(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_BountyExp();
+		virtual void OnRep_BountyExp(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_AbilityPoint();
+		virtual void OnRep_AbilityPoint(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_StatPoint();
+		virtual void OnRep_StatPoint(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_DeathTime();
+		virtual void OnRep_DeathTime(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-		virtual void OnRep_PhysicalPower();
+		virtual void OnRep_PhysicalPower(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_AttackSpeed();
+		virtual void OnRep_AttackSpeed(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-		virtual void OnRep_Evasion();
+		virtual void OnRep_Evasion(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_MoveSpeed();
+		virtual void OnRep_MoveSpeed(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_TurnRate();
+		virtual void OnRep_TurnRate(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-		virtual void OnRep_Health();
+		virtual void OnRep_Health(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_HealthRegen();
+		virtual void OnRep_HealthRegen(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_MaxHealth();
+		virtual void OnRep_MaxHealth(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-		virtual void OnRep_MagicalPower();
+		virtual void OnRep_MagicalPower(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_Mana();
+		virtual void OnRep_Mana(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_ManaRegen();
+		virtual void OnRep_ManaRegen(const FGameplayAttributeData& OldValue);
 	UFUNCTION()
-		virtual void OnRep_MaxMana();
+		virtual void OnRep_MaxMana(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-		virtual void OnRep_Armor();
+		virtual void OnRep_Armor(const FGameplayAttributeData& OldValue);
 
 };
